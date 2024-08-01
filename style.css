@@ -1,0 +1,6 @@
+body{
+    display:grid;
+    grid-template-rows:4vh 48vh 48vh;
+    border:1px solid black;
+    border-radius: 3px;
+}
