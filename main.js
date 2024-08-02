@@ -130,8 +130,6 @@ function popUp(ref,ioValue){
     pop.style="display:block";
     const mainDiv = document.querySelector("#mainPopDiv");
     mainDiv.replaceChildren();
-    
-
     const table= document.createElement("table");
     const thead = document.createElement("thead");
     const tr = document.createElement("tr");
@@ -249,7 +247,7 @@ function popUp(ref,ioValue){
     fileDiv.appendChild(fileTable);
     fileDiv.style="display:grid;grid-template-rows:1fr 8fr";
     mainDiv.appendChild(fileDiv);
-    mainDiv.style="display:grid;grid-template-rows:1fr 1fr";
+    mainDiv.style="display:grid;grid-template-rows:40fr 60fr";
     if(ioValue=="InCargo"){
         database_f.ref(ref).get().then((snapshot)=>{
             const val = snapshot.val();
@@ -257,7 +255,28 @@ function popUp(ref,ioValue){
             console.log(container,val);
             database_f.ref(ref).parent.get().then((snapshot)=>{
                 const val = snapshot.val();
-                console.log(val);
+                for(let i in val){
+                const cont = val[i]["container"];
+                console.log(cont,container);
+                if(container==cont){
+                    const tr = document.createElement("tr");
+                    const td1 = document.createElement("td");
+                    td1.innerHTML=val[i]["bl"];
+                    const td2 = document.createElement("td");
+                    td2.innerHTML=val[i]["description"];
+                    const td3 = document.createElement("td");
+                    td3.innerHTML=val[i]["Pqty"];
+                    const td4 = document.createElement("td");
+                    td4.innerHTML=val[i]["incargo"];
+                    const td5 = document.createElement("td");
+                    td5.innerHTML=val[i]["remark"];
+                    tr.appendChild(td1);
+                    tr.appendChild(td2);
+                    tr.appendChild(td3);
+                    tr.appendChild(td4);
+                    tr.appendChild(td5);
+                    table.appendChild(tr);
+                }}
             }).catch((e)=>{
                 console.log(e)});
     
