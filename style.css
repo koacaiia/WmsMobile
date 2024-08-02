@@ -9,13 +9,14 @@ body{
 }
 .cargoTable{
     table-layout:fixed;
+    width:100%;
 }
 td{
     text-align: center;
     text-overflow: ellipsis;
     overflow: hidden;
-    /* white-space: nowrap; */
-    max-width: 30%;
+    white-space: nowrap;
+    max-width: 30vh;
 }
 .main{
     overflow: scroll;
@@ -25,4 +26,17 @@ td{
 }
 .clicked{
     background-color: #c0c5e9;
+}
+th{
+    border: 1px solid white;
+    word-break:normal;
+    background:rgb(23, 23, 23);
+    position:sticky;
+    top:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-weight:bold;
+    text-size-adjust: 100%;
+    color:white;
 }
