@@ -40,6 +40,16 @@ function getData(date){
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
         for(let i in val){
+            let spec="";
+            if(val[i]["container40"]==="1"){
+                spec="40FT";}
+            else if(val[i]["container20"]==="1"){
+                spec="20FT";}
+            else if(val[i]["lclcargo"]!="0"){
+                spce="LcL";
+            }else{
+             continue
+            }
             const tr = document.createElement("tr");
             tr.id=val[i]["refValue"];
             const td1 = document.createElement("td");
@@ -47,23 +57,29 @@ function getData(date){
             const td2 = document.createElement("td");
             td2.innerHTML=val[i]["container"];
             const td3 = document.createElement("td");
-            console.log(val[i]["container40"]);
-            if(val[i]["container40"]==="1"){
-                td3.innerHTML="40FT";}
-            else if(val[i]["container20"]==="1"){
-                td3.innerHTML="20FT";}
-            else{
-                td3.innerHTML="LcL";
-            }
+            td3.innerHTML=val[i]["Pqty"];
             const td4 = document.createElement("td");
-            td4.innerHTML=val[i]["description"];
+            td4.innerHTML=spec;
+            const td5 = document.createElement("td");
+            td5.innerHTML=val[i]["description"];
             tr.appendChild(td1);
             tr.appendChild(td2);
             tr.appendChild(td3);
             tr.appendChild(td4);
+            tr.appendChild(td5);
             const trH= document.createElement("tr");
             document.querySelector("#tBodyIn").appendChild(tr);
+            tr.addEventListener("click",(e)=>{
+                const trList = document.querySelectorAll("#tBodyIn tr");
+                trList.forEach((e)=>{
+                    e.classList.remove("clicked");
+                });
+                e.target.parentNode.classList.toggle("clicked");
+                document.querySelector("#mainOut").style="display:none";
+                popUp(tr.id,"InCargo");
+            });
         }
+        
     }).
     catch((e)=>{
         alert(e);
@@ -91,10 +107,42 @@ function getData(date){
             tr.appendChild(td5);
             const trH= document.createElement("tr");
             document.querySelector("#tBodyOut").appendChild(tr);
+            tr.addEventListener("click",(e)=>{
+                const trList = document.querySelectorAll("#tBodyOut tr");
+                trList.forEach((e)=>{
+                    e.classList.remove("clicked");
+                });
+                e.target.parentNode.classList.toggle("clicked");
+                document.querySelector("#mainIn").style="display:none";
+                popUp(tr.id);
+            });
         }
     }).catch((e)=>{
         alert(e);
     });
-
+    
 }
 getData(titleDate.innerHTML);
+function popUp(ref,ioValue){
+    const pop = document.querySelector("#mainPop");
+    pop.style="display:block";
+    database_f.ref(ref).get().then((snapshot)=>{
+        const val = snapshot.val();
+        const container = val["container"];
+        console.log(container,val);
+        database_f.ref(ref).parent.get().then((snapshot)=>{
+            const val = snapshot.val();
+            console.log(val);
+        }).catch((e)=>{
+            console.log(e)});
+
+    }).catch((e)=>{});
+    
+};
+function popClose(){
+    document.querySelector("#mainPop").style="display:none";
+    document.querySelector("#mainIn").style="display:block";
+    document.querySelector("#mainOut").style="display:block";
+    document.querySelector("#mainPop").innerHTML="";
+}
+

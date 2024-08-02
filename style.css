@@ -15,11 +15,14 @@ td{
     text-overflow: ellipsis;
     overflow: hidden;
     /* white-space: nowrap; */
-    max-width: 20vw;
+    max-width: 30%;
 }
 .main{
     overflow: scroll;
 }
 td{
     border:1px solid black;
+}
+.clicked{
+    background-color: #c0c5e9;
 }
