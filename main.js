@@ -107,21 +107,31 @@ function getData(date){
         for(let i in val){
             const tr = document.createElement("tr");
             tr.id=val[i]["keyValue"];
+            let des = val[i]["description"];
+            console.log(des);
+            let manNo = val[i]["managementNo"];
+            if(des.includes(",")){
+              des = des.substring(0,des.indexOf(",")+1).replace(",","_외");
+              manNo = manNo.substring(0,manNo.indexOf(",")+1).replace(",","_외");
+            }
             const td1 = document.createElement("td");
             td1.innerHTML=val[i]["consigneeName"];
             const td2 = document.createElement("td");
-            td2.innerHTML=val[i]["description"];
+            td2.innerHTML=val[i]["outwarehouse"];
             const td3 = document.createElement("td");
-            td3.innerHTML=val[i]["managementNo"];
+            td3.innerHTML=des;
             const td4 = document.createElement("td");
-            td4.innerHTML=val[i]["totalQty"];
+            td4.innerHTML=manNo;
             const td5 = document.createElement("td");
-            td5.innerHTML=val[i]["totalEa"];
+            td5.innerHTML=val[i]["totalQty"];
+            const td6 = document.createElement("td");
+            td6.innerHTML=val[i]["totalEa"];
             tr.appendChild(td1);
             tr.appendChild(td2);
             tr.appendChild(td3);
             tr.appendChild(td4);
             tr.appendChild(td5);
+            tr.appendChild(td6);
             tBodyOut.appendChild(tr);
             tr.addEventListener("click",(e)=>{
                 const trList = document.querySelectorAll("#tBodyOut tr");
@@ -153,23 +163,15 @@ function popUp(){
     fileInput.type="file";
     fileInput.id="fileInput";
     fileInput.multiple="multiple";
+    const table= document.createElement("table");
+    const thead = document.createElement("thead");
+    const tr = document.createElement("tr");
+    let thList;
     if(ioValue=="InCargo"){
-      const table= document.createElement("table");
-      const thead = document.createElement("thead");
-      const tr = document.createElement("tr");
-      const thList=["관리번호","품명","PLT","EA","비고"];
-      thList.forEach((e)=>{
-          const th = document.createElement("th");
-          th.innerHTML=e;
-          tr.appendChild(th);
-      });
-      thead.appendChild(tr);
-      table.appendChild(thead);
-      mainDiv.appendChild(table);
+      thList=["관리번호","품명","PLT","EA","비고"];
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
-          console.log(container,val);
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
@@ -198,8 +200,47 @@ function popUp(){
   
       }).catch((e)=>{});
   }else if(ioValue=="outCargo"){
+    thList=["품명","관리번호","PLT","EA","비고"];
+     database_f.ref(ref).get().then((snapshot)=>{
+          console.log(snapshot.val());
+          const val = snapshot.val();
+          const des=val["description"].split(",");
+          const manNo=val["managementNo"].split(",");
+          const pQty = val["pltQty"].split(",");
+          const eQty = val["eaQty"].split(",");
+          // const remark = val["remark"].split(",");
+          console.log(des);
+          for(let i=0;i<des.length;i++){
+              const tr = document.createElement("tr");
+              const td1 = document.createElement("td");
+              td1.innerHTML=des[i];
+              const td2 = document.createElement("td");
+              td2.innerHTML=manNo[i];
+              const td3 = document.createElement("td");
+              td3.innerHTML=pQty[i];
+              const td4 = document.createElement("td");
+              td4.innerHTML=eQty[i];
+              // const td5 = document.createElement("td");
+              // td5.innerHTML=remark[i];
+              tr.appendChild(td1);
+              tr.appendChild(td2);
+              tr.appendChild(td3);
+              tr.appendChild(td4);
+              // tr.appendChild(td5);
+              table.appendChild(tr);
+          }
+  
+      }).catch((e)=>{});
 
   }
+  thList.forEach((e)=>{
+    const th = document.createElement("th");
+    th.innerHTML=e;
+    tr.appendChild(th);
+ });
+  thead.appendChild(tr);
+  table.appendChild(thead);
+  mainDiv.appendChild(table);
   const resizeImage = (settings) => {
     const file = settings.file;
     const maxSize = settings.maxSize;
@@ -302,7 +343,6 @@ function popUp(){
   fileDiv.style="display:grid;grid-template-rows:1fr 8fr";
   mainDiv.appendChild(fileDiv);
   mainDiv.style="display:grid;grid-template-rows:40fr 60fr";
-  console.log(ref);
   let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
   // imgRef.replace("/",",");
   imgRef = imgRef.split(",");
@@ -310,7 +350,6 @@ function popUp(){
   const dateArr = imgRef[2];
   imgRef[3]=dateArr;
   imgRef[2]=io;
-  console.log(imgRef);
   imgRef.splice(4,1);
   imgRef=imgRef.toString().replaceAll(",","/")+"/";
   refFile=imgRef;
