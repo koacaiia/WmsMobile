@@ -15,7 +15,12 @@
 </head>
 <body>
     <div id="mainDateDiv" style="display:grid;grid-template-columns:2fr 1fr 1fr">
-        <h3 style="text-align:center"id="titleDate">Date</h5>
+        <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
+        <script>
+            function reLoad(){
+                location.reload();
+            }
+        </script>
         <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
         <button id="dateContents" onclick="dateContents()">기간검색</button>   
     </div>

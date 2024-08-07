@@ -84,11 +84,11 @@ function getData(date){
             tBodyIn.appendChild(tr);
             tr.addEventListener("click",(e)=>{
                 const trList = document.querySelectorAll("#tBodyIn tr");
-                e.target.parentNode.classList.toggle("clicked");
                 trList.forEach((e)=>{
-                    if(!e.classList.contains("clicked")){
-                         e.classList.remove("clicked");}
+                  if(e.classList.contains("clicked")){
+                       e.classList.remove("clicked");}
                 });
+                e.target.parentNode.classList.toggle("clicked");
                 document.querySelector("#mainOut").style="display:none";
                 ref=tr.id;
                 ioValue="InCargo";
@@ -108,7 +108,6 @@ function getData(date){
             const tr = document.createElement("tr");
             tr.id=val[i]["keyValue"];
             let des = val[i]["description"];
-            console.log(des);
             let manNo = val[i]["managementNo"];
             if(des.includes(",")){
               des = des.substring(0,des.indexOf(",")+1).replace(",","_외");
@@ -136,7 +135,8 @@ function getData(date){
             tr.addEventListener("click",(e)=>{
                 const trList = document.querySelectorAll("#tBodyOut tr");
                 trList.forEach((e)=>{
-                    e.classList.remove("clicked");
+                  if(e.classList.contains("clicked")){
+                    e.classList.remove("clicked");}
                 });
                 e.target.parentNode.classList.toggle("clicked");
                 document.querySelector("#mainIn").style="display:none";
@@ -202,14 +202,12 @@ function popUp(){
   }else if(ioValue=="outCargo"){
     thList=["품명","관리번호","PLT","EA","비고"];
      database_f.ref(ref).get().then((snapshot)=>{
-          console.log(snapshot.val());
           const val = snapshot.val();
           const des=val["description"].split(",");
           const manNo=val["managementNo"].split(",");
           const pQty = val["pltQty"].split(",");
           const eQty = val["eaQty"].split(",");
           // const remark = val["remark"].split(",");
-          console.log(des);
           for(let i=0;i<des.length;i++){
               const tr = document.createElement("tr");
               const td1 = document.createElement("td");
@@ -304,7 +302,6 @@ function popUp(){
     fileTr.replaceChildren();
     upfileList = e.target.files;
     for(let i=0;i<e.target.files.length;i++){
-    console.log(e.target.files[i]);     
     const config = {
       file: e.target.files[i],
       maxSize: 150,
@@ -373,7 +370,6 @@ function popClose(){
     document.querySelector("#mainPop").style="display:none";
     document.querySelector("#mainIn").style="display:block";
     document.querySelector("#mainOut").style="display:block";
-    document.querySelector("#mainPop").innerHTML="";
 }
 
 function upLoad(){
@@ -385,23 +381,46 @@ function upLoad(){
     for(let i=0;i<file.length;i++){
         const fileRef = storageRef.child(file[i].name);
         fileRef.put(file[i]).then((snapshot)=>{
-            console.log("Uploaded a file!");
+            if( i==file.length-1){
+                console.log("업로드 완료");
+                
+            }
         });
     }
-    storage_f.ref(refFile).listAll().then((res)=>{
-      res.items.forEach((refFile)=>{
-        refFile.getDownloadURL().then((url)=>{
-          const td = document.createElement("td");
-          const img = document.createElement("img");
-          img.src=url;
-          img.className="profile-img";
-          img.style.display="block";
-          img.style.width="100px";
-          img.style.height="100px";
-          td.appendChild(img);
-          fileTr.appendChild(td);
-        });
-      });
-    });
-  
+    let w;
+    if(ioValue=="InCargo"){
+      w={"working":"컨테이너진입"}
+    }else{
+      w={"workprocess":"완"}
+    }
+
+    database_f.ref(ref).update(w);
+    toastOn(file.length+" 파일 업로드 완료");
+    popUp();
+    // storage_f.ref(refFile).listAll().then((res)=>{
+    //   res.items.forEach((refFile)=>{
+    //     refFile.getDownloadURL().then((url)=>{
+    //       const td = document.createElement("td");
+    //       const img = document.createElement("img");
+    //       img.src=url;
+    //       img.className="profile-img";
+    //       img.style.display="block";
+    //       img.style.width="100px";
+    //       img.style.height="100px";
+    //       td.appendChild(img);
+    //       fileTr.appendChild(td);
+    //     });
+    //   });
+    // });
+}
+
+function toastOn(msg){
+  const toastMessage = document.createElement("div");
+  toastMessage.id="tost_message";
+  toastMessage.innerHTML = msg; 
+  toastMessage.classList.add('active');
+  document.body.appendChild(toastMessage);
+  setTimeout(function(){
+      toastMessage.classList.remove('active');
+  },1500);
 }
