@@ -17,13 +17,10 @@ td{
     overflow: hidden;
     white-space: nowrap;
     max-width: 30vh;
-    font-size:x-small;
+    border:1px solid black;
 }
 .main{
     overflow: scroll;
-}
-td{
-    border:1px solid black;
 }
 .clicked{
     background-color: #c0c5e9;

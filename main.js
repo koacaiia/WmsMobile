@@ -16,6 +16,7 @@ const deptName = "WareHouseDept2";
 let ref;
 let refFile;
 let ioValue;
+const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
     try{
@@ -423,4 +424,11 @@ function toastOn(msg){
   setTimeout(function(){
       toastMessage.classList.remove('active');
   },1500);
+}
+
+if(mC){
+  const td = document.querySelectorAll("td");
+  td.forEach((e)=>{
+    e.style.fontSize="x-small";
+  });
 }
