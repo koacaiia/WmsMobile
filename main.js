@@ -312,8 +312,11 @@ function popUp(){
       .then((resizedImage) => {
         const url = window.URL.createObjectURL(resizedImage);
         const img = document.createElement("img");
-        img.setAttribute("src", url);
         img.className = "profile-img";
+        img.addEventListener("click", (e) => {
+          img.classList.toggle("file-selected");
+        });
+        img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
@@ -321,8 +324,8 @@ function popUp(){
       .then(() => {
         const img = document.querySelector(".profile-img");
         img.onload = () => {
-          const widthDiff = (img.clientWidth - imgTag.offsetWidth) / 2;
-          const heightDiff = (img.clientHeight - imgTag.offsetHeight) / 2;
+          const widthDiff = (img.clientWidth - imgTag.offsetWidth) ;
+          const heightDiff = (img.clientHeight - imgTag.offsetHeight) ;
           img.style.transform = `translate( -${widthDiff}px , -${heightDiff}px)`;
         };
       })
@@ -425,10 +428,22 @@ function toastOn(msg){
       toastMessage.classList.remove('active');
   },1500);
 }
-
 if(mC){
+  console.log(mC);
   const td = document.querySelectorAll("td");
+  document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
     e.style.fontSize="x-small";
   });
+}
+
+function fileRemove(){
+  const fileO = document.querySelector("#fileInput").files;
+  console.log(fileO);
+  const fileTr = document.querySelector("#popFileTr");
+  const fileRemove = fileTr.querySelectorAll(".file-selected");
+  for(let i in fileRemove){
+    console.log(fileRemove[i].parentNode);
+  }  
+
 }
