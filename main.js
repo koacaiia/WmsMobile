@@ -462,7 +462,7 @@ function toastOn(msg){
 if(mC){
   console.log(mC);
   const td = document.querySelectorAll("td");
-  document.querySelector("#titleDate").style="display:none";
+  // document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
     e.style.fontSize="x-small";
   });
