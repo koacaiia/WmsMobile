@@ -57,6 +57,6 @@ th{
     opacity: 100%;
     bottom: 50px;
 }
-.profile-img.file-selected{
+.file-selected{
     background-color:grey;
 }

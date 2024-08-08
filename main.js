@@ -16,6 +16,7 @@ const deptName = "WareHouseDept2";
 let ref;
 let refFile;
 let ioValue;
+let upfileList;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
@@ -164,6 +165,7 @@ function popUp(){
     fileInput.type="file";
     fileInput.id="fileInput";
     fileInput.multiple="multiple";
+    fileInput.accept="image/*"
     const table= document.createElement("table");
     const thead = document.createElement("thead");
     const tr = document.createElement("tr");
@@ -314,7 +316,7 @@ function popUp(){
         const img = document.createElement("img");
         img.className = "profile-img";
         img.addEventListener("click", (e) => {
-          img.classList.toggle("file-selected");
+          img.parentNode.classList.toggle("file-selected");
         });
         img.setAttribute("src", url);
         img.style.display = "block";
@@ -361,6 +363,9 @@ function popUp(){
         const img = document.createElement("img");
         img.src=url;
         img.className="profile-img";
+        img.addEventListener("click", (e) => {
+          img.parentNode.classList.toggle("file-selected");
+        });
         img.style.display="block";
         img.style.width="100px";
         img.style.height="100px";
@@ -379,18 +384,44 @@ function popClose(){
 function upLoad(){
     const fileInput = document.querySelector("#fileInput");
     const fileTr = document.querySelector("#popFileTr");
-    fileTr.replaceChildren();
+    const imgUrls = [];  
+    console.log(fileTr,fileTr.querySelectorAll("td"));
+    fileTr.querySelectorAll("td").forEach((td)=>{
+    const img = td.querySelector("img");
+    console.log(td);
+    const imgSrc = img.src;
+    imgUrls.push(imgSrc); 
+    });
+    console.log(imgUrls);
     const file = fileInput.files;
     const storageRef = storage_f.ref(refFile);
-    for(let i=0;i<file.length;i++){
-        const fileRef = storageRef.child(file[i].name);
-        fileRef.put(file[i]).then((snapshot)=>{
-            if( i==file.length-1){
-                console.log("업로드 완료");
-                
-            }
+    // for(let i=0;i<imgUrls.length;i++){
+    //     const fileRef = storageRef.child(imgUrls[i]);
+    //     fileRef.put(imgUrls[i]).then((snapshot)=>{
+    //         if( i==imgUrls.length-1){
+    //             console.log("업로드 완료");
+    //         }
+    //     });
+    // }
+
+    imgUrls.forEach((imgUrl, index) => {
+      fetch(imgUrl)
+          .then(response => response.blob())
+          .then(blob => {
+              const fileName = imgUrl.split('/').pop(); // Extract file name from URL
+              const file = new File([blob], fileName, { type: blob.type });
+              const fileRef = storageRef.child(fileName);
+              fileRef.put(file).then((snapshot) => {
+                  if (index === imgUrls.length - 1) {
+                      console.log("업로드 완료");
+                  }
+              });
+          })
+          .catch(error => {
+            console.error("Error uploading file:", error);
         });
-    }
+      });
+  
     let w;
     if(ioValue=="InCargo"){
       w={"working":"컨테이너진입"}
@@ -399,7 +430,7 @@ function upLoad(){
     }
 
     database_f.ref(ref).update(w);
-    toastOn(file.length+" 파일 업로드 완료");
+    toastOn(imgUrls.length+" 파일 업로드 완료");
     popUp();
     // storage_f.ref(refFile).listAll().then((res)=>{
     //   res.items.forEach((refFile)=>{
@@ -438,12 +469,21 @@ if(mC){
 }
 
 function fileRemove(){
-  const fileO = document.querySelector("#fileInput").files;
-  console.log(fileO);
+  const fileInput = document.querySelector("#fileInput");
   const fileTr = document.querySelector("#popFileTr");
-  const fileRemove = fileTr.querySelectorAll(".file-selected");
-  for(let i in fileRemove){
-    console.log(fileRemove[i].parentNode);
-  }  
-
+  let fileRemove = fileTr.querySelectorAll(".file-selected");
+  const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
+  const imgUrls = []; 
+  if(confirmRemove){
+    for(let i=0;i<fileRemove.length;i++){
+      fileRemove[i].remove();
+    }
+    fileTr.querySelectorAll("td").forEach((td)=>{
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      imgUrls.push(imgSrc);
+    });
+    // console.log(imgUrls);
+    // fileInput.value = imgUrls.join(", ");
+  }
 }
