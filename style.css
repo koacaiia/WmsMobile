@@ -7,7 +7,7 @@ body{
     height:95vh;
     overflow:auto;
 }
-.cargoTable{
+table{
     table-layout:fixed;
     width:100%;
 }
@@ -17,6 +17,7 @@ td{
     overflow: hidden;
     white-space: nowrap;
     max-width: 30vh;
+    min-width:10vh;
     border:1px solid black;
 }
 .main{

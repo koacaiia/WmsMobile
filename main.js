@@ -457,7 +457,7 @@ function toastOn(msg){
   document.body.appendChild(toastMessage);
   setTimeout(function(){
       toastMessage.classList.remove('active');
-  },1500);
+  },2000);
 }
 if(mC){
   console.log(mC);
@@ -486,4 +486,15 @@ function fileRemove(){
     // console.log(imgUrls);
     // fileInput.value = imgUrls.join(", ");
   }
+}
+function dateNext(){
+  const d = new Date(dateSelect.value);
+  if(d.getDay()===5){
+    d.setDate(d.getDate()+3);
+    toastOn("다음주 월요일 로 지정 됩니다.")
+  }else{
+    d.setDate(d.getDate()+1);
+  }
+  dateSelect.value=dateT(d);
+  dateChanged();
 }
