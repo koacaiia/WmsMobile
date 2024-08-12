@@ -499,7 +499,7 @@ function dateNext(){
   dateChanged();
 }
 
-if ('serviceWorker' in navigator) {
+// if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/firebase-messaging-sw.js')
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
@@ -507,7 +507,7 @@ if ('serviceWorker' in navigator) {
     .catch((err) => {
       console.error('Service Worker registration failed:', err);
     });
-}
+// }
 function requestPermission(){
   Notification.requestPermission().then((permission)=>{
     if(permission =="granted"){
