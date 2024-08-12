@@ -1,8 +1,8 @@
 body{
     display:grid;
     grid-template-rows:20vh 39vh 39vh;
-    border:1px solid black;
-    border-radius: 3px;
+    /* border:1px solid black;
+    border-radius: 3px; */
     width:99vw;
     height:96vh;
     overflow:auto;
@@ -63,9 +63,15 @@ th{
 }
 .osInput{
     width: 100%;
-    height: 100%;
+    height: 5vh;
     text-align: center;
     padding: 0;
     border: 0;
     font-weight:bold;
+}
+.osTd{
+    height:100%;
+}
+button{
+    background-color: blanchedalmond;
 }

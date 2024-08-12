@@ -14,8 +14,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-functions-compat.js"></script>
 </head>
 <body>
-    <div id="mainTitle" style="display:grid;grid-template-rows:1fr 1fr">
-        <div id="mainDateDiv" style="display:grid;grid-template-columns:2fr 1fr 1fr">
+    <div id="mainTitle" style="display:grid;grid-template-rows:1fr 1fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px">
+        <div id="mainDateDiv" style="display:grid;grid-template-columns:2fr 1fr 1fr;grid-gap:1px">
             <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
             <script>
                 function reLoad(){
@@ -25,7 +25,7 @@
             <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
             <button id="dateContents" onclick="dateNext()">내일</button>   
         </div>
-        <div id="mainOs" style="display:grid;grid-template-columns:9fr 1fr">
+        <div id="mainOs" style="display:grid;grid-template-columns:9fr 1fr;grid-gap:1px">
             <table id="mainOsTable" >
                 <thead>
                     <tr>
@@ -37,10 +37,10 @@
                 </thead>    
                 <tbody>
                     <tr>
-                        <td><input class="osInput" type="number" id="osMo" value="0"></td>
-                        <td><input class="osInput"type="number" id="osWf" value="0"></td>
-                        <td><input class="osInput"type="number" id="osWo" value="0"></td>
-                        <td><input class="osInput"type="text" id="osRe" value="" ></td>
+                        <td class="osTd"><input class="osInput" type="number" id="osMo" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="number" id="osWf" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="number" id="osWo" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="text" id="osRe" value="" ></td>
                     </tr>
                 </tbody>
             </table>

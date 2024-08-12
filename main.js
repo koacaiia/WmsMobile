@@ -58,10 +58,17 @@ function getData(date){
     const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
     database_f.ref(refOs).get().then((snapshot)=>{
       const val = snapshot.val();
-      document.querySelector("#osMo").value=val["osM"];
-      document.querySelector("#osWf").value=val["osWf"];
-      document.querySelector("#osWo").value=val["osWo"];
-      document.querySelector("#osRe").value=val["osR"];
+      if(val==null){
+        document.querySelector("#osMo").value=0;
+        document.querySelector("#osWf").value=0;
+        document.querySelector("#osWo").value=0;
+        document.querySelector("#osRe").value="";
+      }else{
+        document.querySelector("#osMo").value=val["osM"];
+        document.querySelector("#osWf").value=val["osWf"];
+        document.querySelector("#osWo").value=val["osWo"];
+        document.querySelector("#osRe").value=val["osR"];
+      }
     }).catch((e)=>{});
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
