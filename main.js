@@ -466,6 +466,16 @@ function upLoad(){
     // });
 }
 
+
+if(mC){
+  console.log(mC);
+  const td = document.querySelectorAll("td");
+  // document.querySelector("#titleDate").style="display:none";
+  td.forEach((e)=>{
+    toastOn("모바일 환경에서 접속 됩니다..");
+    e.style.fontSize="xx-small";
+  });
+}
 function toastOn(msg){
   const toastMessage = document.createElement("div");
   toastMessage.id="tost_message";
@@ -476,16 +486,6 @@ function toastOn(msg){
       toastMessage.classList.remove('active');
   },2000);
 }
-if(mC){
-  console.log(mC);
-  const td = document.querySelectorAll("td");
-  // document.querySelector("#titleDate").style="display:none";
-  td.forEach((e)=>{
-    toastOn("모바일 환경에서 접속 됩니다..");
-    e.style.fontSize="xx-small";
-  });
-}
-
 function fileRemove(){
   const fileInput = document.querySelector("#fileInput");
   const fileTr = document.querySelector("#popFileTr");
