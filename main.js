@@ -481,7 +481,8 @@ if(mC){
   const td = document.querySelectorAll("td");
   // document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
-    e.style.fontSize="x-small";
+    toastOn("모바일 환경에서 접속 됩니다..");
+    e.style.fontSize="xx-small";
   });
 }
 
