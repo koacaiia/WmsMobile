@@ -17,6 +17,7 @@ let ref;
 let refFile;
 let ioValue;
 let upfileList;
+let token;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
@@ -50,9 +51,18 @@ function dateChanged(){
 dateSelect.value=dateT(new Date());
 titleDate.innerHTML = dateT(new Date());
 function getData(date){
+    const year = date.substring(0,4);
     const month=date.substring(5,7);
     const refI ="DeptName/"+deptName+"/InCargo/"+month+"월/"+date;
     const refO ="DeptName/"+deptName+"/OutCargo/"+month+"월/"+date;
+    const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+    database_f.ref(refOs).get().then((snapshot)=>{
+      const val = snapshot.val();
+      document.querySelector("#osMo").value=val["osM"];
+      document.querySelector("#osWf").value=val["osWf"];
+      document.querySelector("#osWo").value=val["osWo"];
+      document.querySelector("#osRe").value=val["osR"];
+    }).catch((e)=>{});
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
         for(let i in val){
@@ -498,8 +508,21 @@ function dateNext(){
   dateSelect.value=dateT(d);
   dateChanged();
 }
-
-// if ('serviceWorker' in navigator) {
+function osSubmit(){
+  const date = document.querySelector("#titleDate").innerHTML;
+  const year = date.substring(0,4);
+  const month= date.substring(5,7);
+  const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+  const osM= document.querySelector("#osMo").value;
+  const osWf = document.querySelector("#osWf").value;
+  const osWo = document.querySelector("#osWo").value;
+  const osR = document.querySelector("#osRe").value;
+  const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
+  database_f.ref(refOs).update(osObject).then((e)=>{
+    toastOn(osObject);
+  }).catch((e)=>{});
+}
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/firebase-messaging-sw.js')
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
@@ -507,7 +530,7 @@ function dateNext(){
     .catch((err) => {
       console.error('Service Worker registration failed:', err);
     });
-// }
+}
 function requestPermission(){
   Notification.requestPermission().then((permission)=>{
     if(permission =="granted"){
@@ -526,6 +549,7 @@ function getToken() {
     .then(currentToken => {
       if (currentToken) {
         console.log('FCM token:', currentToken);
+        token = currentToken;
         return currentToken;
       } else {
         console.log('No registration token available. Request permission to generate one.');
