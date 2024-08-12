@@ -498,3 +498,91 @@ function dateNext(){
   dateSelect.value=dateT(d);
   dateChanged();
 }
+function requestPermission(){
+  Notification.requestPermission().then((permission)=>{
+    if(permission =="granted"){
+      console.log("Notification Permission Granted");
+      getToken();;
+    }else{
+      console.log("Unable to get Permission to Notify.")
+    }
+  });
+  if(!("Notification" in window)){
+    console.log("This browser does not support notifications.");
+  }
+}
+function getToken() {
+  return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+    .then(currentToken => {
+      if (currentToken) {
+        console.log('FCM token:', currentToken);
+        return currentToken;
+      } else {
+        console.log('No registration token available. Request permission to generate one.');
+        return null;
+      }
+    })
+    .catch(err => {
+      console.log('An error occurred while retrieving token. ', err);
+      return null;
+    });
+}
+messaging.onMessage((payload) => {
+  console.log('Message received. ', payload);
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+      body: payload.notification.body,
+       icon: payload.notification.icon || '/images/default-icon.png'
+  };
+  console.log(notificationTitle,notificationOptions);
+  new Notification(notificationTitle, notificationOptions);
+  // alert(payload.notification.body);
+});
+
+// Call requestPermission on page load
+// document.addEventListener('DOMContentLoaded', () => {
+//   requestPermission();
+// });
+
+function sendMessage(token, title, body, icon) {
+  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
+
+  const messagePayload = {
+    to: token,
+    notification: {
+      title: title,
+      body: body,
+      icon: icon || '/images/default-icon.png'
+    }
+  };
+
+  fetch(fcmEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(messagePayload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Message sent successfully:', data);
+  })
+  .catch(error => {
+    console.error('Error sending message:', error);
+  });
+}
+
+// Example usage
+document.addEventListener('DOMContentLoaded', () => {
+  requestPermission();
+
+  // Example: Send a message after getting the token
+  getToken().then(token => {
+    if (token) {
+      sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+    }
+  });
+});
