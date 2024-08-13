@@ -460,8 +460,8 @@ if(mC){
     e.style.fontSize="xx-small";
   });
   const osRe = document.querySelector("#osRe");
-  osRe.classList.remove("osInput");
   osRe.classList.add("mobile");
+  osRe.classList.remove("osInput");
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
