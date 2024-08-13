@@ -502,6 +502,9 @@ function dateNext(){
   if(d.getDay()===5){
     d.setDate(d.getDate()+3);
     toastOn("다음주 월요일 로 지정 됩니다.")
+  }else if(d.getDay()===6){
+    d.setDate(d.getDate()+2);
+    toastOn("다음주 월요일 로 지정 됩니다.")
   }else{
     d.setDate(d.getDate()+1);
   }
