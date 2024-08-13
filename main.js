@@ -449,33 +449,20 @@ function upLoad(){
     database_f.ref(ref).update(w);
     toastOn(imgUrls.length+" 파일 업로드 완료");
     popUp();
-    // storage_f.ref(refFile).listAll().then((res)=>{
-    //   res.items.forEach((refFile)=>{
-    //     refFile.getDownloadURL().then((url)=>{
-    //       const td = document.createElement("td");
-    //       const img = document.createElement("img");
-    //       img.src=url;
-    //       img.className="profile-img";
-    //       img.style.display="block";
-    //       img.style.width="100px";
-    //       img.style.height="100px";
-    //       td.appendChild(img);
-    //       fileTr.appendChild(td);
-    //     });
-    //   });
-    // });
 }
 
 
 if(mC){
-  console.log(mC);
   const td = document.querySelectorAll("td");
   // document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
     toastOn("모바일 환경에서 접속 됩니다..");
     e.style.fontSize="xx-small";
   });
-}
+}else{
+  const btn = document.querySelector("#titleDate");
+  btn.innerHTML="일정 업로드 Page Load";
+  }
 function toastOn(msg){
   const toastMessage = document.createElement("div");
   toastMessage.id="tost_message";
@@ -628,3 +615,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+ function reLoad(){
+  console.log(mC);
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }

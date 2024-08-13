@@ -17,11 +17,6 @@
     <div id="mainTitle" style="display:grid;grid-template-rows:1fr 1fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px">
         <div id="mainDateDiv" style="display:grid;grid-template-columns:2fr 1fr 1fr;grid-gap:1px">
             <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
-            <script>
-                function reLoad(){
-                    location.reload();
-                }
-            </script>
             <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
             <button id="dateContents" onclick="dateNext()">내일</button>   
         </div>
