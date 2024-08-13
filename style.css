@@ -75,3 +75,15 @@ th{
 button{
     background-color: blanchedalmond;
 }
+@keyframes flowText {
+    0% {
+      transform: translateX(100%);
+    }
+    /* 100% {
+      transform: translateX(-100%);
+    } */
+  }
+  #osRe {
+    white-space: nowrap;
+    overflow: hidden;
+    animation: flowText 5s linear infinite;}
