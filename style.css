@@ -90,5 +90,5 @@ button{
     border: 0;
     font-weight:bold;
     white-space: nowrap;
-    overflow: hidden;
+    /* overflow: hidden; */
     animation: flowText 10s linear infinite;}
