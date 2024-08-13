@@ -456,7 +456,7 @@ if(mC){
   const td = document.querySelectorAll("td");
   // document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
-    toastOn("모바일 환경에서 접속 됩니다.3");
+    toastOn("모바일 환경에서 접속 됩니다.4");
     e.style.fontSize="xx-small";
   });
   const osRe = document.querySelector("#osRe");
