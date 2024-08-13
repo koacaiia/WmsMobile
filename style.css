@@ -79,11 +79,11 @@ button{
     0% {
       transform: translateX(100%);
     }
-    /* 100% {
+    100% {
       transform: translateX(-100%);
-    } */
+    }
   }
-  #osRe {
+ .osInput mobile #osRe {
     white-space: nowrap;
     overflow: hidden;
     animation: flowText 10s linear infinite;}

@@ -462,6 +462,8 @@ if(mC){
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
+  const osRe = document.querySelector("#osRe");
+  osRe.classList.add("mobile");
   }
 function toastOn(msg){
   const toastMessage = document.createElement("div");
