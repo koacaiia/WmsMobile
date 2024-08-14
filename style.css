@@ -16,8 +16,8 @@ td{
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    max-width: 30vh;
-    min-width:10vh;
+    /* max-width: 30vh;
+    min-width:10vh; */
     border:1px solid black;
 }
 .main{
@@ -36,8 +36,8 @@ th{
     overflow:hidden;
     text-overflow:ellipsis;
     font-weight:bold;
-    text-size-adjust: 100%;
     color:white;
+    font-size:small;
 }
 
 #tost_message {
