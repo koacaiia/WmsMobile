@@ -453,20 +453,20 @@ function upLoad(){
 
 
 if(mC){
-  const td = document.querySelectorAll("td");
+  
   // document.querySelector("#titleDate").style="display:none";
-  td.forEach((e)=>{
-    toastOn("모바일 환경에서 접속 됩니다.2");
-    e.style.fontSize="xx-small";
-  });
+  toastOn("모바일 환경에서 접속 됩니다.3");
+  
   // const osRe = document.querySelector("#osRe");
   // osRe.classList.add("mobile");
   // osRe.classList.remove("osInput");
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
-  
-  
+  // td.forEach((e)=>{
+  //   console.log(e);
+  //   e.style.fontSize="small";
+  // });
   }
 function toastOn(msg){
   const toastMessage = document.createElement("div");

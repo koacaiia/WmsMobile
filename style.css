@@ -19,6 +19,7 @@ td{
     /* max-width: 30vh;
     min-width:10vh; */
     border:1px solid black;
+    font-size:xx-small;
 }
 .main{
     overflow: scroll;
