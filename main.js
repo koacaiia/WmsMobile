@@ -456,12 +456,12 @@ if(mC){
   const td = document.querySelectorAll("td");
   // document.querySelector("#titleDate").style="display:none";
   td.forEach((e)=>{
-    toastOn("모바일 환경에서 접속 됩니다.5");
+    toastOn("모바일 환경에서 접속 됩니다.1");
     e.style.fontSize="xx-small";
   });
-  const osRe = document.querySelector("#osRe");
-  osRe.classList.add("mobile");
-  osRe.classList.remove("osInput");
+  // const osRe = document.querySelector("#osRe");
+  // osRe.classList.add("mobile");
+  // osRe.classList.remove("osInput");
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
@@ -512,7 +512,7 @@ function dateNext(){
   dateChanged();
 }
 function osSubmit(){
-  const date = document.querySelector("#titleDate").innerHTML;
+  const date = document.querySelector("#dateSelect").value;
   const year = date.substring(0,4);
   const month= date.substring(5,7);
   const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
