@@ -290,6 +290,7 @@ function popUp(){
     const resize = () => {
       let width = image.width;
       let height = image.height;
+      console.log(width,height);
       if (width > height) {
         if (width > maxSize) {
           height *= maxSize / width;
@@ -303,6 +304,7 @@ function popUp(){
       }
       canvas.width = width;
       canvas.height = height;
+      console.log(width,height,maxSize);
       canvas.getContext("2d").drawImage(image, 0, 0, width, height);
       const dataUrl = canvas.toDataURL("image/jpeg");
       return dataURItoBlob(dataUrl);
@@ -333,7 +335,7 @@ function popUp(){
     for(let i=0;i<e.target.files.length;i++){
     const config = {
       file: e.target.files[i],
-      maxSize: 500*1024,
+      maxSize: 1500,
     };
     const imgTag = document.createElement("td");
     resizeImage(config)
@@ -428,7 +430,7 @@ function upLoad(){
               // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
               const selectTr = document.querySelector(".clicked");
 
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index;
+              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+returnTime();
               const file = new File([blob], fileName, { type: blob.type });
               const fileRef = storageRef.child(fileName);
               fileRef.put(file).then((snapshot) => {
@@ -637,4 +639,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function popDetail(ref){
   location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
+}
+function returnTime(){
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+  return formattedTime;
 }
