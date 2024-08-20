@@ -333,7 +333,7 @@ function popUp(){
     for(let i=0;i<e.target.files.length;i++){
     const config = {
       file: e.target.files[i],
-      maxSize: 500,
+      maxSize: 500*1024,
     };
     const imgTag = document.createElement("td");
     resizeImage(config)
@@ -458,7 +458,7 @@ function upLoad(){
 if(mC){
   
   // document.querySelector("#titleDate").style="display:none";
-  toastOn("모바일 환경에서 접속 됩니다.1");
+  toastOn("모바일 환경에서 접속 됩니다.2");
   
   // const osRe = document.querySelector("#osRe");
   // osRe.classList.add("mobile");
