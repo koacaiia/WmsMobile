@@ -178,11 +178,20 @@ function popUp(){
     const mainDiv = document.querySelector("#mainPopDiv");
     mainDiv.replaceChildren();
     const fileDiv = document.createElement("div");
+    const fileInputImage = document.createElement("div");
     const fileInput = document.createElement("input");
+    const imageDetail = document.createElement("button");
+    imageDetail.innerHTML="이미지 상세보기";
+    imageDetail.addEventListener("click",(e)=>{
+      popDetail(refFile);
+    });
     fileInput.type="file";
     fileInput.id="fileInput";
     fileInput.multiple="multiple";
     fileInput.accept="image/*"
+    fileInputImage.appendChild(fileInput);
+    fileInputImage.appendChild(imageDetail);
+    fileInputImage.style="display:grid;grid-template-columns:7fr 3fr";
     const table= document.createElement("table");
     const thead = document.createElement("thead");
     const tr = document.createElement("tr");
@@ -324,7 +333,7 @@ function popUp(){
     for(let i=0;i<e.target.files.length;i++){
     const config = {
       file: e.target.files[i],
-      maxSize: 150,
+      maxSize: 5000,
     };
     const imgTag = document.createElement("td");
     resizeImage(config)
@@ -337,16 +346,19 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
+        img.style.width="100px";
+        img.style.height="100px";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
       .then(() => {
-        const img = document.querySelector(".profile-img");
-        img.onload = () => {
-          const widthDiff = (img.clientWidth - imgTag.offsetWidth) ;
-          const heightDiff = (img.clientHeight - imgTag.offsetHeight) ;
-          img.style.transform = `translate( -${widthDiff}px , -${heightDiff}px)`;
-        };
+        // const img = document.querySelector(".profile-img");
+        // img.onload = () => {
+        //   const widthDiff = (img.clientWidth - imgTag.offsetWidth);
+        //   console.log(img.clientHeight,imgTag.offsetHeight);
+        //   const heightDiff = (img.clientHeight - imgTag.offsetHeight) ;
+        //   img.style.transform = `translate( -${widthDiff}px , -${heightDiff}px)`;
+        // };
       })
       .catch((err) => {
         console.log(err);
@@ -358,7 +370,7 @@ function popUp(){
   const fileTr = document.createElement("tr");
   fileTr.id="popFileTr";
   fileTable.appendChild(fileTr);
-  fileDiv.appendChild(fileInput);
+  fileDiv.appendChild(fileInputImage);
   fileDiv.appendChild(fileTable);
   fileDiv.style="display:grid;grid-template-rows:1fr 8fr";
   mainDiv.appendChild(fileDiv);
@@ -402,30 +414,21 @@ function upLoad(){
     const fileInput = document.querySelector("#fileInput");
     const fileTr = document.querySelector("#popFileTr");
     const imgUrls = [];  
-    console.log(fileTr,fileTr.querySelectorAll("td"));
     fileTr.querySelectorAll("td").forEach((td)=>{
     const img = td.querySelector("img");
-    console.log(td);
     const imgSrc = img.src;
     imgUrls.push(imgSrc); 
     });
-    console.log(imgUrls);
     const file = fileInput.files;
     const storageRef = storage_f.ref(refFile);
-    // for(let i=0;i<imgUrls.length;i++){
-    //     const fileRef = storageRef.child(imgUrls[i]);
-    //     fileRef.put(imgUrls[i]).then((snapshot)=>{
-    //         if( i==imgUrls.length-1){
-    //             console.log("업로드 완료");
-    //         }
-    //     });
-    // }
-
     imgUrls.forEach((imgUrl, index) => {
       fetch(imgUrl)
           .then(response => response.blob())
           .then(blob => {
-              const fileName = imgUrl.split('/').pop(); // Extract file name from URL
+              // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
+              const selectTr = document.querySelector(".clicked");
+
+              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index;
               const file = new File([blob], fileName, { type: blob.type });
               const fileRef = storageRef.child(fileName);
               fileRef.put(file).then((snapshot) => {
@@ -631,3 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     location.href="https://koacaiia.github.io/Wms-fine-/";
   }
  }
+
+function popDetail(ref){
+  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
+}
