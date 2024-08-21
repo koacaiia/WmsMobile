@@ -177,18 +177,19 @@ function popUp(){
     pop.style="display:grid;grid-template-rows:4vh 44vh;height:48vh";
     const mainDiv = document.querySelector("#mainPopDiv");
     // mainDiv.replaceChildren();
-   
     const fileInput = document.querySelector("#fileInput");
     const imageDetail = document.querySelector("#imgBtn");
     imageDetail.addEventListener("click",(e)=>{
       popDetail(refFile);
     });
-    
     const table= document.querySelector("#popInfoTable");
     const thead = document.querySelector("#popInfoTableThead");
     const tr = document.querySelector("#popInfoTableTr");
+    tr.replaceChildren();
     let thList;
     const fileTable = document.querySelector("#popImgTable");
+    const tBody = document.querySelector("#popInfoTableTbody");
+    tBody.replaceChildren();
     if(ioValue=="InCargo"){
       thList=["관리번호","품명","PLT","EA","비고"];
       database_f.ref(ref).get().then((snapshot)=>{
@@ -215,7 +216,7 @@ function popUp(){
                   tr.appendChild(td3);
                   tr.appendChild(td4);
                   tr.appendChild(td5);
-                  table.appendChild(tr);
+                  tBody.appendChild(tr);
               }}
           }).catch((e)=>{
               console.log(e)});
@@ -247,7 +248,7 @@ function popUp(){
               tr.appendChild(td3);
               tr.appendChild(td4);
               // tr.appendChild(td5);
-              table.appendChild(tr);
+              tBody.appendChild(tr);
           }
   
       }).catch((e)=>{});
@@ -340,7 +341,7 @@ function popUp(){
         img.setAttribute("src", url);
         img.style.display = "block";
         img.style.width="100px";
-        img.style.height="100px";
+        img.style.height="100%";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
@@ -360,7 +361,7 @@ function popUp(){
   };
   fileInput.addEventListener("change",handleImgInput);
   const fileTr = document.querySelector("#imgTr");
-  
+  fileTr.replaceChildren();
   let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
   // imgRef.replace("/",",");
   imgRef = imgRef.split(",");
