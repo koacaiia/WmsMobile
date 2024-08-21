@@ -174,28 +174,21 @@ function getData(date){
 getData(titleDate.innerHTML);
 function popUp(){
     const pop = document.querySelector("#mainPop");
-    pop.style="display:block";
+    pop.style="display:grid;grid-template-rows:4vh 44vh;height:48vh";
     const mainDiv = document.querySelector("#mainPopDiv");
-    mainDiv.replaceChildren();
-    const fileDiv = document.createElement("div");
-    const fileInputImage = document.createElement("div");
-    const fileInput = document.createElement("input");
-    const imageDetail = document.createElement("button");
-    imageDetail.innerHTML="이미지 상세보기";
+    // mainDiv.replaceChildren();
+   
+    const fileInput = document.querySelector("#fileInput");
+    const imageDetail = document.querySelector("#imgBtn");
     imageDetail.addEventListener("click",(e)=>{
       popDetail(refFile);
     });
-    fileInput.type="file";
-    fileInput.id="fileInput";
-    fileInput.multiple="multiple";
-    fileInput.accept="image/*"
-    fileInputImage.appendChild(fileInput);
-    fileInputImage.appendChild(imageDetail);
-    fileInputImage.style="display:grid;grid-template-columns:7fr 3fr";
-    const table= document.createElement("table");
-    const thead = document.createElement("thead");
-    const tr = document.createElement("tr");
+    
+    const table= document.querySelector("#popInfoTable");
+    const thead = document.querySelector("#popInfoTableThead");
+    const tr = document.querySelector("#popInfoTableTr");
     let thList;
+    const fileTable = document.querySelector("#popImgTable");
     if(ioValue=="InCargo"){
       thList=["관리번호","품명","PLT","EA","비고"];
       database_f.ref(ref).get().then((snapshot)=>{
@@ -266,8 +259,6 @@ function popUp(){
     tr.appendChild(th);
  });
   thead.appendChild(tr);
-  table.appendChild(thead);
-  mainDiv.appendChild(table);
   const resizeImage = (settings) => {
     const file = settings.file;
     const maxSize = settings.maxSize;
@@ -368,15 +359,8 @@ function popUp(){
     }
   };
   fileInput.addEventListener("change",handleImgInput);
-  const fileTable = document.createElement("table");
-  const fileTr = document.createElement("tr");
-  fileTr.id="popFileTr";
-  fileTable.appendChild(fileTr);
-  fileDiv.appendChild(fileInputImage);
-  fileDiv.appendChild(fileTable);
-  fileDiv.style="display:grid;grid-template-rows:1fr 8fr";
-  mainDiv.appendChild(fileDiv);
-  mainDiv.style="display:grid;grid-template-rows:40fr 60fr";
+  const fileTr = document.querySelector("#imgTr");
+  
   let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
   // imgRef.replace("/",",");
   imgRef = imgRef.split(",");

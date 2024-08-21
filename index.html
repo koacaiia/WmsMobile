@@ -14,7 +14,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-functions-compat.js"></script>
 </head>
 <body>
-    <div id="mainTitle" style="display:grid;grid-template-rows:1fr 1fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px">
+    <div id="mainTitle" style="display:grid;grid-template-rows:0.8fr 1.2fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px">
         <div id="mainDateDiv" style="display:grid;grid-template-columns:2fr 1fr 1fr;grid-gap:1px">
             <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
             <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
@@ -94,15 +94,42 @@
             </tbody>                
         </table>
     </div>
-    <div class="main" id="mainPop" style="display:none">
+    <div id="mainPop" style="display:none">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;"id="popBtnDiv">
             <button id="btnClose" onclick="popClose()">닫기</button>
             <button id="btnReomve" onclick="fileRemove()">삭제</button>
             <button id="btnUpLoad"  onclick="upLoad()">등록</button>
         </div>
-        <div id="mainPopDiv" style="display:grid;grid-template-rows:35% 65%">
-
+        <div id="mainPopDiv">
+            <div id="popInfoDiv">
+                <table id =popInfoTable >
+                    <thead id="popInfoTableThead">
+                        <tr id="popInfoTableTr">
+    
+                        </tr>
+                    </thead>
+                    <tbody id="popInfoTableTbody">
+                       
+                    </tbody>
+                </table>
+            </div>
+            <div style="display:grid;grid-template-rows:2fr 8fr">
+                <div style="display:grid;grid-template-columns:7fr 3fr">
+                    <input type="file" id="fileInput" multiple accept="image/*" >
+                    <button id="imgBtn" >이미지 상세보기</button>
+                </div>
+                <div>
+                    <table id="popImgTable" >
+                       
+                        <tbody id="popImgTableTbody">
+                            <tr id="imgTr">
+    
+                            </tr>
+                        </tbody>
+                </div>
+            </div>
         </div>
+       
     </div>
        
 <script src="main.js"></script>

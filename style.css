@@ -1,6 +1,6 @@
 body{
     display:grid;
-    grid-template-rows:15vh 39vh 39vh;
+    grid-template-rows:12fr 48fr 48fr;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
@@ -104,4 +104,24 @@ button{
             border:1px solid black;
             font-size:xx-small;
         }
+    }
+    #mainPop {
+        height: 47vh;
+        background-color: rgb(111, 109, 111);
+    }
+    #mainPopDiv {
+        height: 100%;
+        display: grid;
+        grid-template-rows: 20vh 24vh;
+    }
+    
+    #popInfoTable {
+        height: 100%;
+    }
+    #popInfoDiv{
+        height: 20vh;
+        overflow: scroll;
+    }
+    #popImgTable{
+        height:100%;
     }
