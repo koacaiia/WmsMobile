@@ -20,19 +20,21 @@
             <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
             <button id="dateContents" onclick="dateNext()">내일</button>   
         </div>
-        <div id="mainOs" style="display:grid;grid-template-columns:7.9fr 2.1fr;grid-gap:1px">
+        <div id="mainOs" >
             <table id="mainOsTable" >
                 <colgroup>
-                    <col style="width: 20%">
-                    <col style="width: 20%">
-                    <col style="width: 20%">
-                    <col style="width: 40%">
+                    <col style="width: 15%">
+                    <col style="width: 15%">
+                    <col style="width: 15%">
+                    <col style="width: 55%">
                 <thead>
                     <tr>
                         <th>하역(남)</th>
                         <th>여(Fine)</th>
                         <th>여(외부)</th>
-                        <th>비고</th>
+                        <th>
+                            <button id="osBtn" style="width:85%" onclick="osSubmit()">등록,변경</button>
+                        </th>
                     </tr>
                 </thead>    
                 <tbody>
@@ -44,7 +46,7 @@
                     </tr>
                 </tbody>
             </table>
-            <button id="osBtn" onclick="osSubmit()">등록,변경</button>
+            
         </div>
     </div>
     <div class="main" id="mainIn">
