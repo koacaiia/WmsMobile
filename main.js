@@ -430,7 +430,7 @@ function upLoad(){
               // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
               const selectTr = document.querySelector(".clicked");
 
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+returnTime();
+              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
               const file = new File([blob], fileName, { type: blob.type });
               const fileRef = storageRef.child(fileName);
               fileRef.put(file).then((snapshot) => {
