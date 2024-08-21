@@ -459,7 +459,7 @@ function upLoad(){
 if(mC){
   
   // document.querySelector("#titleDate").style="display:none";
-  toastOn("모바일 환경에서 접속 됩니다.2");
+  toastOn("모바일 환경에서 접속 됩니다.1");
   
   // const osRe = document.querySelector("#osRe");
   // osRe.classList.add("mobile");
