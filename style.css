@@ -113,7 +113,7 @@ button{
     }
     #mainPop {
         height: 47vh;
-        background-color: rgb(111, 109, 111);
+        background-color: rgb(118, 140, 200);
     }
     #mainPopDiv {
         height: 100%;
@@ -130,6 +130,7 @@ button{
     }
     #popImgTable{
         height:100%;
+        table-layout:fixed;
     }
     #fileInput{
         height:5.6vh;
@@ -164,4 +165,8 @@ button{
     padding: 0;
     overflow: hidden;
     border: 0;
+}
+#imgTableDiv{
+    overflow-x: scroll;
+    height: 100%;
 }
