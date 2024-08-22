@@ -109,6 +109,15 @@ button{
         #imgTr td{
             width: 33vw;
         }
+        body{
+            display:grid;
+            grid-template-rows:12fr 40fr 48fr;
+            /* border:1px solid black;
+            border-radius: 3px; */
+            width:99vw;
+            height:96vh;
+            overflow:auto;
+        }
 
     }
     #mainPop {
