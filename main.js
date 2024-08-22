@@ -339,7 +339,7 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        img.style.width="30%";
+        img.style.width="100%";
         img.style.height="95%";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
@@ -381,7 +381,7 @@ function popUp(){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
-        img.style.width="25%";
+        img.style.width="100%";
         img.style.height="95%";
         td.appendChild(img);
         fileTr.appendChild(td);
