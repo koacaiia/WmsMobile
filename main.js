@@ -358,7 +358,7 @@ function popUp(){
         console.log(err);
       });
     }
-    document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
+    // document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
   };
   fileInput.addEventListener("change",handleImgInput);
   fileTr.replaceChildren();
