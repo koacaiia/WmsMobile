@@ -187,7 +187,7 @@ function popUp(){
     const tr = document.querySelector("#popInfoTableTr");
     tr.replaceChildren();
     let thList;
-    const fileTable = document.querySelector("#popImgTable");
+    const tBody = document.querySelector("#popInfoTableTbody");
     const fileTr = document.querySelector("#imgTr");
     fileTr.replaceChildren();
     if(ioValue=="InCargo"){
