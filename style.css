@@ -106,6 +106,10 @@ button{
             border:1px solid black;
             font-size:xx-small;
         }
+        #imgTr td{
+            width: 33vw;
+        }
+
     }
     #mainPop {
         height: 47vh;
