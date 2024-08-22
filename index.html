@@ -21,7 +21,7 @@
             <button id="dateContents" onclick="dateNext()">내일</button>   
         </div>
         <div id="mainOs" >
-            <table id="mainOsTable" >
+            <table class="tableW"id="mainOsTable" >
                 <colgroup>
                     <col style="width: 15%">
                     <col style="width: 15%">
@@ -50,7 +50,7 @@
         </div>
     </div>
     <div class="main" id="mainIn">
-        <table class="cargoTable" id="tableIn">
+        <table class="tableW" id="tableIn">
             <colgroup>
                 <col style="width: 20%">
                 <col style="width: 30%">
@@ -71,7 +71,7 @@
         </table>    
     </div>
     <div class="main" id="mainOut">
-        <table class="cargoTable" id="tableOut">
+        <table class="tableW" id="tableOut">
             <colgroup>
                 <col style="width: 20%">
                 <col style="width: 20%">
@@ -102,7 +102,7 @@
         </div>
         <div id="mainPopDiv">
             <div id="popInfoDiv">
-                <table id =popInfoTable >
+                <table class="tableW" id =popInfoTable >
                     <thead id="popInfoTableThead">
                         <tr id="popInfoTableTr">
     
@@ -115,15 +115,18 @@
             </div>
             <div style="display:grid;grid-template-rows:2fr 8fr">
                 <div style="display:grid;grid-template-columns:7fr 3fr">
-                    <input type="file" id="fileInput" multiple accept="image/*" >
-                    
+                    <div class="filebox">
+                        <label for="fileInput">파일찾기</label> 
+                        <input class="upload-name" value="첨부파일" placeholder="첨부파일">
+                        <input type="file" id="fileInput" multiple accept="image/*" onchange="fileInput()" >
+                    </div>
                     <button id="btnUpLoad"  onclick="upLoad()">등록</button>
                 </div>
-                <div>
+                <div styel="height:22.4vh;overflow:scroll">
                     <table id="popImgTable" >
                        
                         <tbody id="popImgTableTbody">
-                            <tr id="imgTr">
+                            <tr id="imgTr" style="height:22vh">
     
                             </tr>
                         </tbody>

@@ -7,7 +7,7 @@ body{
     height:96vh;
     overflow:auto;
 }
-table{
+.tableW{
     table-layout:fixed;
     width:100%;
 }
@@ -61,6 +61,8 @@ th{
 }
 .file-selected{
     background-color:grey;
+    border:red 3px solid;
+    border-radius: 10px;
 }
 .osInput{
     width: 100%;
@@ -112,16 +114,50 @@ button{
     #mainPopDiv {
         height: 100%;
         display: grid;
-        grid-template-rows: 20vh 24vh;
+        grid-template-rows: 15vh 28vh;
     }
     
     #popInfoTable {
         height: 100%;
     }
     #popInfoDiv{
-        height: 20vh;
+        height: 14vh;
         overflow: scroll;
     }
     #popImgTable{
         height:100%;
     }
+    #fileInput{
+        height:5.6vh;
+    }
+.filebox .upload-name {
+    display: inline-block;
+    height: 5.6vh;
+    padding: 0 10px;
+    vertical-align: middle;
+    border: 1px solid #dddddd;
+    width: 78%;
+    color: #999999;
+}
+.filebox label {
+    display: inline-block;
+    padding: 10px 20px;
+    color: #fff;
+    /* vertical-align: middle; */
+    line-height: 3vh;
+    background-color: #999999;
+    cursor: pointer;
+    height: 3vh;
+    width:6vw;
+    margin-left: 10px;
+    text-align: center;
+    
+}
+.filebox input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}

@@ -188,6 +188,7 @@ function popUp(){
     tr.replaceChildren();
     let thList;
     const tBody = document.querySelector("#popInfoTableTbody");
+    tBody.replaceChildren();
     const fileTr = document.querySelector("#imgTr");
     fileTr.replaceChildren();
     if(ioValue=="InCargo"){
@@ -340,7 +341,7 @@ function popUp(){
         img.setAttribute("src", url);
         img.style.display = "block";
         img.style.width="100%";
-        img.style.height="95%";
+        img.style.height="22vh";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
@@ -357,6 +358,7 @@ function popUp(){
         console.log(err);
       });
     }
+    document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
   };
   fileInput.addEventListener("change",handleImgInput);
   fileTr.replaceChildren();
@@ -381,8 +383,8 @@ function popUp(){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
-        img.style.width="100%";
-        img.style.height="95%";
+        // img.style.width="100%";
+        img.style.height="22vh";
         td.appendChild(img);
         fileTr.appendChild(td);
       });
