@@ -113,7 +113,7 @@ button{
     }
     #mainPop {
         height: 47vh;
-        background-color: rgb(118, 140, 200);
+        background-color: rgb(89, 64, 110);
     }
     #mainPopDiv {
         height: 100%;
@@ -131,6 +131,7 @@ button{
     #popImgTable{
         height:100%;
         table-layout:fixed;
+        width: 100%;
     }
     #fileInput{
         height:5.6vh;
@@ -150,13 +151,14 @@ button{
     color: #fff;
     /* vertical-align: middle; */
     line-height: 3vh;
-    background-color: #999999;
+    background-color: #4a1313;
     /* cursor: pointer; */
     height: 3;
     width:25vw;
     /* margin-left: 10px; */
     text-align: center;
     font-size:x-small;
+    border-radius: 15px;
 }
 .filebox input[type="file"] {
     position: absolute;
