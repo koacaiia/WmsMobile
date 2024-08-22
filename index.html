@@ -98,7 +98,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;"id="popBtnDiv">
             <button id="btnClose" onclick="popClose()">닫기</button>
             <button id="btnReomve" onclick="fileRemove()">삭제</button>
-            <button id="btnUpLoad"  onclick="upLoad()">등록</button>
+            <button id="imgBtn" >이미지 상세보기</button>
         </div>
         <div id="mainPopDiv">
             <div id="popInfoDiv">
@@ -116,7 +116,8 @@
             <div style="display:grid;grid-template-rows:2fr 8fr">
                 <div style="display:grid;grid-template-columns:7fr 3fr">
                     <input type="file" id="fileInput" multiple accept="image/*" >
-                    <button id="imgBtn" >이미지 상세보기</button>
+                    
+                    <button id="btnUpLoad"  onclick="upLoad()">등록</button>
                 </div>
                 <div>
                     <table id="popImgTable" >

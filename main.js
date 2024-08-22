@@ -188,8 +188,8 @@ function popUp(){
     tr.replaceChildren();
     let thList;
     const fileTable = document.querySelector("#popImgTable");
-    const tBody = document.querySelector("#popInfoTableTbody");
-    tBody.replaceChildren();
+    const fileTr = document.querySelector("#imgTr");
+    fileTr.replaceChildren();
     if(ioValue=="InCargo"){
       thList=["관리번호","품명","PLT","EA","비고"];
       database_f.ref(ref).get().then((snapshot)=>{
@@ -321,7 +321,6 @@ function popUp(){
   };
 
   const handleImgInput = (e) => {
-    const fileTr = document.querySelector("#popFileTr");
     fileTr.replaceChildren();
     upfileList = e.target.files;
     for(let i=0;i<e.target.files.length;i++){
@@ -340,8 +339,8 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        img.style.width="100px";
-        img.style.height="100%";
+        img.style.width="30%";
+        img.style.height="95%";
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
@@ -360,7 +359,6 @@ function popUp(){
     }
   };
   fileInput.addEventListener("change",handleImgInput);
-  const fileTr = document.querySelector("#imgTr");
   fileTr.replaceChildren();
   let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
   // imgRef.replace("/",",");
@@ -383,8 +381,8 @@ function popUp(){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
-        img.style.width="100px";
-        img.style.height="100px";
+        img.style.width="25%";
+        img.style.height="95%";
         td.appendChild(img);
         fileTr.appendChild(td);
       });
@@ -399,7 +397,7 @@ function popClose(){
 
 function upLoad(){
     const fileInput = document.querySelector("#fileInput");
-    const fileTr = document.querySelector("#popFileTr");
+    const fileTr = document.querySelector("#imgTr");
     const imgUrls = [];  
     fileTr.querySelectorAll("td").forEach((td)=>{
     const img = td.querySelector("img");
