@@ -146,12 +146,12 @@ button{
     /* vertical-align: middle; */
     line-height: 3vh;
     background-color: #999999;
-    cursor: pointer;
-    height: 3vh;
+    /* cursor: pointer; */
+    height: 3;
     width:6vw;
-    margin-left: 10px;
+    /* margin-left: 10px; */
     text-align: center;
-    
+    font-size:x-small;
 }
 .filebox input[type="file"] {
     position: absolute;
