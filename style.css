@@ -118,7 +118,9 @@ button{
             height:96vh;
             overflow:auto;
         }
-
+        #btnUpLoad{
+            margin:10px;
+        }
     }
     #mainPop {
         height: 47vh;
