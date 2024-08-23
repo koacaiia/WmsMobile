@@ -122,6 +122,12 @@ button{
         #btnUpLoad{
             margin:10px;
         }
+        .osTh{
+            font-size:xx-small
+        }
+        #osRe{
+            font-size:xx-small;
+        }
     }
     #mainPop {
         height: 47vh;
