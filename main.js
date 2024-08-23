@@ -211,7 +211,6 @@ function popUp(){
                   const td4 = document.createElement("td");
                   td4.innerHTML=val[i]["incargo"];
                   const td5 = document.createElement("td");
-                  td5.style.wordBreak="break-all";
                   td5.innerHTML=val[i]["remark"];
                   tr.appendChild(td1);
                   tr.appendChild(td2);
