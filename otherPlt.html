@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pallet</title>
+    <link rel="stylesheet" href="otherPlt.css" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-functions-compat.js"></script>
+</head>
+<body>
+    <div id="pltMain" style="display:grid;grid-template-rows:1fr 1fr">
+    <div id="pltTitle" style="display:grid;grid-template-rows:1fr 1fr">    
+    <div style="display:grid;grid-template-columns: 1fr 1fr;width:80%">
+        <select id="pltClient" onchange="pltClient()" style="height:80%;margin-top:5%">
+            <option value="0">화주선택</option>
+        </select>
+        <input type="text" id="pltClientInput" placeholder="직접입력" style="height:70%;margin-top:5%;margin-bottom:10%">
+    </div>
+    <div style="display:grid;grid-template-columns: 1fr 1fr;width:80%">
+        <select id="pltType" onchange="pltType()" style="height:80%;margin-top:5%;" >
+            <option value="0">Pallet Type선택</option>
+        </select>
+        <input type="text" id="pltTypeInput" placeholder="직접입력" style="height:70%;margin-top:5%;margin-bottom:10%">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid black;border-radius: 2%;padding:1%;height:80%;margin-top:2%">
+        <div style="display:grid;grid-template-rows:1fr 1fr 1fr">
+            <input type="number" id="pltIn" placeholder="입고" >
+            <input type="number" id="pltOut" placeholder="출고">
+            <input type="text" id="pltNote" placeholder="비고">
+        </div>
+        <div style="display:grid;grid-template-rows:1fr 1fr">
+            <input type="date" id="pltDate" value="yyyy-MM-dd" style="text-align: center;">
+            <button id="pltReg" style="background-color:gray"onclick="pltReg()">사용등록</button>
+        </div>
+    </div>  
+    </div>
+    <div id="pltTableDiv" >
+        <table id="pltTable">
+            <thead style="width:98.5%">
+                <tr style="width:98.5%">
+                    <th>날짜</th>
+                    <th>입고</th>
+                    <th>출고</th>
+                    <th>재고</th>
+                    <th>비고</th>
+                </tr>
+            </thead>
+            <tbody id="pltTableTbody">
+            </tbody>
+        </table>
+    </div>  
+    </div>
+    <script src="otherPlt.js"></script>
+</body>
+</html>

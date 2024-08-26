@@ -632,3 +632,7 @@ function returnTime(){
   const formattedTime = `${hours}:${minutes}:${seconds}`;
   return formattedTime;
 }
+function otherContents(e){
+  console.log(e);
+  location.href="otherPlt.html";
+}
