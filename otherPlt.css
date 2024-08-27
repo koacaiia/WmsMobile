@@ -1,7 +1,7 @@
-/* body{
+body{
     height:1440px;
     width:412px;
-} */
+}
 #pltTable{
     table-layout:fixed;
     width:100%;
@@ -38,7 +38,7 @@
     background-color: #1713dd;
     /* cursor: pointer; */
     /* height: 2; */
-    width:25vw;
+    width:70%;
     /* margin-left: 10px; */
     text-align: center;
     font-size:x-small;
@@ -51,4 +51,13 @@
     padding: 0;
     overflow: hidden;
     border: 0;
+}
+.pltInputSub{
+    width: 80%;
+}
+#btnUpLoad{
+    border-radius: 10px;
+    margin-right:20px;
+    margin-top:5px;
+    height:80%;
 }
