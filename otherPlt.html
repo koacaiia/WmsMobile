@@ -15,28 +15,52 @@
 </head>
 <body>
     <div id="pltMain" style="display:grid;grid-template-rows:1fr 1fr">
-    <div id="pltTitle" style="display:grid;grid-template-rows:1fr 1fr">    
-    <div style="display:grid;grid-template-columns: 1fr 1fr;width:80%">
-        <select id="pltClient" onchange="pltClient()" style="height:80%;margin-top:5%">
-            <option value="0">화주선택</option>
-        </select>
-        <input type="text" id="pltClientInput" placeholder="직접입력" style="height:70%;margin-top:5%;margin-bottom:10%">
-    </div>
-    <div style="display:grid;grid-template-columns: 1fr 1fr;width:80%">
-        <select id="pltType" onchange="pltType()" style="height:80%;margin-top:5%;" >
-            <option value="0">Pallet Type선택</option>
-        </select>
-        <input type="text" id="pltTypeInput" placeholder="직접입력" style="height:70%;margin-top:5%;margin-bottom:10%">
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid black;border-radius: 2%;padding:1%;height:80%;margin-top:2%">
-        <div style="display:grid;grid-template-rows:1fr 1fr 1fr">
-            <input type="number" id="pltIn" placeholder="입고" >
-            <input type="number" id="pltOut" placeholder="출고">
-            <input type="text" id="pltNote" placeholder="비고">
-        </div>
+     <div id="pltTitle" style="display:grid;grid-template-rows:4fr 6fr">
+     <div style="display:grid;grid-template-columns:1fr 1fr">
         <div style="display:grid;grid-template-rows:1fr 1fr">
-            <input type="date" id="pltDate" value="yyyy-MM-dd" style="text-align: center;">
-            <button id="pltReg" style="background-color:gray"onclick="pltReg()">사용등록</button>
+            <div class="pltTitleInput">
+                <select id="pltClient" onchange="pltClient()" >
+                    <option value="0">화주선택</option>
+                </select>
+                <input type="text" id="pltClientInput" placeholder="직접입력">
+              </div>
+             <div class="pltTitleInput" >
+                <select id="pltType" onchange="pltType()" >
+                    <option value="0">Pallet Type선택</option>
+                </select>
+                <input type="text" id="pltTypeInput" placeholder="직접입력" >
+             </div>
+        </div>
+        <div class="pltTitleInput" style="display:grid;grid-template-columns:1fr 1fr;border:1px solid black;border-radius: 2%;padding:1%;">
+            <div style="display:grid;grid-template-rows:1fr 1fr 1fr">
+                <input type="number" id="pltIn" placeholder="입고" >
+                <input type="number" id="pltOut" placeholder="출고">
+                <input type="text" id="pltNote" placeholder="비고">
+            </div>
+            <div style="display:grid;grid-template-rows:1fr 1fr">
+                <input type="date" id="pltDate" value="yyyy-MM-dd" style="text-align: center;">
+                <button id="pltReg" style="background-color:gray"onclick="pltReg()">사용등록</button>
+            </div>
+        </div>
+     </div>       
+      
+     <div class="pltTitleDiv" style="display:grid;grid-template-rows:1fr 9fr">
+        <div style="display:grid;grid-template-columns:7fr 3fr">
+            <div class="filebox">
+                <label for="fileInput">파일찾기</label> 
+                <input class="upload-name" value="첨부파일" placeholder="첨부파일">
+                <input type="file" id="fileInput" multiple accept="image/*" onchange="fileInput()" >
+            </div>
+            <button id="btnUpLoad"  onclick="upLoad()">사진등록</button>
+        </div>
+        <div id="imgTableDiv">
+            <table id="popImgTable" >
+                <tbody id="popImgTableTbody">
+                    <tr id="imgTr" >
+
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>  
     </div>

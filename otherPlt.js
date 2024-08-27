@@ -56,7 +56,7 @@ const selClient = document.getElementById("pltClient");
              const time = new Date().getTime();
              const type = document.getElementById("pltType").value;
              const refPath = "DeptName/"+deptName+"/PltManagement/"+client+"/"+type+"/"+date.value+"_"+time;
-             const pltValue = {"date":date.value,"inQty":inQty.value,"outQty":outQty.value,"remark":remark.value};
+             const pltValue = {"date":date.value,"inQty":inQty.value,"outQty":outQty.value,"remark":remark.value,"refPath":refPath};
              database_f.ref(refPath).update(pltValue).then(()=>{
                  alert("Plt 현황이 등록 되었습니다.");
                  pltDataTable();
@@ -85,6 +85,7 @@ const selClient = document.getElementById("pltClient");
              let totalOut=0;
              for(let p in values){
                  const tr = document.createElement("tr");
+                 console.log(values[p]);
                  tbody.appendChild(tr);
                  const pltTh =["date","inQty","outQty","stockQty","remark"];
                  if(values[p]["inQty"]==""){
@@ -95,7 +96,6 @@ const selClient = document.getElementById("pltClient");
                  }
                  totalIn = totalIn+parseInt(values[p]["inQty"]);
                  totalOut = totalOut+parseInt(values[p]["outQty"]);
-                 console.log(totalIn,totalOut);
                  for(let t in pltTh){
                      const td = document.createElement("td");
                     //  remove(totalIn,totalOut,pltTh[t]);
