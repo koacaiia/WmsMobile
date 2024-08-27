@@ -16,9 +16,9 @@
 <body>
     <div id="pltMain" style="display:grid;grid-template-rows:1fr 1fr">
      <div id="pltTitle" style="display:grid;grid-template-rows:3fr 7fr">
-     <div id="pltTitleInput"style="display:grid;grid-template-columns:1fr 1fr">
-        <div style="display:grid;grid-template-rows:1fr 1fr">
-            <div class="pltTitleInput">
+     <div id="pltTitleInput"style="display:grid;grid-template-columns:1fr 1fr;grid-gap:0.5vw">
+        <div style="display:grid;grid-template-rows:1fr 1fr;border:2px solid black;border-radius: 3%;padding:1%;background-color: bisque;">
+            <div class="pltTitleInput" >
                 <select id="pltClient" onchange="pltClient()" >
                     <option value="0">화주선택</option>
                 </select>
@@ -31,7 +31,7 @@
                 <input type="text" id="pltTypeInput" placeholder="직접입력" >
              </div>
         </div>
-        <div class="pltTitleInput" style="display:grid;grid-template-columns:1fr 1fr;border:1px solid black;border-radius: 2%;padding:1%;">
+        <div id="pltTitleSub" style="height:85%;display:grid;grid-template-columns:1fr 1fr;border:2px solid black;border-radius: 3%;padding:1%;background-color: bisque;">
             <div style="display:grid;grid-template-rows:1fr 1fr 1fr">
                 <input type="number" id="pltIn" placeholder="입고" >
                 <input type="number" id="pltOut" placeholder="출고">
