@@ -15,8 +15,8 @@
 </head>
 <body>
     <div id="pltMain" style="display:grid;grid-template-rows:1fr 1fr">
-     <div id="pltTitle" style="display:grid;grid-template-rows:4fr 6fr">
-     <div style="display:grid;grid-template-columns:1fr 1fr">
+     <div id="pltTitle" style="display:grid;grid-template-rows:3fr 7fr">
+     <div id="pltTitleInput"style="display:grid;grid-template-columns:1fr 1fr">
         <div style="display:grid;grid-template-rows:1fr 1fr">
             <div class="pltTitleInput">
                 <select id="pltClient" onchange="pltClient()" >
@@ -44,7 +44,7 @@
         </div>
      </div>       
       
-     <div class="pltTitleDiv" style="display:grid;grid-template-rows:1fr 9fr">
+     <div id="pltTitleImg"style="display:grid;grid-template-rows:1fr 9fr">
         <div style="display:grid;grid-template-columns:7fr 3fr">
             <div class="filebox">
                 <label for="fileInput">파일찾기</label> 
@@ -53,8 +53,8 @@
             </div>
             <button id="btnUpLoad"  onclick="upLoad()">사진등록</button>
         </div>
-        <div id="imgTableDiv">
-            <table id="popImgTable" >
+        <div id="imgTableDiv" style="height:100%;overflow: scroll;">
+            <table id="popImgTable" style="height:23vh" >
                 <tbody id="popImgTableTbody">
                     <tr id="imgTr" >
 
@@ -64,8 +64,8 @@
         </div>
     </div>  
     </div>
-    <div id="pltTableDiv" >
-        <table id="pltTable">
+    <div id="pltTableDiv" style="height:50vh;overflow: scroll;" >
+        <table id="pltTable" style="height:48vh">
             <thead style="width:98.5%">
                 <tr style="width:98.5%">
                     <th>날짜</th>

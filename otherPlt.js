@@ -38,10 +38,11 @@ const selClient = document.getElementById("pltClient");
                 option.innerHTML=c;
                 pltType.appendChild(option);
             }
-            
+        document.querySelector("#pltClientInput").value=clientValue;    
         
     }
     function pltType(){
+        document.querySelector("#pltTypeInput").value=document.getElementById("pltType").value;
         pltDataTable();
      }
     
@@ -72,8 +73,8 @@ const selClient = document.getElementById("pltClient");
      function pltDataTable(){
          const tbody=document.getElementById("pltTableTbody");
          tbody.replaceChildren();
-         const client = document.getElementById("pltClient").value;
-         const type = document.getElementById("pltType").value;
+         const client = document.getElementById("pltClientInput").value;
+         const type = document.getElementById("pltTypeInput").value;
          database_f.ref("DeptName/"+deptName+"/PltManagement/"+client+"/"+type).get().then((snapshot)=>{
              let value = snapshot.val();
              let values = Object.values(value);
