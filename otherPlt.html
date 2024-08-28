@@ -14,9 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-functions-compat.js"></script>
 </head>
 <body>
-    <div id="pltMain" style="display:grid;grid-template-rows:1fr 1fr">
-     <div id="pltTitle" style="display:grid;grid-template-rows:3fr 7fr">
-     <div id="pltTitleInput"style="display:grid;grid-template-columns:1fr 1fr;grid-gap:0.5vw">
+    <div id="pltMain" style="display:grid;grid-template-rows:4fr 6fr">
+     <div id="pltTitle" >
+     <div id="pltTitleInput"style="display:grid;grid-template-rows:1fr 1fr;grid-gap:0.5vw">
         <div style="height:85%;display:grid;grid-template-rows:1fr 1fr;border:2px solid black;border-radius: 3%;padding:1%;background-color: bisque;">
             <div class="pltTitleInput" >
                 <select id="pltClient" onchange="pltClient()" >
@@ -44,25 +44,7 @@
         </div>
      </div>       
       
-     <div id="pltTitleImg"style="display:grid;grid-template-rows:1fr 9fr">
-        <div style="display:grid;grid-template-columns:7fr 3fr">
-            <div class="filebox">
-                <label for="fileInput">파일찾기</label> 
-                <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
-                <input type="file" id="fileInput" multiple accept="image/*" onchange="fileInput()" >
-            </div>
-            <button id="btnUpLoad"  onclick="upLoad()" >사진등록</button>
-        </div>
-        <div id="imgTableDiv" style="height:100%;overflow: scroll;">
-            <table id="popImgTable" style="height:23vh" >
-                <tbody id="popImgTableTbody">
-                    <tr id="imgTr" >
-
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>  
+       
     </div>
     <div id="pltTableDiv" style="height:50vh;overflow: scroll;" >
         <table id="pltTable" style="height:48vh">
@@ -80,6 +62,26 @@
         </table>
     </div>  
     </div>
+    <div id="popImgSubDiv" class="popUp">
+        <div style="display:grid;grid-template-columns:7fr 3fr">
+            <div class="filebox">
+                <label for="fileInput">파일찾기</label> 
+                <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
+                <input type="file" id="fileInput" multiple accept="image/*"  >
+            </div>
+            <button id="btnUpLoad"  onclick="upLoad()" >사진등록</button>
+        </div>
+        <div id="imgTableDiv" style="height:100%;overflow: scroll;">
+            <table id="popImgTable" style="height:23vh" >
+                <tbody id="popImgTableTbody">
+                    <tr id="imgTr" >
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
     <script src="otherPlt.js"></script>
+    <!-- <script src="main.js"></script> -->
 </body>
 </html>
