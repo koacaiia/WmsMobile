@@ -62,6 +62,9 @@ function btn(e){
     }else if(e.id=="saveImg"){
       saveImg();
       return;
+    }else if(e.id=="homeBtn"){
+      window.location.href = "index.html";
+      return;
     }
   loadImage(c);
 }
