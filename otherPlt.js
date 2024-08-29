@@ -18,6 +18,26 @@ const fileInput = document.querySelector("#fileInput");
 const fileTr = document.querySelector("#imgTr");
     // fileTr.replaceChildren();
 const selClient = document.getElementById("pltClient");
+const date = document.getElementById("pltDate");
+const dateT = (d)=>{
+  let result_date;
+  try{
+  let result_month = d.getMonth()+1;
+  let result_day =d.getDate();
+  if(result_month<10){
+      result_month ="0"+result_month;
+  };
+  if(result_day <10){
+      result_day ="0"+result_day;
+  };
+  result_date = d.getFullYear()+"-"+result_month+"-"+result_day;
+  return result_date;
+  }catch(e){
+  return result_date ="미정";
+  }
+};
+date.value=dateT(new Date());
+let imgFileRef;
     database_f.ref("DeptName/"+deptName+"/PltManagement").get().then((snapshot)=>{
             const value = snapshot.val();
             pltData=value;
@@ -49,16 +69,15 @@ const selClient = document.getElementById("pltClient");
      }
     
      function pltReg(){
-         const date= document.getElementById("pltDate");
          const inQty=document.getElementById("pltIn");
          const outQty=document.getElementById("pltOut");
          const remark=document.getElementById("pltNote");
          const confirmPlt = confirm("입고수량 : "+inQty.value+"\n"+"출고수량 : "+outQty.value+"\n"+"재고수량 : "+remark.value+"\n"+"위 내용으로 등록 하시겠습니까?");
          if(confirmPlt){
-            //  const client = document.getElementById("pltClientInput").value;
-            //  const time = new Date().getTime();
-            //  const type = document.getElementById("pltTypeInput").value;
-            //  const refPath = "DeptName/"+deptName+"/PltManagement/"+client+"/"+type+"/"+date.value+"_"+time+"_I_"+inQty.value+"_O_"+outQty.value;
+             const client = document.getElementById("pltClientInput").value;
+             const time = new Date().getTime();
+             const type = document.getElementById("pltTypeInput").value;
+             const refPath = "DeptName/"+deptName+"/PltManagement/"+client+"/"+type+"/"+date.value+"_"+returnTime()+"_I_"+inQty.value+"_O_"+outQty.value;
             //  const pltValue = {"date":date.value,"inQty":inQty.value,"outQty":outQty.value,"remark":remark.value,"refPath":refPath};
             //  database_f.ref(refPath).update(pltValue).then(()=>{
             //      alert("Plt 현황이 등록 되었습니다.");
@@ -69,8 +88,8 @@ const selClient = document.getElementById("pltClient");
             //  }).catch((e)=>{
             //      console.error(e);
             //  });
-            const refPath="test";
-            popImgSub(refPath);
+            imgFileRef = refPath.replace("DeptName","images")
+            popImgSub();
          }
      }
      
@@ -129,7 +148,7 @@ const selClient = document.getElementById("pltClient");
         imgUrls.push(imgSrc); 
         });
         const file = fileInput.files;
-        const storageRef = storage_f.ref(refFile);
+        const storageRef = storage_f.ref(imgFileRef);
         imgUrls.forEach((imgUrl, index) => {
           fetch(imgUrl)
               .then(response => response.blob())
@@ -156,12 +175,13 @@ const selClient = document.getElementById("pltClient");
         const hours = now.getHours().toString().padStart(2, '0');
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
-        const formattedTime = `${hours}:${minutes}:${seconds}`;
+        const formattedTime = `${hours}시${minutes}분${seconds}초`;
         return formattedTime;
       }
-    function popImgSub(ref){
+    function popImgSub(){
         const popDiv = document.querySelector("#popImgSubDiv");
         popDiv.classList.toggle("popUp");
+        console.log(imgFileRef)
     }  
     const resizeImage = (settings) => {
         const file = settings.file;

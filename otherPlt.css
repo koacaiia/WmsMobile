@@ -55,7 +55,7 @@ body{
 .pltInputSub{
     width: 80%;
 }
-#btnUpLoad{
+#btnUpLoad ,#btnImgClose{
     border-radius: 10px;
     margin-right:20px;
     margin-top:5px;
@@ -68,11 +68,11 @@ body{
 #popImgSubDiv {
     display:block; /* Hidden by default */
     position: fixed;
-    top: 40%;
-    left: 10%;
+    top: 35%;
+    left: 11%;
     transform: translate(-50%, -50%);
     width: 80%;
-    /* max-width: 600px; */
+    max-width: 412px;
     padding: 20px;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
