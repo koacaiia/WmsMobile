@@ -69,10 +69,10 @@ body{
     display:block; /* Hidden by default */
     position: fixed;
     top: 35%;
-    left: 11%;
+    left: 15%;
     transform: translate(-50%, -50%);
     width: 80%;
-    max-width: 412px;
+    max-width: 90vw;
     padding: 20px;
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
