@@ -72,22 +72,23 @@ let imgFileRef;
          const inQty=document.getElementById("pltIn");
          const outQty=document.getElementById("pltOut");
          const remark=document.getElementById("pltNote");
-         const confirmPlt = confirm("입고수량 : "+inQty.value+"\n"+"출고수량 : "+outQty.value+"\n"+"재고수량 : "+remark.value+"\n"+"위 내용으로 등록 하시겠습니까?");
+         const client = document.getElementById("pltClientInput").value;
+         const type = document.getElementById("pltTypeInput").value;
+         if(client==""|| type==""){alert("Client와 Type을 선택해 주세요.");return;}
+         const confirmPlt = confirm("입고수량 : "+inQty.value+"\n"+"출고수량 : "+outQty.value+"\n"+"비고 : "+remark.value+"\n"+"위 내용으로 등록 하시겠습니까?");
          if(confirmPlt){
-             const client = document.getElementById("pltClientInput").value;
-             const time = new Date().getTime();
-             const type = document.getElementById("pltTypeInput").value;
              const refPath = "DeptName/"+deptName+"/PltManagement/"+client+"/"+type+"/"+date.value+"_"+returnTime()+"_I_"+inQty.value+"_O_"+outQty.value;
-            //  const pltValue = {"date":date.value,"inQty":inQty.value,"outQty":outQty.value,"remark":remark.value,"refPath":refPath};
-            //  database_f.ref(refPath).update(pltValue).then(()=>{
-            //      alert("Plt 현황이 등록 되었습니다.");
-            //      pltDataTable();
-            //      inQty.value=null;
-            //      outQty.value=null;
-            //      remark.value=null;
-            //  }).catch((e)=>{
-            //      console.error(e);
-            //  });
+             const pltValue = {"date":date.value,"inQty":inQty.value,"outQty":outQty.value,"remark":remark.value,"refPath":refPath};
+             database_f.ref(refPath).update(pltValue).then(()=>{
+                 alert("Plt 현황이 등록 되었습니다.");
+                 pltDataTable();
+                 inQty.value=null;
+                 outQty.value=null;
+                 remark.value=null;
+             }).catch((e)=>{
+                alert(e);
+                 console.error(e);
+             });
             imgFileRef = refPath.replace("DeptName","images")
             popImgSub();
          }
@@ -109,7 +110,7 @@ let imgFileRef;
              let totalOut=0;
              for(let p in values){
                  const tr = document.createElement("tr");
-                 console.log(values[p]);
+                 tr.id=values[p]["refPath"];
                  tbody.appendChild(tr);
                  const pltTh =["date","inQty","outQty","stockQty","remark"];
                  if(values[p]["inQty"]==""){
@@ -155,7 +156,7 @@ let imgFileRef;
               .then(blob => {
                   // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
                   const selectTr = document.querySelector(".clicked");
-                  const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+                  const fileName = imgFileRef.split("/")[3]+"_"+imgFileRef.split("_")[4]+imgFileRef.split("_")[5]+"_"+index+returnTime();
                   const file = new File([blob], fileName, { type: blob.type });
                   const fileRef = storageRef.child(fileName);
                   fileRef.put(file).then((snapshot) => {
@@ -163,6 +164,7 @@ let imgFileRef;
                           console.log("업로드 완료");
                       }
                   });
+                  popImgSub();
               })
               .catch(error => {
                 console.error("Error uploading file:", error);
@@ -181,7 +183,6 @@ let imgFileRef;
     function popImgSub(){
         const popDiv = document.querySelector("#popImgSubDiv");
         popDiv.classList.toggle("popUp");
-        console.log(imgFileRef)
     }  
     const resizeImage = (settings) => {
         const file = settings.file;
@@ -205,7 +206,6 @@ let imgFileRef;
         const resize = () => {
           let width = image.width;
           let height = image.height;
-          console.log(width,height);
           if (width > height) {
             if (width > maxSize) {
               height *= maxSize / width;
@@ -219,7 +219,6 @@ let imgFileRef;
           }
           canvas.width = width;
           canvas.height = height;
-          console.log(width,height,maxSize);
           canvas.getContext("2d").drawImage(image, 0, 0, width, height);
           const dataUrl = canvas.toDataURL("image/jpeg");
           return dataURItoBlob(dataUrl);
@@ -283,3 +282,5 @@ let imgFileRef;
         // document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
       };
       fileInput.addEventListener("change",handleImgInput);    
+
+      // document.querySelector("body").style="width:412px;height:883px;";
