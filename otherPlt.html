@@ -70,14 +70,15 @@
     </div>  
     </div>
     <div id="popImgSubDiv" class="popUp">
-        <div style="display:grid;grid-template-columns:5fr 3fr 2fr">
+        <div style="display:grid;grid-template-columns:3fr 2fr 3fr 2fr">
             <div class="filebox">
                 <label for="fileInput">파일찾기</label> 
                 <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
                 <input type="file" id="fileInput" multiple accept="image/*"  >
             </div>
+            <button id="btnRemove" onclick="fileRemove()">삭제</button>
             <button id="btnUpLoad"  onclick="upLoad()" >사진등록</button>
-            <button id="btnImgClose" onclick="imgClose()">Close</button>
+            <button id="btnImgClose" onclick="imgClose()">창닫기</button>
             <script>
                 function imgClose(){
                     document.getElementById("popImgSubDiv").classList.toggle("popUp");
@@ -88,6 +89,43 @@
             <table id="popImgTable" style="height:23vh" >
                 <tbody id="popImgTableTbody">
                     <tr id="imgTr" >
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="popDataResetDiv" class="popUp">
+        <div style="display:grid;grid-template-columns:1fr 1fr 6fr">
+            <div>날짜</div>
+            <input type="date" id="popDataResetDate" value="yyyy-MM-dd" style="text-align: center;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+            <div>입고</div>
+            <input type="number" id="popDataResetIn" style="text-align: center;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+            <div>출고</div>
+            <input type="number" id="popDataResetOut" style="text-align: center;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr">
+            <div>날짜</div>
+            <input type="text" id="popDataResetRemark" style="text-align: center;">
+        </div>
+        <div id="popDataResetBtn" style="display:grid;grid-template-columns: 1fr 1fr 1fr">
+            <button id="popDataBtnCancel" onclick="dataClose()"> 취 소 </button>
+            <script>
+                function dataClose(){
+                    document.getElementById("popDataResetDiv").classList.toggle("popUp");
+                }
+            </script>
+            <button id="popDataBtnSubmit" onclick="resetUpLoad()">수정등록</button>
+            <button id="popDataBtnImgSubmit" onclick="popImgSub()">사진등록</button>
+        </div>
+        <div id="resetTableDiv" style="height:100%;overflow: scroll;">
+            <table id="resetTable" style="height:23vh" >
+                <tbody id="resetTableTbody">
+                    <tr id="reImgTr" >
 
                     </tr>
                 </tbody>

@@ -55,17 +55,17 @@
 .pltInputSub{
     width: 80%;
 }
-#btnUpLoad ,#btnImgClose{
+#btnUpLoad ,#btnImgClose ,#btnRemove{
     border-radius: 10px;
     margin-right:20px;
     margin-top:5px;
     height:80%;
 }
-#popImgSubDiv.popUp {
+#popImgSubDiv.popUp ,#popDataResetDiv.popUp{
     display: none; /* Show when the popUp class is added */
 }
 
-#popImgSubDiv {
+#popImgSubDiv ,#popDataResetDiv{
     display:block; /* Hidden by default */
     position: fixed;
     top: 35%;
@@ -77,6 +77,8 @@
     background-color: white;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     z-index: 1000;
+    border-radius: 10px;
+    border:2px solid black;
 }
 #popImgSubDiv .close-btn {
     position: absolute;
@@ -86,4 +88,9 @@
 }
 td{
     text-align:center;
+}
+.file-selected{
+    background-color:grey;
+    border:red 3px solid;
+    border-radius: 10px;
 }

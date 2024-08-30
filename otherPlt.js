@@ -16,6 +16,7 @@ const deptName = "WareHouseDept2";
 let pltData={};
 const fileInput = document.querySelector("#fileInput");
 const fileTr = document.querySelector("#imgTr");
+const reTr = document.querySelector("#reImgTr");
     // fileTr.replaceChildren();
 const selClient = document.getElementById("pltClient");
 const date = document.getElementById("pltDate");
@@ -134,6 +135,41 @@ let imgFileRef;
                          }
                      }
                      tr.appendChild(td);
+                     td.addEventListener("click",(e)=>{
+                      const tr = e.target.parentNode;
+                      tr.classList.toggle("file-selected");
+                      imgFileRef = tr.id;
+                      const resetDiv = document.querySelector("#popDataResetDiv");
+                      resetDiv.classList.toggle("popUp");
+                      const inputList = resetDiv.querySelectorAll("input");
+                      database_f.ref(imgFileRef).get().then((snapshot)=>{
+                          const value = snapshot.val();
+                          inputList[0].value=value["date"];
+                          inputList[1].value=value["inQty"];
+                          inputList[2].value=value["outQty"];
+                          inputList[3].value=value["remark"];
+                      }).catch((e)=>{
+                          console.error(e);
+                      });
+                      storage_f.ref(imgFileRef).listAll().then((res)=>{
+                        res.items.forEach((itemRef)=>{
+                          itemRef.getDownloadURL().then((url)=>{
+                            const td = document.createElement("td");
+                            const img = document.createElement("img");
+                            img.src=url;
+                            img.className="profile-img";
+                            img.addEventListener("click", (e) => {
+                              img.parentNode.classList.toggle("file-selected");
+                            });
+                            img.style.display="block";
+                            // img.style.width="100%";
+                            img.style.height="22vh";
+                            td.appendChild(img);
+                            reTr.appendChild(td);
+                          });
+                        });
+                      });    
+                     });
                  }
              }
             
@@ -181,6 +217,10 @@ let imgFileRef;
         return formattedTime;
       }
     function popImgSub(){
+        const popReset =document.querySelector("#popDataResetDiv");
+        if(!popReset.classList.contains("popUp")){
+          popReset.classList.toggle("popUp");
+        };
         const popDiv = document.querySelector("#popImgSubDiv");
         popDiv.classList.toggle("popUp");
     }  
@@ -267,20 +307,45 @@ let imgFileRef;
             fileTr.appendChild(imgTag);
           })
           .then(() => {
-            // const img = document.querySelector(".profile-img");
-            // img.onload = () => {
-            //   const widthDiff = (img.clientWidth - imgTag.offsetWidth);
-            //   console.log(img.clientHeight,imgTag.offsetHeight);
-            //   const heightDiff = (img.clientHeight - imgTag.offsetHeight) ;
-            //   img.style.transform = `translate( -${widthDiff}px , -${heightDiff}px)`;
-            // };
           })
           .catch((err) => {
             console.log(err);
           });
         }
-        // document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
       };
       fileInput.addEventListener("change",handleImgInput);    
 
-      // document.querySelector("body").style="width:412px;height:883px;";
+      function fileRemove(){
+        const fileInput = document.querySelector("#fileInput");
+        const fileTr = document.querySelector("#imgTr");
+        let fileRemove = fileTr.querySelectorAll(".file-selected");
+        const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
+        const imgUrls = []; 
+        if(confirmRemove){
+          for(let i=0;i<fileRemove.length;i++){
+            fileRemove[i].remove();
+          }
+          fileTr.querySelectorAll("td").forEach((td)=>{
+            const img = td.querySelector("img");
+            const imgSrc = img.src;
+            imgUrls.push(imgSrc);
+          });
+        }
+      }
+      function resetUpLoad(){
+        const popReset =document.querySelector("#popDataResetDiv");
+        if(!popReset.classList.contains("popUp")){
+          popReset.classList.toggle("popUp");
+        };
+        const resetDiv = document.querySelector("#popDataResetDiv"); 
+        const fileInputList  = resetDiv.querySelectorAll("input");
+
+        const resetData={"date":fileInputList[0].value,"inQty":fileInputList[1].value,"outQty":fileInputList[2].value,"remark":fileInputList[3].value};
+        database_f.ref(imgFileRef).update(resetData).then(()=>{
+            alert("데이터가 수정 되었습니다.");
+            pltDataTable();
+        }).catch((e)=>{
+            console.error(e);
+        });
+
+      }
