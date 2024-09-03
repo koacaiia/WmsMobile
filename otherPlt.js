@@ -136,6 +136,7 @@ let imgFileRef;
                      }
                      tr.appendChild(td);
                      td.addEventListener("click",(e)=>{
+                      reTr.replaceChildren();
                       const tr = e.target.parentNode;
                       tr.classList.toggle("file-selected");
                       imgFileRef = tr.id;
@@ -151,7 +152,7 @@ let imgFileRef;
                       }).catch((e)=>{
                           console.error(e);
                       });
-                      storage_f.ref(imgFileRef).listAll().then((res)=>{
+                      storage_f.ref(imgFileRef.replace("DeptName","images")).listAll().then((res)=>{
                         res.items.forEach((itemRef)=>{
                           itemRef.getDownloadURL().then((url)=>{
                             const td = document.createElement("td");
