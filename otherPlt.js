@@ -160,7 +160,8 @@ let imgFileRef;
                             img.src=url;
                             img.className="profile-img";
                             img.addEventListener("click", (e) => {
-                              img.parentNode.classList.toggle("file-selected");
+                              // img.parentNode.classList.toggle("file-selected");
+                              location.href=`imagePop.html?ref=${encodeURIComponent(imgFileRef.replace("DeptName","images"))}`;
                             });
                             img.style.display="block";
                             // img.style.width="100%";
