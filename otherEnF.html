@@ -15,7 +15,7 @@
 </head>
 <body>
     <div id="eNfMain" style="display:grid;grid-template-rows:2fr 8fr">
-     <div id="eNfTitle"style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-gap:0.5vw" >
+     <div id="eNfTitle"style="display:grid;grid-template-columns:1fr 1fr;grid-gap:0.5vw" >
         <button id="eNfReg" onclick="eNfReg()">등록</button>
         <div>
             <select id ="selectName">
@@ -23,25 +23,28 @@
             </select>       
             <input id="inputName" type="text" placeholder="직접입력">
         </div>
-        <button id="eNfSearch" onclick="eNfSearch()">내역 검색</button>
        
     </div>
     <div id="eNfTableDiv" style="height:50vh;overflow: scroll;" >
         <table id="eNfTable" style="height:48vh">
             <colgroup>
+                <col style="width: 10%">
+                <col style="width: 30%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 10%">
                 <col style="width: 20%">
-                <col style="width: 15%">
-                <col style="width: 15%">
-                <col style="width: 15%">
-                <col style="width: 35%">
             </colgroup>   
             <thead style="width:98.5%">
                 <tr style="width:98.5%">
                     <th>장비,시설명</th>
                     <th>점검내용</th>
+                    <th>점검발생일</th>
                     <th>진행상황</th>
                     <th>발주비용</th>
                     <th>결재비용</th>
+                    <th>비고</th>
                 </tr>
             </thead>
             <tbody id="eNfTableTbody">
@@ -115,14 +118,24 @@
     <div id="contentsEnf" class="popUp">
         <div>
             <div class="contentsInput">
-             <select id ="enfName">
+             <select id ="enfNameSelect">
                 <option value="0">장비시설물명</option>
             </select>   
             <input type="text" id="enfName" placeholder="직접입력">
             </div>
             <div class="contentsInput">
-                <h4>점검내용</h4>
+                <select id ="enfContentSelect">
+                    <option value="0">점검사항</option>
+                </select>
                 <input id="enfContent" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>점검요청일</h4>
+                <input type="date" id="enfContentDate" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>점검일</h4>
+                <input type="date" id="enfContentDate" placeholder="직접입력">
             </div>
             <div class="contentsInput">
                 <h4>구매발주서 작성일</h4>
@@ -144,9 +157,13 @@
                 <h4>내용 집행금액(지출결의서작성)</h4>
                 <input type="number" id="enfSignPrice" placeholder="집행금액">
             </div>
+            <div class="contentsInput">
+                <h4>비고</h4>
+                <input id="enfSignPrice" placeholder="집행금액">
+            </div>
         </div>
         <button id="contentsReg" style="width:100%" onclick="enfSubmit()">등록</button>
-        <button id="contentsRegClose" style="width:100%"onclick="eNfReg()">닫기</button>
+        <button id="contentsRegClose" style="width:100%"onclick="enfClose()">닫기</button>
     </div>
     <script src="otherEnf.js"></script>
     <!-- <script src="main.js"></script> -->
