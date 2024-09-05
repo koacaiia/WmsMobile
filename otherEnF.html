@@ -78,33 +78,7 @@
             </table>
         </div>
     </div>
-    <div id="popDataResetDiv" class="popUp">
-        <div style="display:grid;grid-template-columns:1fr 1fr 6fr">
-            <div>날짜</div>
-            <input type="date" id="popDataResetDate" value="yyyy-MM-dd" style="text-align: center;">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr">
-            <div>입고</div>
-            <input type="number" id="popDataResetIn" style="text-align: center;">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr">
-            <div>출고</div>
-            <input type="number" id="popDataResetOut" style="text-align: center;">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr">
-            <div>날짜</div>
-            <input type="text" id="popDataResetRemark" style="text-align: center;">
-        </div>
-        <div id="popDataResetBtn" style="display:grid;grid-template-columns: 1fr 1fr 1fr">
-            <button id="popDataBtnCancel" onclick="dataClose()"> 취 소 </button>
-            <script>
-                function dataClose(){
-                    document.getElementById("popDataResetDiv").classList.toggle("popUp");
-                }
-            </script>
-            <button id="popDataBtnSubmit" onclick="resetUpLoad()">수정등록</button>
-            <button id="popDataBtnImgSubmit" onclick="popImgSub()">사진등록</button>
-        </div>
+  
         <div id="resetTableDiv" style="height:100%;overflow: scroll;">
             <table id="resetTable" style="height:23vh" >
                 <tbody id="resetTableTbody">
@@ -116,7 +90,7 @@
         </div>
     </div>
     <div id="contentsEnf" class="popUp">
-        <div>
+        <div style="height:90%">
             <div class="contentsInput">
              <select id ="enfNameSelect">
                 <option value="0">장비시설물명</option>
@@ -142,6 +116,10 @@
                 <input type="date" id="enfOrderDate" value="yyyy-MM-dd">
             </div>
             <div class="contentsInput">
+                <h4>구매발주상 내용</h4>
+                <input id="enfOrderContent" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
                 <h4>구매발주서 금액</h4>
                 <input type="number" id="enfOrderPrice" placeholder="구매발주서 금액">
             </div>
@@ -159,7 +137,7 @@
             </div>
             <div class="contentsInput">
                 <h4>비고</h4>
-                <input id="enfSignPrice" placeholder="집행금액">
+                <input id="enfSignPrice" placeholder="직업입력">
             </div>
         </div>
         <button id="contentsReg" style="width:100%" onclick="enfSubmit()">등록</button>
