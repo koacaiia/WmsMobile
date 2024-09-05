@@ -633,6 +633,5 @@ function returnTime(){
   return formattedTime;
 }
 function otherContents(e){
-  alert(e.id);
   location.href=e.id+".html";
 }
