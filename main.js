@@ -371,6 +371,7 @@ function popUp(){
   imgRef[2]=io;
   imgRef.splice(4,1);
   imgRef=imgRef.toString().replaceAll(",","/")+"/";
+  console.log(imgRef);
   refFile=imgRef;
   storage_f.ref(imgRef).listAll().then((res)=>{
     res.items.forEach((itemRef)=>{
@@ -414,9 +415,9 @@ function upLoad(){
           .then(blob => {
               // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
               const selectTr = document.querySelector(".clicked");
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime().replaceAll("/","_");
+              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
               const file = new File([blob], fileName, { type: blob.type });
-              const fileRef = storageRef.child(fileName);
+              const fileRef = storageRef.child(fileName.replace("/","_"));
               fileRef.put(file).then((snapshot) => {
                   if (index === imgUrls.length - 1) {
                       console.log("업로드 완료");
