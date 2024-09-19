@@ -458,161 +458,161 @@ if(mC){
   //   e.style.fontSize="small";
   // });
   }
-function toastOn(msg){
-  const toastMessage = document.createElement("div");
-  toastMessage.id="tost_message";
-  toastMessage.innerHTML = msg; 
-  toastMessage.classList.add('active');
-  document.body.appendChild(toastMessage);
-  setTimeout(function(){
-      toastMessage.classList.remove('active');
-  },2000);
-}
-function fileRemove(){
-  const fileInput = document.querySelector("#fileInput");
-  const fileTr = document.querySelector("#popFileTr");
-  let fileRemove = fileTr.querySelectorAll(".file-selected");
-  const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
-  const imgUrls = []; 
-  if(confirmRemove){
-    for(let i=0;i<fileRemove.length;i++){
-      fileRemove[i].remove();
-    }
-    fileTr.querySelectorAll("td").forEach((td)=>{
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      imgUrls.push(imgSrc);
-    });
-    // console.log(imgUrls);
-    // fileInput.value = imgUrls.join(", ");
-  }
-}
-function dateNext(){
-  const d = new Date(dateSelect.value);
-  if(d.getDay()===5){
-    d.setDate(d.getDate()+3);
-    toastOn("다음주 월요일 로 지정 됩니다.")
-  }else if(d.getDay()===6){
-    d.setDate(d.getDate()+2);
-    toastOn("다음주 월요일 로 지정 됩니다.")
-  }else{
-    d.setDate(d.getDate()+1);
-  }
-  dateSelect.value=dateT(d);
-  dateChanged();
-}
-function osSubmit(){
-  const date = document.querySelector("#dateSelect").value;
-  const year = date.substring(0,4);
-  const month= date.substring(5,7);
-  const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
-  const osM= document.querySelector("#osMo").value;
-  const osWf = document.querySelector("#osWf").value;
-  const osWo = document.querySelector("#osWo").value;
-  const osR = document.querySelector("#osRe").value;
-  const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
-  database_f.ref(refOs).update(osObject).then((e)=>{
-    toastOn(osObject);
-  }).catch((e)=>{});
-}
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then((registration) => {
-      console.log('Service Worker registered with scope:', registration.scope);
-    })
-    .catch((err) => {
-      console.error('Service Worker registration failed:', err);
-    });
-}
-function requestPermission(){
-  Notification.requestPermission().then((permission)=>{
-    if(permission =="granted"){
-      console.log("Notification Permission Granted");
-      getToken();;
-    }else{
-      console.log("Unable to get Permission to Notify.")
-    }
-  });
-  if(!("Notification" in window)){
-    console.log("This browser does not support notifications.");
-  }
-}
-function getToken() {
-  return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
-    .then(currentToken => {
-      if (currentToken) {
-        console.log('FCM token:', currentToken);
-        token = currentToken;
-        return currentToken;
-      } else {
-        console.log('No registration token available. Request permission to generate one.');
-        return null;
-      }
-    })
-    .catch(err => {
-      console.log('An error occurred while retrieving token. ', err);
-      return null;
-    });
-}
-messaging.onMessage((payload) => {
-  console.log('Message received. ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-      body: payload.notification.body,
-       icon: payload.notification.icon || '/images/default-icon.png'
-  };
-  console.log(notificationTitle,notificationOptions);
-  new Notification(notificationTitle, notificationOptions);
-  // alert(payload.notification.body);
-});
-
-// Call requestPermission on page load
-// document.addEventListener('DOMContentLoaded', () => {
-//   requestPermission();
+// function toastOn(msg){
+//   const toastMessage = document.createElement("div");
+//   toastMessage.id="tost_message";
+//   toastMessage.innerHTML = msg; 
+//   toastMessage.classList.add('active');
+//   document.body.appendChild(toastMessage);
+//   setTimeout(function(){
+//       toastMessage.classList.remove('active');
+//   },2000);
+// }
+// function fileRemove(){
+//   const fileInput = document.querySelector("#fileInput");
+//   const fileTr = document.querySelector("#popFileTr");
+//   let fileRemove = fileTr.querySelectorAll(".file-selected");
+//   const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
+//   const imgUrls = []; 
+//   if(confirmRemove){
+//     for(let i=0;i<fileRemove.length;i++){
+//       fileRemove[i].remove();
+//     }
+//     fileTr.querySelectorAll("td").forEach((td)=>{
+//       const img = td.querySelector("img");
+//       const imgSrc = img.src;
+//       imgUrls.push(imgSrc);
+//     });
+//     // console.log(imgUrls);
+//     // fileInput.value = imgUrls.join(", ");
+//   }
+// }
+// function dateNext(){
+//   const d = new Date(dateSelect.value);
+//   if(d.getDay()===5){
+//     d.setDate(d.getDate()+3);
+//     toastOn("다음주 월요일 로 지정 됩니다.")
+//   }else if(d.getDay()===6){
+//     d.setDate(d.getDate()+2);
+//     toastOn("다음주 월요일 로 지정 됩니다.")
+//   }else{
+//     d.setDate(d.getDate()+1);
+//   }
+//   dateSelect.value=dateT(d);
+//   dateChanged();
+// }
+// function osSubmit(){
+//   const date = document.querySelector("#dateSelect").value;
+//   const year = date.substring(0,4);
+//   const month= date.substring(5,7);
+//   const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+//   const osM= document.querySelector("#osMo").value;
+//   const osWf = document.querySelector("#osWf").value;
+//   const osWo = document.querySelector("#osWo").value;
+//   const osR = document.querySelector("#osRe").value;
+//   const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
+//   database_f.ref(refOs).update(osObject).then((e)=>{
+//     toastOn(osObject);
+//   }).catch((e)=>{});
+// }
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('/firebase-messaging-sw.js')
+//     .then((registration) => {
+//       console.log('Service Worker registered with scope:', registration.scope);
+//     })
+//     .catch((err) => {
+//       console.error('Service Worker registration failed:', err);
+//     });
+// }
+// function requestPermission(){
+//   Notification.requestPermission().then((permission)=>{
+//     if(permission =="granted"){
+//       console.log("Notification Permission Granted");
+//       getToken();;
+//     }else{
+//       console.log("Unable to get Permission to Notify.")
+//     }
+//   });
+//   if(!("Notification" in window)){
+//     console.log("This browser does not support notifications.");
+//   }
+// }
+// function getToken() {
+//   return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+//     .then(currentToken => {
+//       if (currentToken) {
+//         console.log('FCM token:', currentToken);
+//         token = currentToken;
+//         return currentToken;
+//       } else {
+//         console.log('No registration token available. Request permission to generate one.');
+//         return null;
+//       }
+//     })
+//     .catch(err => {
+//       console.log('An error occurred while retrieving token. ', err);
+//       return null;
+//     });
+// }
+// messaging.onMessage((payload) => {
+//   console.log('Message received. ', payload);
+//   // Customize notification here
+//   const notificationTitle = payload.notification.title;
+//   const notificationOptions = {
+//       body: payload.notification.body,
+//        icon: payload.notification.icon || '/images/default-icon.png'
+//   };
+//   console.log(notificationTitle,notificationOptions);
+//   new Notification(notificationTitle, notificationOptions);
+//   // alert(payload.notification.body);
 // });
 
-function sendMessage(token, title, body, icon) {
-  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
+// // Call requestPermission on page load
+// // document.addEventListener('DOMContentLoaded', () => {
+// //   requestPermission();
+// // });
 
-  const messagePayload = {
-    to: token,
-    notification: {
-      title: title,
-      body: body,
-      icon: icon || '/images/default-icon.png'
-    }
-  };
+// function sendMessage(token, title, body, icon) {
+//   const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
+//   const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
 
-  fetch(fcmEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
-    },
-    body: JSON.stringify(messagePayload)
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Message sent successfully:', data);
-  })
-  .catch(error => {
-    console.error('Error sending message:', error);
-  });
-}
+//   const messagePayload = {
+//     to: token,
+//     notification: {
+//       title: title,
+//       body: body,
+//       icon: icon || '/images/default-icon.png'
+//     }
+//   };
 
-// Example usage
-document.addEventListener('DOMContentLoaded', () => {
-  requestPermission();
+//   fetch(fcmEndpoint, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'Authorization': 'key=' + serverKey
+//     },
+//     body: JSON.stringify(messagePayload)
+//   })
+//   .then(response => response.json())
+//   .then(data => {
+//     console.log('Message sent successfully:', data);
+//   })
+//   .catch(error => {
+//     console.error('Error sending message:', error);
+//   });
+// }
 
-  // Example: Send a message after getting the token
-  getToken().then(token => {
-    if (token) {
-      sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-    }
-  });
-});
+// // Example usage
+// document.addEventListener('DOMContentLoaded', () => {
+//   requestPermission();
+
+//   // Example: Send a message after getting the token
+//   getToken().then(token => {
+//     if (token) {
+//       sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+//     }
+//   });
+// });
  function reLoad(){
   console.log(mC);
   if(mC){

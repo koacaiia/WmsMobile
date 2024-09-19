@@ -140,15 +140,17 @@
                 <input id="enRemark" placeholder="직업입력">
             </div>
         </div>
-        <button id="contentsReg" style="width:100%" onclick="enfSubmit()">진행상황 등록</button>
+        
         <div class="imgCheck" id="imgBefore">
             <div class="fileInput">
                 <label for="imgBfile">사진파일</label>
                 <input type = "file" id="imgBfile" accept="image/*" style="display:none" multiple>
                 <button class="imgBtn" id="imgBbtn" onclick="imgUpLoad(this)">점검전 사진등록</button>
-                <button class="imgAtn" id="imgBbtn" onclick="imgUpLoad(this)">점검,후 사진등록</button>
+                <button class="imgAtn" id="imgAbtn" onclick="imgUpLoad(this)">점검,후 사진등록</button>
+                <button id="contentsReg" onclick="enfSubmit()">진행상황 등록</button>
+                <button id="contentsRegClose" onclick="enfClose()">닫기</button>
             </div>
-            <table>
+            <table style="height:10vh">
                 <tbody id="imgBeforeTbody">
                     <tr id="imgBeforeTr" >
 
@@ -156,16 +158,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="imgCheck" id="imgAfter">
-            <table>
-                <tbody id="imgAfterTbody">
-                    <tr id="imgAfterTr" >
-
-                    </tr>
-                </tbody>
-            </table>
-        <button id="contentsRegClose" style="width:100%"onclick="enfClose()">닫기</button>
-    </div>
+        
     <script src="otherEnf.js"></script>
     <!-- <script src="main.js"></script> -->
 </body>

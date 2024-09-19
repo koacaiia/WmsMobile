@@ -32,7 +32,11 @@ function getEnfData(){
             const enfRow = document.createElement('tr');
             enfRow.innerHTML = `<td>${enfValue[key].name}</td><td>${enfValue[key].checkContent}</td><td>${pD}</td><td>${progress}</td><td>${enfValue[key].purchaseOrderAmount}</td><td>${enfValue[key].realAmount}</td><td>${enfValue[key].remark}</td>`;
             enfRow.id=enfValue[key].keyValue;
+            const enfDivB =document.createElement("tr");
+            const enfDivA =document.createElement("tr");
             eNfTableTbody.appendChild(enfRow);
+            eNfTableTbody.appendChild(enfDivB);
+            eNfTableTbody.appendChild(enfDivA);
             enfRow.addEventListener('click',(e)=>{
                 // removeSelected();
                 enfRow.classList.toggle('file-selected');
@@ -88,6 +92,7 @@ function getImgData(){
                 const imgName = itemRef.name.split("_");
                 const imgTag = document.querySelector(`#${imgName[1]}`);
                 imgTag.src=url;
+                imgTag.className="server-img";
             });
         });
     });
@@ -179,7 +184,7 @@ const resizeImage = (settings) => {
       .then((resizedImage) => {
         const url = window.URL.createObjectURL(resizedImage);
         const img = document.createElement("img");
-        img.className = "profile-img";
+        img.className = "local-img";
         img.addEventListener("click", (e) => {
           img.parentNode.classList.toggle("file-selected");
         });
