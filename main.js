@@ -8,7 +8,11 @@ const firebaseConfig = {
     appId: "1:415417723331:web:15212f190062886281b576",
     measurementId: "G-SWBR4359JQ"
 };
-firebase.initializeApp(firebaseConfig);
+if(firebase.apps.length==0){
+  firebase.initializeApp(firebaseConfig);
+}
+else{firebase.app();}
+
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
@@ -58,6 +62,7 @@ function getData(date){
     const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
     database_f.ref(refOs).get().then((snapshot)=>{
       const val = snapshot.val();
+      console.log(val);
       if(val==null){
         document.querySelector("#osMo").value=0;
         document.querySelector("#osWf").value=0;
@@ -69,9 +74,10 @@ function getData(date){
         document.querySelector("#osWo").value=val["osWo"];
         document.querySelector("#osRe").value=val["osR"];
       }
-    }).catch((e)=>{});
+    }).catch((e)=>{console.log(e)});
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
+        console.log(val);
         for(let i in val){
             let spec="";
             if(val[i]["container40"]==="1"){
