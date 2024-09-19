@@ -77,7 +77,6 @@ function getData(date){
     }).catch((e)=>{console.log(e)});
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
-        console.log(val);
         for(let i in val){
             let spec="";
             if(val[i]["container40"]==="1"){
@@ -493,34 +492,34 @@ if(mC){
 //     // fileInput.value = imgUrls.join(", ");
 //   }
 // }
-// function dateNext(){
-//   const d = new Date(dateSelect.value);
-//   if(d.getDay()===5){
-//     d.setDate(d.getDate()+3);
-//     toastOn("다음주 월요일 로 지정 됩니다.")
-//   }else if(d.getDay()===6){
-//     d.setDate(d.getDate()+2);
-//     toastOn("다음주 월요일 로 지정 됩니다.")
-//   }else{
-//     d.setDate(d.getDate()+1);
-//   }
-//   dateSelect.value=dateT(d);
-//   dateChanged();
-// }
-// function osSubmit(){
-//   const date = document.querySelector("#dateSelect").value;
-//   const year = date.substring(0,4);
-//   const month= date.substring(5,7);
-//   const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
-//   const osM= document.querySelector("#osMo").value;
-//   const osWf = document.querySelector("#osWf").value;
-//   const osWo = document.querySelector("#osWo").value;
-//   const osR = document.querySelector("#osRe").value;
-//   const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
-//   database_f.ref(refOs).update(osObject).then((e)=>{
-//     toastOn(osObject);
-//   }).catch((e)=>{});
-// }
+function dateNext(){
+  const d = new Date(dateSelect.value);
+  if(d.getDay()===5){
+    d.setDate(d.getDate()+3);
+    toastOn("다음주 월요일 로 지정 됩니다.")
+  }else if(d.getDay()===6){
+    d.setDate(d.getDate()+2);
+    toastOn("다음주 월요일 로 지정 됩니다.")
+  }else{
+    d.setDate(d.getDate()+1);
+  }
+  dateSelect.value=dateT(d);
+  dateChanged();
+}
+function osSubmit(){
+  const date = document.querySelector("#dateSelect").value;
+  const year = date.substring(0,4);
+  const month= date.substring(5,7);
+  const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+  const osM= document.querySelector("#osMo").value;
+  const osWf = document.querySelector("#osWf").value;
+  const osWo = document.querySelector("#osWo").value;
+  const osR = document.querySelector("#osRe").value;
+  const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
+  database_f.ref(refOs).update(osObject).then((e)=>{
+    toastOn(osObject);
+  }).catch((e)=>{});
+}
 // if ('serviceWorker' in navigator) {
 //   navigator.serviceWorker.register('/firebase-messaging-sw.js')
 //     .then((registration) => {
