@@ -14,16 +14,15 @@
     <!-- <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-functions-compat.js"></script> -->
 </head>
 <body>
-    <div id="eNfMain" style="display:grid;grid-template-rows:2fr 8fr">
+    <div id="eNfMain" style="display:grid;grid-template-rows:1fr 9fr">
      <div id="eNfTitle"style="display:grid;grid-template-columns:1fr 1fr;grid-gap:0.5vw" >
-        <button id="eNfReg" onclick="eNfReg()">등록</button>
-        <div>
-            <select id ="selectName">
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-gap:3%">
+            <select style="height:90%" id ="selectName">
                 <option value="0">장비선택</option>
             </select>       
-            <input id="inputName" type="text" placeholder="직접입력">
+            <input style="height:85%" id="inputName" type="text" placeholder="직접입력">
         </div>
-       
+        <button id="eNfReg" onclick="eNfReg()">신규 등록</button>
     </div>
     <div id="eNfTableDiv" style="height:50vh;overflow: scroll;" >
         <table id="eNfTable" style="height:48vh">

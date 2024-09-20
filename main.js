@@ -62,7 +62,6 @@ function getData(date){
     const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
     database_f.ref(refOs).get().then((snapshot)=>{
       const val = snapshot.val();
-      console.log(val);
       if(val==null){
         document.querySelector("#osMo").value=0;
         document.querySelector("#osWf").value=0;
@@ -123,7 +122,8 @@ function getData(date){
         }
     }).
     catch((e)=>{
-        alert(e);
+      console.log(e);
+        // alert(e);
     });
 
     database_f.ref(refO).get().then((snapshot)=>{
@@ -172,7 +172,8 @@ function getData(date){
               tr.style="color:red;";}
         }
     }).catch((e)=>{
-        alert(e);
+      console.log(e);
+        // alert(e);
     });
     
 }
