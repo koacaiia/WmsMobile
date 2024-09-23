@@ -23,6 +23,7 @@
             <input style="height:85%" id="inputName" type="text" placeholder="직접입력">
         </div>
         <button id="eNfReg" onclick="eNfReg()">신규 등록</button>
+        <button id="enfSearch"  onclick="enfSearch()">현황 확인</button>
     </div>
     <div id="eNfTableDiv" style="height:50vh;overflow: scroll;" >
         <table id="eNfTable" style="height:48vh">
@@ -51,11 +52,11 @@
         </table>
     </div>  
     </div>
-    <div id="popImgSubDiv" class="popUp">
+    <!-- <div id="popImgSubDiv" class="popUp">
         <div style="display:grid;grid-template-columns:3fr 2fr 3fr 2fr">
             <div class="filebox">
                 <label for="fileInput">파일찾기</label> 
-                <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
+                <input class="upload-name" value="첨부파일" placeholder="첨부파일">
                 <input type="file" id="fileInput" multiple accept="image/*"  >
             </div>
             <button id="btnRemove" onclick="fileRemove()">삭제</button>
@@ -76,7 +77,7 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </div> -->
   
         <div id="resetTableDiv" style="height:100%;overflow: scroll;">
             <table id="resetTable" style="height:23vh" >
