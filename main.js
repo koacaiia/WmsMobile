@@ -447,7 +447,7 @@ function upLoad(){
 
     database_f.ref(ref).update(w);
     toastOn(imgUrls.length+" 파일 업로드 완료");
-    popUp();
+    
 }
 
 
@@ -477,25 +477,25 @@ function toastOn(msg){
       toastMessage.classList.remove('active');
   },2000);
 }
-// function fileRemove(){
-//   const fileInput = document.querySelector("#fileInput");
-//   const fileTr = document.querySelector("#popFileTr");
-//   let fileRemove = fileTr.querySelectorAll(".file-selected");
-//   const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
-//   const imgUrls = []; 
-//   if(confirmRemove){
-//     for(let i=0;i<fileRemove.length;i++){
-//       fileRemove[i].remove();
-//     }
-//     fileTr.querySelectorAll("td").forEach((td)=>{
-//       const img = td.querySelector("img");
-//       const imgSrc = img.src;
-//       imgUrls.push(imgSrc);
-//     });
-//     // console.log(imgUrls);
-//     // fileInput.value = imgUrls.join(", ");
-//   }
-// }
+function fileRemove(){
+  const fileInput = document.querySelector("#fileInput");
+  const fileTr = document.querySelector("#popFileTr");
+  let fileRemove = fileTr.querySelectorAll(".file-selected");
+  const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
+  const imgUrls = []; 
+  if(confirmRemove){
+    for(let i=0;i<fileRemove.length;i++){
+      fileRemove[i].remove();
+    }
+    fileTr.querySelectorAll("td").forEach((td)=>{
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      imgUrls.push(imgSrc);
+    });
+    // console.log(imgUrls);
+    // fileInput.value = imgUrls.join(", ");
+  }
+}
 function dateNext(){
   const d = new Date(dateSelect.value);
   if(d.getDay()===5){
