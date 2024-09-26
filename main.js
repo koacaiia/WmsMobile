@@ -426,7 +426,7 @@ function upLoad(){
               const fileRef = storageRef.child(fileName.replace("/","_"));
               fileRef.put(file).then((snapshot) => {
                   if (index === imgUrls.length - 1) {
-                      alert(imgUrl.length+" 개 Images업로드 완료");
+                      alert(imgUrls.length+" 개 Images업로드 완료");
                       console.log("업로드 완료");
                       popClose();
                   }
