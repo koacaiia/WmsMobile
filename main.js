@@ -426,13 +426,14 @@ function upLoad(){
               const fileRef = storageRef.child(fileName.replace("/","_"));
               fileRef.put(file).then((snapshot) => {
                   if (index === imgUrls.length - 1) {
-                      alert(imgUrls.length+" 개 Images업로드 완료");
+                      // alert(imgUrls.length+" 개 Images업로드 완료");
                       console.log("업로드 완료");
                       popClose();
                   }
               });
           })
           .catch(error => {
+            alert("Error uploading file:", error);
             console.error("Error uploading file:", error);
         });
       });
@@ -466,16 +467,16 @@ if(mC){
   //   e.style.fontSize="small";
   // });
   }
-// function toastOn(msg){
-//   const toastMessage = document.createElement("div");
-//   toastMessage.id="tost_message";
-//   toastMessage.innerHTML = msg; 
-//   toastMessage.classList.add('active');
-//   document.body.appendChild(toastMessage);
-//   setTimeout(function(){
-//       toastMessage.classList.remove('active');
-//   },2000);
-// }
+function toastOn(msg){
+  const toastMessage = document.createElement("div");
+  toastMessage.id="tost_message";
+  toastMessage.innerHTML = msg; 
+  toastMessage.classList.add('active');
+  document.body.appendChild(toastMessage);
+  setTimeout(function(){
+      toastMessage.classList.remove('active');
+  },2000);
+}
 // function fileRemove(){
 //   const fileInput = document.querySelector("#fileInput");
 //   const fileTr = document.querySelector("#popFileTr");
