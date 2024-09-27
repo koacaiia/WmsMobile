@@ -340,7 +340,7 @@ function popUp(){
       .then((resizedImage) => {
         const url = window.URL.createObjectURL(resizedImage);
         const img = document.createElement("img");
-        img.className = "profile-img";
+        img.className = "local-img"
         img.addEventListener("click", (e) => {
           img.parentNode.classList.toggle("file-selected");
         });
@@ -385,7 +385,7 @@ function popUp(){
         const td = document.createElement("td");
         const img = document.createElement("img");
         img.src=url;
-        img.className="profile-img";
+        img.className="server-img";
         img.addEventListener("click", (e) => {
           img.parentNode.classList.toggle("file-selected");
         });
@@ -407,14 +407,20 @@ function popClose(){
 function upLoad(){
     const fileInput = document.querySelector("#fileInput");
     const fileTr = document.querySelector("#imgTr");
-    const imgUrls = [];  
-    fileTr.querySelectorAll("td").forEach((td)=>{
-    const img = td.querySelector("img");
-    const imgSrc = img.src;
-    imgUrls.push(imgSrc); 
-    });
-    const file = fileInput.files;
-    const storageRef = storage_f.ref(refFile);
+    let imgUrls = [];
+    // const forTd = fileTr.querySelectorAll("td");
+    const img = fileTr.querySelectorAll(".local-img");
+    if(img==null){
+      alert("이미지를 선택해주세요.");
+          }else{
+            console.log(img);
+            for(let i=0;i<img.length;i++){
+              console.log(img[i].src);
+              const imgSrc = img[i].src;
+              imgUrls.push(imgSrc);
+            }
+            const storageRef = storage_f.ref(refFile);
+            console.log(imgUrls);
     imgUrls.forEach((imgUrl, index) => {
       fetch(imgUrl)
           .then(response => response.blob())
@@ -437,6 +443,9 @@ function upLoad(){
             console.error("Error uploading file:", error);
         });
       });
+      toastOn(imgUrls.length+" 파일 업로드 완료");
+          }
+    
   
     let w;
     if(ioValue=="InCargo"){
@@ -446,7 +455,7 @@ function upLoad(){
     }
 
     database_f.ref(ref).update(w);
-    toastOn(imgUrls.length+" 파일 업로드 완료");
+    
     
 }
 
