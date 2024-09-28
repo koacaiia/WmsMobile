@@ -428,10 +428,10 @@ function popClose(){
     document.querySelector("#mainIn").style="display:block";
     document.querySelector("#mainOut").style="display:block";
 }
-
+const fileTr = document.querySelector("#imgTr");
 function upLoad(){
     const fileInput = document.querySelector("#fileInput");
-    const fileTr = document.querySelector("#imgTr");
+    
     let imgUrls = [];
     // const forTd = fileTr.querySelectorAll("td");
     const img = fileTr.querySelectorAll(".local-img");
@@ -459,7 +459,49 @@ function upLoad(){
                   if (index === imgUrls.length - 1) {
                       // alert(imgUrls.length+" 개 Images업로드 완료");
                       console.log("업로드 완료");
-                      popClose();
+                      fileTr.replaceChildren();
+                      let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
+                      // imgRef.replace("/",",");
+                      imgRef = imgRef.split(",");
+                      const io=imgRef[4];
+                      const dateArr = imgRef[2];
+                      imgRef[3]=dateArr;
+                      imgRef[2]=io;
+                      imgRef.splice(4,1);
+                      imgRef=imgRef.toString().replaceAll(",","/")+"/";
+                      console.log(imgRef);
+                      refFile=imgRef;
+                      storage_f.ref(imgRef).listAll().then((res)=>{
+                        res.items.forEach((itemRef)=>{
+                          itemRef.getDownloadURL().then((url)=>{
+                            const td = document.createElement("td");
+                            const img = document.createElement("img");
+                            img.src=url;
+                            img.className="server-img";
+                            img.addEventListener("click", (e) => {
+                              img.parentNode.classList.toggle("file-selected");
+                            });
+                            img.style.display="block";
+                            td.style.width="30vw";
+                            img.style.width="100%";
+                            img.style.height="22vh";
+                            img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+                    
+                            // Create a container div to center the image
+                            const imgContainer = document.createElement("div");
+                            imgContainer.style.display = "flex";
+                            imgContainer.style.justifyContent = "center";
+                            imgContainer.style.alignItems = "center";
+                            imgContainer.style.width = "100%";
+                            imgContainer.style.height = "100%";
+                            imgContainer.style.position = "relative";
+                            imgContainer.appendChild(img);
+                            td.appendChild(imgContainer);
+                            fileTr.appendChild(td);
+                          });
+                        });
+                      });
+                      // popClose();
                   }
               });
           })
@@ -477,6 +519,7 @@ function upLoad(){
       w={"workprocess":"완"}
     }
     database_f.ref(ref).update(w);
+  
 }
 
 
