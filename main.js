@@ -346,9 +346,22 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        img.style.width="100%";
+        imgTag.style.width="30vw";
+        // img.style.width="100%";
         img.style.height="22vh";
-        imgTag.appendChild(img);
+        img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+
+        // Create a container div to center the image
+        const imgContainer = document.createElement("div");
+        imgContainer.style.display = "flex";
+        imgContainer.style.justifyContent = "center";
+        imgContainer.style.alignItems = "center";
+        imgContainer.style.width = "100%";
+        imgContainer.style.height = "100%";
+        imgContainer.style.position = "relative";
+        imgContainer.appendChild(img);
+
+        imgTag.appendChild(imgContainer);
         fileTr.appendChild(imgTag);
       })
       .then(() => {
@@ -390,9 +403,21 @@ function popUp(){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
-        // img.style.width="100%";
+        td.style.width="30vw";
+        img.style.width="100%";
         img.style.height="22vh";
-        td.appendChild(img);
+        img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+
+        // Create a container div to center the image
+        const imgContainer = document.createElement("div");
+        imgContainer.style.display = "flex";
+        imgContainer.style.justifyContent = "center";
+        imgContainer.style.alignItems = "center";
+        imgContainer.style.width = "100%";
+        imgContainer.style.height = "100%";
+        imgContainer.style.position = "relative";
+        imgContainer.appendChild(img);
+        td.appendChild(imgContainer);
         fileTr.appendChild(td);
       });
     });
@@ -410,10 +435,10 @@ function upLoad(){
     let imgUrls = [];
     // const forTd = fileTr.querySelectorAll("td");
     const img = fileTr.querySelectorAll(".local-img");
-    if(img==null){
-      alert("이미지를 선택해주세요.");
+    console.log(img);
+    if(img.length==0){
+      toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
           }else{
-            console.log(img);
             for(let i=0;i<img.length;i++){
               console.log(img[i].src);
               const imgSrc = img[i].src;
@@ -445,18 +470,13 @@ function upLoad(){
       });
       toastOn(imgUrls.length+" 파일 업로드 완료");
           }
-    
-  
     let w;
     if(ioValue=="InCargo"){
       w={"working":"컨테이너진입"}
     }else{
       w={"workprocess":"완"}
     }
-
     database_f.ref(ref).update(w);
-    
-    
 }
 
 
@@ -488,7 +508,7 @@ function toastOn(msg){
 }
 function fileRemove(){
   const fileInput = document.querySelector("#fileInput");
-  const fileTr = document.querySelector("#popFileTr");
+  const fileTr = document.querySelector("#imgTr");
   let fileRemove = fileTr.querySelectorAll(".file-selected");
   const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
   const imgUrls = []; 
@@ -501,8 +521,8 @@ function fileRemove(){
       const imgSrc = img.src;
       imgUrls.push(imgSrc);
     });
-    // console.log(imgUrls);
-    // fileInput.value = imgUrls.join(", ");
+    console.log(imgUrls);
+    fileInput.value = imgUrls.join(", ");
   }
 }
 function dateNext(){
