@@ -29,6 +29,7 @@ td{
     min-width:10vh; */
     border:1px solid black;
     font-size:large;
+    height:5vh;
 }
 .main{
     overflow: scroll;
@@ -145,7 +146,7 @@ button{
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 40vh 7vh;
+        grid-template-rows: 45vh 17vh;
     }
     
     /* #popInfoTable {

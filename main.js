@@ -212,14 +212,15 @@ function popUp(){
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
+          h3List[0].innerHTML=val["consignee"];
+          h3List[1].innerHTML=val["container"];
+          h3List[2].innerHTML=val["bl"];
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
               const cont = val[i]["container"];
               if(container==cont){
-                  h3List[0].innerHTML=val[i]["consignee"];
-                  h3List[1].innerHTML=val[i]["container"];
-                  h3List[2].innerHTML=val[i]["bl"];
+                  
                   const tr = document.createElement("tr");
                   const td2 = document.createElement("td");
                   td2.innerHTML=val[i]["description"];
