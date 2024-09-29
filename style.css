@@ -146,7 +146,7 @@ button{
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 45vh 17vh;
+        grid-template-rows: 40vh 17vh;
     }
     
     /* #popInfoTable {
@@ -175,18 +175,19 @@ button{
 }
 .filebox label {
     display: inline-block;
-    padding: 10px 20px;
-    margin:10px;
+    padding: 10px 10px;
+    /* margin:10px; */
     color: #fff;
     /* vertical-align: middle; */
-    line-height: 2vh;
+    line-height: 3.5vh;
     background-color: #1713dd;
     /* cursor: pointer; */
     /* height: 2; */
-    width:25vw;
+    width:40vw;
     /* margin-left: 10px; */
     text-align: center;
-    font-size:x-small;
+    font-size:larger;
+    font-weight: bold;
     border-radius: 15px;
 }
 .filebox input[type="file"] {
