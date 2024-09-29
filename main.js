@@ -219,6 +219,7 @@ function popUp(){
           h3List[0].innerHTML=val["consignee"];
           h3List[1].innerHTML=val["container"];
           h3List[2].innerHTML=val["bl"];
+          h3List[2].style.fontSize="x-small";
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
@@ -283,6 +284,7 @@ function popUp(){
             tr.style.height="6vh";
           });
           h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
+          h3List[2].style="font-size:large;margin-top:3%;color:red;";
       }).catch((e)=>{});
   }
   
