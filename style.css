@@ -207,8 +207,9 @@ button{
 }
 .popTitleC{
     text-align: center;
-    font-size: large;
     font-weight: bold;
+    vertical-align:bottom ;
+    
 }
 #popTitle{
     background-color: #b5b4ee;

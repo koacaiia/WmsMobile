@@ -377,9 +377,9 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        imgTag.style.width="30vw";
+        imgTag.style.width="32.5vw";
         // img.style.width="100%";
-        img.style.height="22vh";
+        img.style.height="90%";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
 
         // Create a container div to center the image
@@ -388,7 +388,7 @@ function popUp(){
         imgContainer.style.justifyContent = "center";
         imgContainer.style.alignItems = "center";
         imgContainer.style.width = "100%";
-        imgContainer.style.height = "100%";
+        imgContainer.style.height = "44vh";
         imgContainer.style.position = "relative";
         imgContainer.appendChild(img);
 
@@ -514,9 +514,9 @@ function upLoad(){
                               img.parentNode.classList.toggle("file-selected");
                             });
                             img.style.display="block";
-                            td.style.width="30vw";
+                            td.style.width="32.5vw";
                             img.style.width="100%";
-                            img.style.height="22vh";
+                            img.style.height="100%";
                             img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
                     
                             // Create a container div to center the image
@@ -525,7 +525,7 @@ function upLoad(){
                             imgContainer.style.justifyContent = "center";
                             imgContainer.style.alignItems = "center";
                             imgContainer.style.width = "100%";
-                            imgContainer.style.height = "100%";
+                            imgContainer.style.height = "44vh";
                             imgContainer.style.position = "relative";
                             imgContainer.appendChild(img);
                             td.appendChild(imgContainer);
