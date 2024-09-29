@@ -135,14 +135,14 @@
                         <button id="imgBtn" >이미지 상세보기</button>
                     </div>
                     <div style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
-                        <button id="btnClose" onclick="popClose()">닫기</button>
+                        <button id="btnClose" style="font-weight: bold;font-size:large;"onclick="popClose()">닫기(목록으로)</button>
                         <div style="display:grid;grid-template-columns:7fr 3fr">
                             <div class="filebox">
                                 <label for="fileInput">파일찾기</label> 
                                 <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
                                 <input type="file" id="fileInput" multiple accept="image/*"  >
                             </div>
-                            <button id="btnUpLoad"  onclick="upLoad()">사진등록</button>
+                            <button id="btnUpLoad" style="font-weight: bold;font-size:large;color:red" onclick="upLoad()">사진등록</button>
                         </div>
                     </div>
                     

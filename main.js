@@ -458,6 +458,9 @@ function popClose(){
     document.querySelector("#mainTitle").style="display:grid";
     document.querySelector("#mainPop").style="display:none";
     document.querySelector("#mainContent").style="display:grid";
+    document.querySelectorAll(".clicked").forEach((e)=>{
+        e.classList.remove("clicked");
+    });
     // document.querySelector("#mainOut").style="display:block";
 }
 const fileTr = document.querySelector("#imgTr");
