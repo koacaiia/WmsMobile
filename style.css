@@ -1,10 +1,19 @@
 body{
     display:grid;
-    grid-template-rows:12fr 48fr 48fr;
+    grid-template-rows:12fr 86fr;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
     height:96vh;
+    overflow:auto;
+}
+#mainContent{
+    display:grid;
+    grid-template-rows: 48fr 48fr;
+    /* border:1px solid black;
+    border-radius: 3px; */
+    width:99vw;
+    height:75vh;
     overflow:auto;
 }
 .tableW{
@@ -130,20 +139,20 @@ button{
         }
     }
     #mainPop {
-        height: 47vh;
-        background-color: rgb(177, 123, 221);
+        display:grid;
+        grid-template-rows: 35vh 63vh;
+        height:98vh;
     }
     #mainPopDiv {
-        height: 100%;
         display: grid;
-        grid-template-rows: 15vh 28vh;
+        grid-template-rows: 40vh 7vh;
     }
     
-    #popInfoTable {
-        height: 100%;
-    }
+    /* #popInfoTable {
+        height: 29vh;
+    } */
     #popInfoDiv{
-        height: 14vh;
+        height: 100%;
         overflow: scroll;
     }
     #popImgTable{
@@ -194,4 +203,17 @@ button{
 #btnUpLoad{
     border-radius: 10px;
     margin-right:20px;
+}
+.popTitleC{
+    text-align: center;
+    font-size: large;
+    font-weight: bold;
+}
+#popTitle{
+    background-color: #b5b4ee;
+    display:grid;
+    grid-template-rows: 5vh 30vh;
+}
+.tableInfoTr{
+    height: 5vh;
 }

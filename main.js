@@ -53,7 +53,9 @@ function dateChanged(){
     getData(d);
 }
 dateSelect.value=dateT(new Date());
-titleDate.innerHTML = dateT(new Date());
+// titleDate.innerHTML = dateT(new Date());
+titleDate.innerHTML = "2024-09-28";
+
 function getData(date){
     const year = date.substring(0,4);
     const month=date.substring(5,7);
@@ -112,7 +114,7 @@ function getData(date){
                        e.classList.remove("clicked");}
                 });
                 e.target.parentNode.classList.toggle("clicked");
-                document.querySelector("#mainOut").style="display:none";
+                // document.querySelector("#mainOut").style="display:none";
                 ref=tr.id;
                 ioValue="InCargo";
                 popUp();
@@ -163,7 +165,7 @@ function getData(date){
                     e.classList.remove("clicked");}
                 });
                 e.target.parentNode.classList.toggle("clicked");
-                document.querySelector("#mainIn").style="display:none";
+                // document.querySelector("#mainIn").style="display:none";
                 ref=tr.id;
                 ioValue="outCargo";
                 popUp();
@@ -179,8 +181,12 @@ function getData(date){
 }
 getData(titleDate.innerHTML);
 function popUp(){
+    const mainTitle = document.querySelector("#mainTitle");
+    mainTitle.style="display:none";
+    const mainContent = document.querySelector("#mainContent");
+    mainContent.style="display:none";
     const pop = document.querySelector("#mainPop");
-    pop.style="display:grid;grid-template-rows:4vh 44vh;height:48vh";
+    pop.style="display:grid";
     const mainDiv = document.querySelector("#mainPopDiv");
     // mainDiv.replaceChildren();
     const fileInput = document.querySelector("#fileInput");
@@ -189,16 +195,20 @@ function popUp(){
       popDetail(refFile);
     });
     const table= document.querySelector("#popInfoTable");
-    const thead = document.querySelector("#popInfoTableThead");
-    const tr = document.querySelector("#popInfoTableTr");
-    tr.replaceChildren();
+    const thR = table.querySelectorAll("tr")[0];
+    thR.style.height="3vh";
+    thR.replaceChildren();
     let thList;
-    const tBody = document.querySelector("#popInfoTableTbody");
+    const tBody = table.querySelectorAll("tbody")[0];
     tBody.replaceChildren();
     const fileTr = document.querySelector("#imgTr");
     fileTr.replaceChildren();
+    const h3List = document.querySelectorAll(".popTitleC");
+    for(let i=0;i<h3List.length;i++){
+      h3List[i].innerHTML="";
+    }
     if(ioValue=="InCargo"){
-      thList=["관리번호","품명","PLT","EA","비고"];
+      thList=["품명","PLT","EA","비고",];
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
@@ -207,9 +217,10 @@ function popUp(){
               for(let i in val){
               const cont = val[i]["container"];
               if(container==cont){
+                  h3List[0].innerHTML=val[i]["consignee"];
+                  h3List[1].innerHTML=val[i]["container"];
+                  h3List[2].innerHTML=val[i]["bl"];
                   const tr = document.createElement("tr");
-                  const td1 = document.createElement("td");
-                  td1.innerHTML=val[i]["bl"];
                   const td2 = document.createElement("td");
                   td2.innerHTML=val[i]["description"];
                   const td3 = document.createElement("td");
@@ -218,13 +229,15 @@ function popUp(){
                   td4.innerHTML=val[i]["incargo"];
                   const td5 = document.createElement("td");
                   td5.innerHTML=val[i]["remark"];
-                  tr.appendChild(td1);
                   tr.appendChild(td2);
                   tr.appendChild(td3);
                   tr.appendChild(td4);
                   tr.appendChild(td5);
                   tBody.appendChild(tr);
               }}
+              tBody.querySelectorAll("tr").forEach((tr)=>{
+                tr.style.height="6vh";
+              });
           }).catch((e)=>{
               console.log(e)});
   
@@ -237,7 +250,10 @@ function popUp(){
           const manNo=val["managementNo"].split(",");
           const pQty = val["pltQty"].split(",");
           const eQty = val["eaQty"].split(",");
-          // const remark = val["remark"].split(",");
+          h3List[0].innerHTML=val["consigneeName"];
+          h3List[1].innerHTML=val["outwarehouse"];
+          // const remark = val["remark"].split(" ,");
+          let totalPlt=0;
           for(let i=0;i<des.length;i++){
               const tr = document.createElement("tr");
               const td1 = document.createElement("td");
@@ -246,6 +262,7 @@ function popUp(){
               td2.innerHTML=manNo[i];
               const td3 = document.createElement("td");
               td3.innerHTML=pQty[i];
+              totalPlt+=parseInt(pQty[i]);
               const td4 = document.createElement("td");
               td4.innerHTML=eQty[i];
               // const td5 = document.createElement("td");
@@ -257,16 +274,29 @@ function popUp(){
               // tr.appendChild(td5);
               tBody.appendChild(tr);
           }
-  
+          tBody.querySelectorAll("tr").forEach((tr)=>{
+            tr.style.height="6vh";
+          });
+          h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
       }).catch((e)=>{});
-
   }
-  thList.forEach((e)=>{
-    const th = document.createElement("th");
-    th.innerHTML=e;
-    tr.appendChild(th);
- });
-  thead.appendChild(tr);
+  
+//   thList.forEach((e)=>{
+//     const th = document.createElement("th");
+//     th.innerHTML=e;
+//     tr.appendChild(th);
+//  });
+ for(let i=0;i<thList.length;i++){
+  const th = document.createElement("th");
+  th.innerHTML=thList[i];
+  thR.appendChild(th);
+ }
+//  for(let i=4;i<thList.length;i++){
+//   const th = document.createElement("th");
+//   th.innerHTML=thList[i];
+//   thR1.appendChild(th);
+//  }
+  // thead.appendChild(tr);
   const resizeImage = (settings) => {
     const file = settings.file;
     const maxSize = settings.maxSize;
@@ -424,9 +454,10 @@ function popUp(){
   });
 };
 function popClose(){
+    document.querySelector("#mainTitle").style="display:grid";
     document.querySelector("#mainPop").style="display:none";
-    document.querySelector("#mainIn").style="display:block";
-    document.querySelector("#mainOut").style="display:block";
+    document.querySelector("#mainContent").style="display:grid";
+    // document.querySelector("#mainOut").style="display:block";
 }
 const fileTr = document.querySelector("#imgTr");
 function upLoad(){
