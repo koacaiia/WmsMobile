@@ -12,7 +12,11 @@ if(firebase.apps.length==0){
   firebase.initializeApp(firebaseConfig);
 }
 else{firebase.app();}
-
+const doc =document.documentElement;
+function fullScreen(){
+  doc.requestFullscreen();
+}
+fullScreen();
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
@@ -53,8 +57,8 @@ function dateChanged(){
     getData(d);
 }
 dateSelect.value=dateT(new Date());
-// titleDate.innerHTML = dateT(new Date());
-titleDate.innerHTML = "2024-09-28";
+titleDate.innerHTML = dateT(new Date());
+// titleDate.innerHTML = "2024-09-24";
 
 function getData(date){
     const year = date.substring(0,4);
