@@ -190,7 +190,7 @@ button{
     font-weight: bold;
     border-radius: 15px;
 }
-.filebox input[type="file"] {
+.filebox input[type="file"], button {
     position: absolute;
     width: 0;
     height: 0;
