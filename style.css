@@ -1,6 +1,7 @@
 body{
     display:grid;
     grid-template-rows:12fr 86fr;
+    row-gap:1vh;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
@@ -10,6 +11,7 @@ body{
 #mainContent{
     display:grid;
     grid-template-rows: 48fr 48fr;
+    row-gap:1vh;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
@@ -190,7 +192,7 @@ button{
     font-weight: bold;
     border-radius: 15px;
 }
-.filebox input[type="file"], button {
+.filebox input[type="file"], .filebox button {
     position: absolute;
     width: 0;
     height: 0;
