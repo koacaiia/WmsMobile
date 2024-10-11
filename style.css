@@ -144,7 +144,7 @@ button{
     #mainPop {
         display:grid;
         grid-template-rows: 35vh 63vh;
-        height:98vh;
+        height: 100%;
     }
     #mainPopDiv {
         display: grid;
