@@ -76,14 +76,20 @@ function getData(date){
     }).catch((e)=>{console.log(e)});
     database_f.ref(refI).get().then((snapshot)=>{
         const val=snapshot.val();
+        let ft4=0;
+        let ft2=0;
+        let lcl=0;
         for(let i in val){
             let spec="";
             if(val[i]["container40"]==="1"){
-                spec="40FT";}
+                spec="40FT";
+              ft4+=1;}
             else if(val[i]["container20"]==="1"){
-                spec="20FT";}
+                spec="20FT";
+              ft2+=1;}
             else if(val[i]["lclcargo"]!="0"){
                 spce="LcL";
+                lcl+=1;
             }else{
              continue
             }
@@ -120,6 +126,8 @@ function getData(date){
             if(val[i]["working"]!=""){
                 tr.style="color:red;";}
         }
+        console.log(ft4,ft2,lcl);
+        toastOn("40FT:"+ft4+" 20FT:"+ft2+" LCL:"+lcl);
     }).
     catch((e)=>{
       console.log(e);
@@ -407,7 +415,6 @@ function popUp(){
         img.style.width="100%";
         img.style.height="22vh";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
-
         // Create a container div to center the image
         const imgContainer = document.createElement("div");
         imgContainer.style.display = "flex";
