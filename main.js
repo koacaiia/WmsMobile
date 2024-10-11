@@ -12,7 +12,11 @@ if(firebase.apps.length==0){
   firebase.initializeApp(firebaseConfig);
 }
 else{firebase.app();}
-
+const doc =document.documentElement;
+function fullScreen(){
+  doc.requestFullscreen();
+}
+fullScreen();
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
@@ -54,6 +58,8 @@ function dateChanged(){
 }
 dateSelect.value=dateT(new Date());
 titleDate.innerHTML = dateT(new Date());
+// titleDate.innerHTML = "2024-09-24";
+
 function getData(date){
     const year = date.substring(0,4);
     const month=date.substring(5,7);
@@ -118,7 +124,7 @@ function getData(date){
                        e.classList.remove("clicked");}
                 });
                 e.target.parentNode.classList.toggle("clicked");
-                document.querySelector("#mainOut").style="display:none";
+                // document.querySelector("#mainOut").style="display:none";
                 ref=tr.id;
                 ioValue="InCargo";
                 popUp();
@@ -171,7 +177,7 @@ function getData(date){
                     e.classList.remove("clicked");}
                 });
                 e.target.parentNode.classList.toggle("clicked");
-                document.querySelector("#mainIn").style="display:none";
+                // document.querySelector("#mainIn").style="display:none";
                 ref=tr.id;
                 ioValue="outCargo";
                 popUp();
@@ -187,8 +193,12 @@ function getData(date){
 }
 getData(titleDate.innerHTML);
 function popUp(){
+    const mainTitle = document.querySelector("#mainTitle");
+    mainTitle.style="display:none";
+    const mainContent = document.querySelector("#mainContent");
+    mainContent.style="display:none";
     const pop = document.querySelector("#mainPop");
-    pop.style="display:grid;grid-template-rows:4vh 44vh;height:48vh";
+    pop.style="display:grid";
     const mainDiv = document.querySelector("#mainPopDiv");
     // mainDiv.replaceChildren();
     const fileInput = document.querySelector("#fileInput");
@@ -197,27 +207,34 @@ function popUp(){
       popDetail(refFile);
     });
     const table= document.querySelector("#popInfoTable");
-    const thead = document.querySelector("#popInfoTableThead");
-    const tr = document.querySelector("#popInfoTableTr");
-    tr.replaceChildren();
+    const thR = table.querySelectorAll("tr")[0];
+    thR.style.height="3vh";
+    thR.replaceChildren();
     let thList;
-    const tBody = document.querySelector("#popInfoTableTbody");
+    const tBody = table.querySelectorAll("tbody")[0];
     tBody.replaceChildren();
     const fileTr = document.querySelector("#imgTr");
     fileTr.replaceChildren();
+    const h3List = document.querySelectorAll(".popTitleC");
+    for(let i=0;i<h3List.length;i++){
+      h3List[i].innerHTML="";
+    }
     if(ioValue=="InCargo"){
-      thList=["관리번호","품명","PLT","EA","비고"];
+      thList=["품명","PLT","EA","비고",];
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
+          h3List[0].innerHTML=val["consignee"];
+          h3List[1].innerHTML=val["container"];
+          h3List[2].innerHTML=val["bl"];
+          h3List[2].style.fontSize="x-small";
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
               const cont = val[i]["container"];
               if(container==cont){
+                  
                   const tr = document.createElement("tr");
-                  const td1 = document.createElement("td");
-                  td1.innerHTML=val[i]["bl"];
                   const td2 = document.createElement("td");
                   td2.innerHTML=val[i]["description"];
                   const td3 = document.createElement("td");
@@ -226,13 +243,15 @@ function popUp(){
                   td4.innerHTML=val[i]["incargo"];
                   const td5 = document.createElement("td");
                   td5.innerHTML=val[i]["remark"];
-                  tr.appendChild(td1);
                   tr.appendChild(td2);
                   tr.appendChild(td3);
                   tr.appendChild(td4);
                   tr.appendChild(td5);
                   tBody.appendChild(tr);
               }}
+              tBody.querySelectorAll("tr").forEach((tr)=>{
+                tr.style.height="6vh";
+              });
           }).catch((e)=>{
               console.log(e)});
   
@@ -245,7 +264,10 @@ function popUp(){
           const manNo=val["managementNo"].split(",");
           const pQty = val["pltQty"].split(",");
           const eQty = val["eaQty"].split(",");
-          // const remark = val["remark"].split(",");
+          h3List[0].innerHTML=val["consigneeName"];
+          h3List[1].innerHTML=val["outwarehouse"];
+          // const remark = val["remark"].split(" ,");
+          let totalPlt=0;
           for(let i=0;i<des.length;i++){
               const tr = document.createElement("tr");
               const td1 = document.createElement("td");
@@ -254,6 +276,7 @@ function popUp(){
               td2.innerHTML=manNo[i];
               const td3 = document.createElement("td");
               td3.innerHTML=pQty[i];
+              totalPlt+=parseInt(pQty[i]);
               const td4 = document.createElement("td");
               td4.innerHTML=eQty[i];
               // const td5 = document.createElement("td");
@@ -265,16 +288,30 @@ function popUp(){
               // tr.appendChild(td5);
               tBody.appendChild(tr);
           }
-  
+          tBody.querySelectorAll("tr").forEach((tr)=>{
+            tr.style.height="6vh";
+          });
+          h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
+          h3List[2].style="font-size:large;margin-top:3%;color:red;";
       }).catch((e)=>{});
-
   }
-  thList.forEach((e)=>{
-    const th = document.createElement("th");
-    th.innerHTML=e;
-    tr.appendChild(th);
- });
-  thead.appendChild(tr);
+  
+//   thList.forEach((e)=>{
+//     const th = document.createElement("th");
+//     th.innerHTML=e;
+//     tr.appendChild(th);
+//  });
+ for(let i=0;i<thList.length;i++){
+  const th = document.createElement("th");
+  th.innerHTML=thList[i];
+  thR.appendChild(th);
+ }
+//  for(let i=4;i<thList.length;i++){
+//   const th = document.createElement("th");
+//   th.innerHTML=thList[i];
+//   thR1.appendChild(th);
+//  }
+  // thead.appendChild(tr);
   const resizeImage = (settings) => {
     const file = settings.file;
     const maxSize = settings.maxSize;
@@ -354,9 +391,10 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        imgTag.style.width="30vw";
+        imgTag.style.width="32.5vw";
+        imgTag.style.height="37vh";
         // img.style.width="100%";
-        img.style.height="22vh";
+        img.style.height="90%";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
 
         // Create a container div to center the image
@@ -411,9 +449,9 @@ function popUp(){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
-        td.style.width="30vw";
+        td.style.width="32.5vw";
         img.style.width="100%";
-        img.style.height="22vh";
+        img.style.height="37vh";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
         // Create a container div to center the image
         const imgContainer = document.createElement("div");
@@ -431,14 +469,18 @@ function popUp(){
   });
 };
 function popClose(){
+    document.querySelector("#mainTitle").style="display:grid";
     document.querySelector("#mainPop").style="display:none";
-    document.querySelector("#mainIn").style="display:block";
-    document.querySelector("#mainOut").style="display:block";
+    document.querySelector("#mainContent").style="display:grid";
+    document.querySelectorAll(".clicked").forEach((e)=>{
+        e.classList.remove("clicked");
+    });
+    // document.querySelector("#mainOut").style="display:block";
 }
-
+const fileTr = document.querySelector("#imgTr");
 function upLoad(){
     const fileInput = document.querySelector("#fileInput");
-    const fileTr = document.querySelector("#imgTr");
+    
     let imgUrls = [];
     // const forTd = fileTr.querySelectorAll("td");
     const img = fileTr.querySelectorAll(".local-img");
@@ -466,7 +508,50 @@ function upLoad(){
                   if (index === imgUrls.length - 1) {
                       // alert(imgUrls.length+" 개 Images업로드 완료");
                       console.log("업로드 완료");
-                      popClose();
+                      fileTr.replaceChildren();
+                      let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
+                      // imgRef.replace("/",",");
+                      imgRef = imgRef.split(",");
+                      const io=imgRef[4];
+                      const dateArr = imgRef[2];
+                      imgRef[3]=dateArr;
+                      imgRef[2]=io;
+                      imgRef.splice(4,1);
+                      imgRef=imgRef.toString().replaceAll(",","/")+"/";
+                      console.log(imgRef);
+                      refFile=imgRef;
+                      storage_f.ref(imgRef).listAll().then((res)=>{
+                        res.items.forEach((itemRef)=>{
+                          itemRef.getDownloadURL().then((url)=>{
+                            const td = document.createElement("td");
+                            const img = document.createElement("img");
+                            img.src=url;
+                            img.className="server-img";
+                            img.addEventListener("click", (e) => {
+                              img.parentNode.classList.toggle("file-selected");
+                            });
+                            img.style.display="block";
+                            td.style.width="32.5vw";
+                            td.style.height="37vh";
+                            img.style.width="100%";
+                            img.style.height="100%";
+                            img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+                    
+                            // Create a container div to center the image
+                            const imgContainer = document.createElement("div");
+                            imgContainer.style.display = "flex";
+                            imgContainer.style.justifyContent = "center";
+                            imgContainer.style.alignItems = "center";
+                            imgContainer.style.width = "100%";
+                            imgContainer.style.height = "100%";
+                            imgContainer.style.position = "relative";
+                            imgContainer.appendChild(img);
+                            td.appendChild(imgContainer);
+                            fileTr.appendChild(td);
+                          });
+                        });
+                      });
+                      // popClose();
                   }
               });
           })
@@ -484,6 +569,7 @@ function upLoad(){
       w={"workprocess":"완"}
     }
     database_f.ref(ref).update(w);
+  
 }
 
 
