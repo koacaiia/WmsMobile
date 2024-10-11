@@ -132,8 +132,7 @@ function getData(date){
             if(val[i]["working"]!=""){
                 tr.style="color:red;";}
         }
-        console.log(ft4,ft2,lcl);
-        toastOn("40FT:"+ft4+" 20FT:"+ft2+" LCL:"+lcl);
+        toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
     }).
     catch((e)=>{
       console.log(e);
@@ -576,7 +575,7 @@ function upLoad(){
 if(mC){
   
   // document.querySelector("#titleDate").style="display:none";
-  toastOn("모바일 환경에서 접속 됩니다.1");
+  // toastOn("모바일 환경에서 접속 됩니다.1");
   
   // const osRe = document.querySelector("#osRe");
   // osRe.classList.add("mobile");
@@ -589,7 +588,10 @@ if(mC){
   //   e.style.fontSize="small";
   // });
   }
-function toastOn(msg){
+function toastOn(msg,t){
+  if(t == null){
+    t=2000;
+  }
   const toastMessage = document.createElement("div");
   toastMessage.id="tost_message";
   toastMessage.innerHTML = msg; 
@@ -597,7 +599,7 @@ function toastOn(msg){
   document.body.appendChild(toastMessage);
   setTimeout(function(){
       toastMessage.classList.remove('active');
-  },2000);
+  },t);
 }
 function fileRemove(){
   const fileInput = document.querySelector("#fileInput");
