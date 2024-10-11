@@ -148,7 +148,7 @@ button{
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 40vh 17vh;
+        grid-template-rows: 35vh 22vh;
     }
     
     /* #popInfoTable {
@@ -216,7 +216,7 @@ button{
 #popTitle{
     background-color: #b5b4ee;
     display:grid;
-    grid-template-rows: 5vh 30vh;
+    grid-template-rows: 8vh 27vh;
 }
 .tableInfoTr{
     height: 5vh;

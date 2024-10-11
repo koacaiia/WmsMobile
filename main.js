@@ -391,7 +391,7 @@ function popUp(){
         img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.style.width="32.5vw";
-        imgTag.style.height="37vh";
+        imgTag.style.height="32vh";
         // img.style.width="100%";
         img.style.height="90%";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
@@ -450,7 +450,7 @@ function popUp(){
         img.style.display="block";
         td.style.width="32.5vw";
         img.style.width="100%";
-        img.style.height="37vh";
+        img.style.height="32vh";
         img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
         // Create a container div to center the image
         const imgContainer = document.createElement("div");
