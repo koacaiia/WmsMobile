@@ -391,22 +391,22 @@ function popUp(){
         img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.style.width="32.5vw";
-        imgTag.style.height="32vh";
-        // img.style.width="100%";
-        img.style.height="90%";
-        img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+        imgTag.style.height="29vh";
+        img.style.width="100%";
+        img.style.height="100%";
+        img.style.objectFit = "scale"; // Ensures the image covers the container without distortion
 
         // Create a container div to center the image
-        const imgContainer = document.createElement("div");
-        imgContainer.style.display = "flex";
-        imgContainer.style.justifyContent = "center";
-        imgContainer.style.alignItems = "center";
-        imgContainer.style.width = "100%";
-        imgContainer.style.height = "100%";
-        imgContainer.style.position = "relative";
-        imgContainer.appendChild(img);
+        // const imgContainer = document.createElement("div");
+        // imgContainer.style.display = "flex";
+        // imgContainer.style.justifyContent = "center";
+        // imgContainer.style.alignItems = "center";
+        // imgContainer.style.width = "100%";
+        // imgContainer.style.height = "29vh";
+        // imgContainer.style.position = "relative";
+        // imgContainer.appendChild(img);
 
-        imgTag.appendChild(imgContainer);
+        imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
       .then(() => {
@@ -449,19 +449,20 @@ function popUp(){
         });
         img.style.display="block";
         td.style.width="32.5vw";
+        td.style.height="29vh";
         img.style.width="100%";
-        img.style.height="32vh";
-        img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
+        img.style.height="100%";
+        img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
         // Create a container div to center the image
-        const imgContainer = document.createElement("div");
-        imgContainer.style.display = "flex";
-        imgContainer.style.justifyContent = "center";
-        imgContainer.style.alignItems = "center";
-        imgContainer.style.width = "100%";
-        imgContainer.style.height = "100%";
-        imgContainer.style.position = "relative";
-        imgContainer.appendChild(img);
-        td.appendChild(imgContainer);
+        // const imgContainer = document.createElement("div");
+        // imgContainer.style.display = "flex";
+        // imgContainer.style.justifyContent = "center";
+        // imgContainer.style.alignItems = "center";
+        // imgContainer.style.width = "100%";
+        // imgContainer.style.height = "29vh";
+        // imgContainer.style.position = "relative";
+        // imgContainer.appendChild(img);
+        td.appendChild(img);
         fileTr.appendChild(td);
       });
     });
