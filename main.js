@@ -57,8 +57,8 @@ function dateChanged(){
     getData(d);
 }
 dateSelect.value=dateT(new Date());
-// titleDate.innerHTML = dateT(new Date());
-titleDate.innerHTML = "2024-09-24";
+titleDate.innerHTML = dateT(new Date());
+// titleDate.innerHTML = "2024-09-24";
 
 function getData(date){
     const year = date.substring(0,4);

@@ -143,12 +143,12 @@ button{
     }
     #mainPop {
         display:grid;
-        grid-template-rows: 30vh 68vh;
+        grid-template-rows: 30vh 60vh;
         /* height: 100%; */
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 35vh 30vh;
+        grid-template-rows: 35vh 24vh;
         border:3px solid black;
         border-radius: 10px;
     }
