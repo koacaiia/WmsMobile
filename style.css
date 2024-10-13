@@ -144,7 +144,7 @@ button{
     #mainPop {
         display:grid;
         grid-template-rows: 30vh 68vh;
-        height: 100%;
+        /* height: 100%; */
     }
     #mainPopDiv {
         display: grid;
@@ -188,9 +188,10 @@ button{
     /* cursor: pointer; */
     /* height: 2; */
     width:40vw;
-    height:10vh;
+    height:100%;
+    /* height:10vh; */
     margin-left: 10px;
-    line-height:3;
+    /* line-height:3; */
     text-align: center;
     font-size:larger;
     font-weight: bold;
@@ -206,7 +207,6 @@ button{
 }
 #imgTableDiv{
     overflow-x: scroll;
-    height: 100%;
 }
 #btnUpLoad{
     border-radius: 10px;
@@ -236,4 +236,5 @@ button{
     margin:0;
     width:100%;
     vertical-align: middle;
+    height:100%;
 }
