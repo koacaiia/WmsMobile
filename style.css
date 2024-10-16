@@ -178,7 +178,7 @@ button{
     color: #999999;
 }
 .filebox label {
-    display: block;
+    display: flex;
     /* padding: 10px 10px; */
     /* margin:0; */
     /* margin:10px; */
@@ -192,7 +192,9 @@ button{
     /* height:10vh; */
     margin-left: 10px;
     /* line-height:3; */
-    text-align: center;
+    /* text-align: center; */
+    justify-content: center;
+    align-items:center;
     font-size:larger;
     font-weight: bold;
     border-radius: 15px;
