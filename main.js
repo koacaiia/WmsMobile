@@ -201,10 +201,7 @@ function popUp(){
     const mainDiv = document.querySelector("#mainPopDiv");
     // mainDiv.replaceChildren();
     const fileInput = document.querySelector("#fileInput");
-    const imageDetail = document.querySelector("#imgBtn");
-    imageDetail.addEventListener("click",(e)=>{
-      popDetail(refFile);
-    });
+   
     const table= document.querySelector("#popInfoTable");
     const thR = table.querySelectorAll("tr")[0];
     thR.style.height="3vh";
@@ -333,7 +330,6 @@ function popUp(){
     const resize = () => {
       let width = image.width;
       let height = image.height;
-      console.log(width,height);
       if (width > height) {
         if (width > maxSize) {
           height *= maxSize / width;
@@ -347,7 +343,6 @@ function popUp(){
       }
       canvas.width = width;
       canvas.height = height;
-      console.log(width,height,maxSize);
       canvas.getContext("2d").drawImage(image, 0, 0, width, height);
       const dataUrl = canvas.toDataURL("image/jpeg");
       return dataURItoBlob(dataUrl);
@@ -386,7 +381,7 @@ function popUp(){
         const img = document.createElement("img");
         img.className = "local-img"
         img.addEventListener("click", (e) => {
-          // img.parentNode.classList.toggle("file-selected");
+          img.parentNode.classList.toggle("file-selected");
           showModal(url,imgTag)
         });
         img.setAttribute("src", url);
@@ -446,8 +441,8 @@ function popUp(){
         img.src=url;
         img.className="server-img";
         img.addEventListener("click", (e) => {
-          // img.parentNode.classList.toggle("file-selected");
-          showModal(url,img)
+          img.parentNode.classList.toggle("file-selected");
+          showModal(url,itemRef.name)
         });
         img.style.display="block";
         td.style.width="32.5vw";
@@ -619,9 +614,10 @@ function fileRemove(){
       const imgSrc = img.src;
       imgUrls.push(imgSrc);
     });
-    console.log(imgUrls);
-    fileInput.value = imgUrls.join(", ");
+    
+    // fileInput.value = imgUrls.join(", ");
   }
+  closeModal();
 }
 function dateNext(){
   const d = new Date(dateSelect.value);
@@ -784,4 +780,19 @@ function showModal(url,imgTag){
 function closeModal() {
   const modal = document.getElementById("imgModal");
   modal.style.display = "none";
+}
+function deleteImage() {
+  const modalImg = document.getElementById("modalImg");
+  const imgTag = modalImg.dataset.imgTag;
+  console.log(imgTag);
+  imgTag.remove();
+  closeModal();
+}
+function saveImg() {
+  const modalImg = document.getElementById("modalImg");
+  console.log(modalImg);
+  const url = modalImg.src;
+  console.log(url.name);
+  saveAs(url, modalImg.dataset.imgTag);
+  
 }
