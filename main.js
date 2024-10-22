@@ -386,7 +386,8 @@ function popUp(){
         const img = document.createElement("img");
         img.className = "local-img"
         img.addEventListener("click", (e) => {
-          img.parentNode.classList.toggle("file-selected");
+          // img.parentNode.classList.toggle("file-selected");
+          showModal(url,imgTag)
         });
         img.setAttribute("src", url);
         img.style.display = "block";
@@ -445,7 +446,8 @@ function popUp(){
         img.src=url;
         img.className="server-img";
         img.addEventListener("click", (e) => {
-          img.parentNode.classList.toggle("file-selected");
+          // img.parentNode.classList.toggle("file-selected");
+          showModal(url,img)
         });
         img.style.display="block";
         td.style.width="32.5vw";
@@ -769,4 +771,17 @@ function returnTime(){
 }
 function otherContents(e){
   location.href=e.id+".html";
+}
+function showModal(url,imgTag){
+  const modal = document.getElementById("imgModal");
+    const modalImg = document.getElementById("modalImg");
+    modalImg.src = url;
+    modal.style.display = "block";
+
+    // Store the imgTag for later use
+    modalImg.dataset.imgTag = imgTag;
+}
+function closeModal() {
+  const modal = document.getElementById("imgModal");
+  modal.style.display = "none";
 }

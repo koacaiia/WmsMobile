@@ -135,7 +135,10 @@
                         <button id="imgBtn" >이미지 상세보기</button>
                     </div>
                     <div style="display:grid;grid-template-rows:7vh 12vh;row-gap:1vh">
-                        <button id="btnClose" style="font-weight: bold;font-size:large;"onclick="popClose()">닫기(목록으로)</button>
+                        <div style="display:grid;grid-template-columns:1fr 1fr">
+                            <button id="btnClose" style="font-weight: bold;font-size:large;"onclick="popClose()">닫기(목록으로)</button>
+                            <button id="btnReport " style="font-weight: bold;font-size:large;"onclick="popReport()">검수</button>
+                        </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:3vw;">
                             <div class="filebox">
                                 <label for="fileInput">파일찾기</label> 
@@ -149,14 +152,21 @@
                            
                         </div>
                     </div>
-                    
                 </div>
-                
             </div>
-            
         </div>
-        
     </div>
-       
+<div id="imgModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <img id="modalImg" src="" alt="Image" style="width:100%">
+        <div class="modal-buttons">
+            <button onclick="deleteImage()">삭제</button>
+            <button onclick="viewDetails()">자세히</button>
+        </div>
+
+    </div>
+
+</div>       
 <script src="main.js"></script>
 </body>
