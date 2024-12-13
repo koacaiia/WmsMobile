@@ -796,3 +796,26 @@ function saveImg() {
   saveAs(url, modalImg.dataset.imgTag);
   
 }
+function popSaveAll(){
+  const fileTr = document.querySelector("#imgTr");
+  const img = fileTr.querySelectorAll(".server-img");
+  const imgUrls = [];
+  for(let i=0;i<img.length;i++){
+    const imgSrc = img[i].src;
+    imgUrls.push(imgSrc);
+  }
+  imgUrls.forEach((imgUrl, index) => {
+    fetch(imgUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const fileName = "SaveAll_"+index+"_"+returnTime();
+            const file = new File([blob], fileName, { type: blob.type });
+            saveAs(file, fileName);
+        })
+        .catch(error => {
+          alert("Error uploading file:", error);
+          console.error("Error uploading file:", error);
+      });
+    });
+
+}
