@@ -790,10 +790,16 @@ function deleteImage() {
 }
 function saveImg() {
   const modalImg = document.getElementById("modalImg");
-  console.log(modalImg);
   const url = modalImg.src;
-  console.log(url.name);
-  saveAs(url, modalImg.dataset.imgTag);
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      saveAs(url, modalImg.dataset.imgTag);
+    })
+    .catch(error => {
+      console.error("Error saving image:", error);
+    });
+  closeModal();
   
 }
 function popSaveAll(){
