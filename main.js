@@ -26,7 +26,7 @@ let refFile;
 let ioValue;
 let upfileList;
 let token;
-const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
     try{
