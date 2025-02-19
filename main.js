@@ -17,6 +17,17 @@ else{firebase.app();}
 //   doc.requestFullscreen();
 // }
 // fullScreen();
+messaging.onBackgroundMessage(function(payload) {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+      body: payload.notification.body,
+      icon: '/icon.png'
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+  });
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
