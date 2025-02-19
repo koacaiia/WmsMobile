@@ -22,17 +22,17 @@ const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const deptName = "WareHouseDept2";
-messaging.onBackgroundMessage(function(payload) {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-      body: payload.notification.body,
-      icon: '/icon.png'
-  };
+// messaging.onBackgroundMessage(function(payload) {
+//   console.log('[firebase-messaging-sw.js] Received background message ', payload);
+//   // Customize notification here
+//   const notificationTitle = payload.notification.title;
+//   const notificationOptions = {
+//       body: payload.notification.body,
+//       icon: '/icon.png'
+//   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-  });
+//   self.registration.showNotification(notificationTitle, notificationOptions);
+//   });
 let ref;
 let refFile;
 let ioValue;
