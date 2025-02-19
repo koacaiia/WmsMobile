@@ -12,11 +12,11 @@ if(firebase.apps.length==0){
   firebase.initializeApp(firebaseConfig);
 }
 else{firebase.app();}
-const doc =document.documentElement;
-function fullScreen(){
-  doc.requestFullscreen();
-}
-fullScreen();
+// const doc =document.documentElement;
+// function fullScreen(){
+//   doc.requestFullscreen();
+// }
+// fullScreen();
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
@@ -647,104 +647,120 @@ function osSubmit(){
     toastOn(osObject);
   }).catch((e)=>{});
 }
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/firebase-messaging-sw.js')
-//     .then((registration) => {
-//       console.log('Service Worker registered with scope:', registration.scope);
-//     })
-//     .catch((err) => {
-//       console.error('Service Worker registration failed:', err);
-//     });
-// }
-// function requestPermission(){
-//   Notification.requestPermission().then((permission)=>{
-//     if(permission =="granted"){
-//       console.log("Notification Permission Granted");
-//       getToken();;
-//     }else{
-//       console.log("Unable to get Permission to Notify.")
-//     }
-//   });
-//   if(!("Notification" in window)){
-//     console.log("This browser does not support notifications.");
-//   }
-// }
-// function getToken() {
-//   return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
-//     .then(currentToken => {
-//       if (currentToken) {
-//         console.log('FCM token:', currentToken);
-//         token = currentToken;
-//         return currentToken;
-//       } else {
-//         console.log('No registration token available. Request permission to generate one.');
-//         return null;
-//       }
-//     })
-//     .catch(err => {
-//       console.log('An error occurred while retrieving token. ', err);
-//       return null;
-//     });
-// }
-// messaging.onMessage((payload) => {
-//   console.log('Message received. ', payload);
-//   // Customize notification here
-//   const notificationTitle = payload.notification.title;
-//   const notificationOptions = {
-//       body: payload.notification.body,
-//        icon: payload.notification.icon || '/images/default-icon.png'
-//   };
-//   console.log(notificationTitle,notificationOptions);
-//   new Notification(notificationTitle, notificationOptions);
-//   // alert(payload.notification.body);
-// });
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then((registration) => {
+      console.log('Service Worker registered with scope:', registration.scope);
+    })
+    .catch((err) => {
+      console.error('Service Worker registration failed:', err);
+    });
+}
+function requestPermission(){
+  Notification.requestPermission().then((permission)=>{
+    if(permission =="granted"){
+      console.log("Notification Permission Granted");
+      getToken();;
+    }else{
+      console.log("Unable to get Permission to Notify.")
+    }
+  });
+  if(!("Notification" in window)){
+    console.log("This browser does not support notifications.");
+  }
+}
+function getToken() {
+  return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+    .then(currentToken => {
+      if (currentToken) {
+        token = currentToken;
+        return currentToken;
+      } else {
+        console.log('No registration token available. Request permission to generate one.');
+        return null;
+      }
+    })
+    .catch(err => {
+      console.log('An error occurred while retrieving token. ', err);
+      return null;
+    });
+}
+messaging.onMessage((payload) => {
+  console.log('Message received. ', payload);
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+      body: payload.notification.body,
+       icon: payload.notification.icon || '/images/default-icon.png'
+  };
+  console.log(notificationTitle,notificationOptions);
+  new Notification(notificationTitle, notificationOptions);
+  alert(payload.notification.body);
+});
 
-// // Call requestPermission on page load
-// // document.addEventListener('DOMContentLoaded', () => {
-// //   requestPermission();
-// // });
+// Call requestPermission on page load
+document.addEventListener('DOMContentLoaded', () => {
+  requestPermission();
+});
 
-// function sendMessage(token, title, body, icon) {
-//   const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
-//   const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
+function sendMessage(token, title, body, icon) {
+  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
 
-//   const messagePayload = {
-//     to: token,
-//     notification: {
-//       title: title,
-//       body: body,
-//       icon: icon || '/images/default-icon.png'
-//     }
-//   };
+  const messagePayload = {
+    to: token,
+    notification: {
+      title: title,
+      body: body,
+      icon: icon || '/images/default-icon.png'
+    }
+  };
 
-//   fetch(fcmEndpoint, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//       'Authorization': 'key=' + serverKey
-//     },
-//     body: JSON.stringify(messagePayload)
-//   })
-//   .then(response => response.json())
-//   .then(data => {
-//     console.log('Message sent successfully:', data);
-//   })
-//   .catch(error => {
-//     console.error('Error sending message:', error);
-//   });
-// }
+  fetch(fcmEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(messagePayload)
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Message sent successfully:', data);
+  })
+  .catch(error => {
+    console.error('Error sending message:', error);
+  });
+}
+async function sendMessageToServer(message, token) {
+  try {
+    const response = await fetch('https://fcm.googleapis.com/fcm/send', { // Your server's endpoint
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, token }),
+    });
 
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    console.log('Notification request sent to server.');
+  } catch (error) {
+    console.error('Error sending notification request:', error);
+  }
+}
 // // Example usage
-// document.addEventListener('DOMContentLoaded', () => {
-//   requestPermission();
+document.addEventListener('DOMContentLoaded', () => {
+  requestPermission();
 
-//   // Example: Send a message after getting the token
-//   getToken().then(token => {
-//     if (token) {
-//       sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-//     }
-//   });
-// });
+  // Example: Send a message after getting the token
+  getToken().then(token => {
+    if (token) {
+      sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+    }
+  });
+});
  function reLoad(){
   console.log(mC);
   if(mC){
@@ -794,7 +810,7 @@ function saveImg() {
   fetch(url)
     .then(response => response.blob())
     .then(blob => {
-      saveAs(url, modalImg.dataset.imgTag);
+      saveAs(blob, modalImg.dataset.imgTag);
     })
     .catch(error => {
       console.error("Error saving image:", error);
