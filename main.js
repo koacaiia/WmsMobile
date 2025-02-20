@@ -659,6 +659,7 @@ function osSubmit(){
     toastOn(osObject);
   }).catch((e)=>{});
 }
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
     .then((registration) => {
