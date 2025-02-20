@@ -677,6 +677,7 @@ if ('serviceWorker' in navigator) {
           console.log("This browser does not support notifications.");
         }
       }
+      
       function getToken() {
         return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
           .then(currentToken => {
@@ -693,6 +694,16 @@ if ('serviceWorker' in navigator) {
             return null;
           });
       }
+      document.addEventListener('DOMContentLoaded', () => {
+        requestPermission();
+      
+        // Example: Send a message after getting the token
+        getToken().then(token => {
+          if (token) {
+            sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+          }
+        });
+      });
     })
     .catch((err) => {
       console.error('Service Worker registration failed:', err);
@@ -713,9 +724,6 @@ messaging.onMessage((payload) => {
 });
 
 // Call requestPermission on page load
-document.addEventListener('DOMContentLoaded', () => {
-  requestPermission();
-});
 
 function sendMessage(token, title, body, icon) {
   const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
@@ -765,16 +773,7 @@ async function sendMessageToServer(message, token) {
   }
 }
 // // Example usage
-document.addEventListener('DOMContentLoaded', () => {
-  requestPermission();
 
-  // Example: Send a message after getting the token
-  getToken().then(token => {
-    if (token) {
-      sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-    }
-  });
-});
  function reLoad(){
   console.log(mC);
   if(mC){
