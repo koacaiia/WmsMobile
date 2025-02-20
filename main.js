@@ -773,7 +773,7 @@ async function sendMessageToServer(message, token) {
   }
 }
 // // Example usage
-
+sendMessageToServer('Hello!', token);
  function reLoad(){
   console.log(mC);
   if(mC){
