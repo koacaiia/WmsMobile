@@ -393,6 +393,10 @@ function popUp(){
         const img = document.createElement("img");
         img.className = "local-img"
         img.addEventListener("click", (e) => {
+          const tdList = img.parentNode.parentNode.querySelectorAll("td");
+          tdList.forEach((td)=>{
+              td.classList.remove("file-selected");
+          });
           img.parentNode.classList.toggle("file-selected");
           showModal(url,imgTag)
         });
@@ -402,29 +406,10 @@ function popUp(){
         imgTag.style.height="29vh";
         img.style.width="100%";
         img.style.height="100%";
-        img.style.objectFit = "scale"; // Ensures the image covers the container without distortion
-
-        // Create a container div to center the image
-        // const imgContainer = document.createElement("div");
-        // imgContainer.style.display = "flex";
-        // imgContainer.style.justifyContent = "center";
-        // imgContainer.style.alignItems = "center";
-        // imgContainer.style.width = "100%";
-        // imgContainer.style.height = "29vh";
-        // imgContainer.style.position = "relative";
-        // imgContainer.appendChild(img);
+        img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
 
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
-      })
-      .then(() => {
-        // const img = document.querySelector(".profile-img");
-        // img.onload = () => {
-        //   const widthDiff = (img.clientWidth - imgTag.offsetWidth);
-        //   console.log(img.clientHeight,imgTag.offsetHeight);
-        //   const heightDiff = (img.clientHeight - imgTag.offsetHeight) ;
-        //   img.style.transform = `translate( -${widthDiff}px , -${heightDiff}px)`;
-        // };
       })
       .catch((err) => {
         console.log(err);
@@ -443,7 +428,6 @@ function popUp(){
   imgRef[2]=io;
   imgRef.splice(4,1);
   imgRef=imgRef.toString().replaceAll(",","/")+"/";
-  console.log(imgRef);
   refFile=imgRef;
   storage_f.ref(imgRef).listAll().then((res)=>{
     res.items.forEach((itemRef)=>{
@@ -453,24 +437,18 @@ function popUp(){
         img.src=url;
         img.className="server-img";
         img.addEventListener("click", (e) => {
+          const tdList = img.parentNode.parentNode.querySelectorAll("td");
+          tdList.forEach((td)=>{
+              td.classList.remove("file-selected");
+          });
           img.parentNode.classList.toggle("file-selected");
           showModal(url,itemRef.name)
         });
         img.style.display="block";
-        td.style.width="32.5vw";
-        td.style.height="29vh";
+        td.style="width:32.5vw;height:29vh;border:1px dashed red;border-radius:5px";
         img.style.width="100%";
         img.style.height="100%";
         img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
-        // Create a container div to center the image
-        // const imgContainer = document.createElement("div");
-        // imgContainer.style.display = "flex";
-        // imgContainer.style.justifyContent = "center";
-        // imgContainer.style.alignItems = "center";
-        // imgContainer.style.width = "100%";
-        // imgContainer.style.height = "29vh";
-        // imgContainer.style.position = "relative";
-        // imgContainer.appendChild(img);
         td.appendChild(img);
         fileTr.appendChild(td);
       });
@@ -488,17 +466,12 @@ function popClose(){
 }
 const fileTr = document.querySelector("#imgTr");
 function upLoad(){
-    const fileInput = document.querySelector("#fileInput");
-    
     let imgUrls = [];
-    // const forTd = fileTr.querySelectorAll("td");
     const img = fileTr.querySelectorAll(".local-img");
-    console.log(img);
     if(img.length==0){
       toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
           }else{
             for(let i=0;i<img.length;i++){
-              console.log(img[i].src);
               const imgSrc = img[i].src;
               imgUrls.push(imgSrc);
             }
@@ -540,22 +513,12 @@ function upLoad(){
                               img.parentNode.classList.toggle("file-selected");
                             });
                             img.style.display="block";
-                            td.style.width="32.5vw";
-                            td.style.height="37vh";
+                            img.style.display="block";
+                            td.style="width:32.5vw;height:29vh;border:1px dashed red;border-radius:5px";
                             img.style.width="100%";
                             img.style.height="100%";
-                            img.style.objectFit = "cover"; // Ensures the image covers the container without distortion
-                    
-                            // Create a container div to center the image
-                            const imgContainer = document.createElement("div");
-                            imgContainer.style.display = "flex";
-                            imgContainer.style.justifyContent = "center";
-                            imgContainer.style.alignItems = "center";
-                            imgContainer.style.width = "100%";
-                            imgContainer.style.height = "100%";
-                            imgContainer.style.position = "relative";
-                            imgContainer.appendChild(img);
-                            td.appendChild(imgContainer);
+                            img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
+                            td.appendChild(img);
                             fileTr.appendChild(td);
                           });
                         });
@@ -578,7 +541,7 @@ function upLoad(){
       w={"workprocess":"완"}
     }
     database_f.ref(ref).update(w);
-  
+ 
 }
 
 
@@ -611,26 +574,7 @@ function toastOn(msg,t){
       toastMessage.classList.remove('active');
   },t);
 }
-function fileRemove(){
-  const fileInput = document.querySelector("#fileInput");
-  const fileTr = document.querySelector("#imgTr");
-  let fileRemove = fileTr.querySelectorAll(".file-selected");
-  const confirmRemove = confirm(fileRemove.length+" 개의 파일을 삭제하시겠습니까?");
-  const imgUrls = []; 
-  if(confirmRemove){
-    for(let i=0;i<fileRemove.length;i++){
-      fileRemove[i].remove();
-    }
-    fileTr.querySelectorAll("td").forEach((td)=>{
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      imgUrls.push(imgSrc);
-    });
-    
-    // fileInput.value = imgUrls.join(", ");
-  }
-  closeModal();
-}
+
 function dateNext(){
   const d = new Date(dateSelect.value);
   if(d.getDay()===5){
@@ -798,16 +742,47 @@ function otherContents(e){
   location.href=e.id+".html";
 }
 function showModal(url,imgTag){
-  const modal = document.getElementById("imgModal");
+    const modal = document.getElementById("imgModal");
     const modalImg = document.getElementById("modalImg");
     modalImg.src = url;
     modal.style.display = "block";
-
-    // Store the imgTag for later use
     modalImg.dataset.imgTag = imgTag;
+}
+function fileRemove(){
+  const fileTr = document.querySelector("#imgTr");
+  let fileRemove = fileTr.querySelectorAll(".file-selected");
+  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
+  const imgUrls = [];
+   
+  if(confirmRemove){
+    for(let i=0;i<fileRemove.length;i++){
+      fileRemove[i].remove();
+    }
+    fileTr.querySelectorAll("td").forEach((td)=>{
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      if(img.classList=="local-img"){
+        imgUrls.push(imgSrc);
+      }else{
+        const storageRef = firebase.storage().refFromURL(imgSrc);
+        storageRef.delete().then(() => {
+          alert("이미지 삭제 완료:", imgSrc)
+        }).catch((error) => {
+          alert("이미지 삭제 오류:", error)
+        });
+      }
+    });
+  }
+  closeModal();
 }
 function closeModal() {
   const modal = document.getElementById("imgModal");
+  const tdList = document.querySelectorAll("#imgTr td");
+  console.log(tdList);
+  tdList.forEach((td)=>{
+    console.log(td.classList);
+    td.classList.remove("file-selected");
+  });
   modal.style.display = "none";
 }
 function deleteImage() {
