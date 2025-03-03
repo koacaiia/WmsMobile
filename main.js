@@ -746,7 +746,9 @@ function showModal(url,imgTag){
     const modalImg = document.getElementById("modalImg");
     modalImg.src = url;
     modal.style.display = "block";
+    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
     modalImg.dataset.imgTag = imgTag;
+    
 }
 function fileRemove(){
   const fileTr = document.querySelector("#imgTr");
@@ -761,6 +763,8 @@ function fileRemove(){
     fileTr.querySelectorAll("td").forEach((td)=>{
       const img = td.querySelector("img");
       const imgSrc = img.src;
+      const imgFile = td.querySelector("img .file-selected");
+      
       if(img.classList=="local-img"){
         imgUrls.push(imgSrc);
       }else{
