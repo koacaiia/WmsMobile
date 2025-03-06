@@ -398,6 +398,7 @@ function popUp(){
               td.classList.remove("file-selected");
           });
           img.parentNode.classList.toggle("file-selected");
+          console.log(img.parentNode.classList);
           showModal(url,imgTag)
         });
         img.setAttribute("src", url);
@@ -442,6 +443,7 @@ function popUp(){
               td.classList.remove("file-selected");
           });
           img.parentNode.classList.toggle("file-selected");
+          console.log(img.parentNode.classList);
           showModal(url,itemRef.name)
         });
         img.style.display="block";
@@ -750,31 +752,26 @@ function showModal(url,imgTag){
     modalImg.dataset.imgTag = imgTag;
     
 }
-function fileRemove(){
+function fileRemove() {
   const fileTr = document.querySelector("#imgTr");
-  let fileRemove = fileTr.querySelectorAll(".file-selected");
   const confirmRemove = confirm("파일을 삭제하시겠습니까?");
   const imgUrls = [];
-   
-  if(confirmRemove){
-    for(let i=0;i<fileRemove.length;i++){
-      fileRemove[i].remove();
-    }
-    fileTr.querySelectorAll("td").forEach((td)=>{
+
+  if (confirmRemove) {
+    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
       const img = td.querySelector("img");
       const imgSrc = img.src;
-      const imgFile = td.querySelector("img .file-selected");
-      
-      if(img.classList=="local-img"){
+      if (img.classList.contains("local-img")) {
         imgUrls.push(imgSrc);
-      }else{
+      } else {
         const storageRef = firebase.storage().refFromURL(imgSrc);
         storageRef.delete().then(() => {
-          alert("이미지 삭제 완료:", imgSrc)
+          console.log("이미지 삭제 완료:", imgSrc);
         }).catch((error) => {
-          alert("이미지 삭제 오류:", error)
+          console.error("이미지 삭제 오류:", error);
         });
       }
+      td.remove(); // td 요소 제거
     });
   }
   closeModal();
@@ -782,9 +779,7 @@ function fileRemove(){
 function closeModal() {
   const modal = document.getElementById("imgModal");
   const tdList = document.querySelectorAll("#imgTr td");
-  console.log(tdList);
   tdList.forEach((td)=>{
-    console.log(td.classList);
     td.classList.remove("file-selected");
   });
   modal.style.display = "none";
