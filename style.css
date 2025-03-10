@@ -223,6 +223,7 @@ button{
 }
 #imgTableDiv{
     overflow-x: scroll;
+    background-color:grey;
 }
 #btnUpLoad{
     border-radius: 10px;
