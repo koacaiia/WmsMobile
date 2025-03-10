@@ -458,12 +458,13 @@ function popUp(){
   });
 };
 function popClose(){
-    document.querySelector("#mainTitle").style="display:grid";
-    document.querySelector("#mainPop").style="display:none";
-    document.querySelector("#mainContent").style="display:grid";
-    document.querySelectorAll(".clicked").forEach((e)=>{
-        e.classList.remove("clicked");
-    });
+  location.reload();;
+    // document.querySelector("#mainTitle").style="display:grid";
+    // document.querySelector("#mainPop").style="display:none";
+    // document.querySelector("#mainContent").style="display:grid";
+    // document.querySelectorAll(".clicked").forEach((e)=>{
+    //     e.classList.remove("clicked");
+    // });
     // document.querySelector("#mainOut").style="display:block";
 }
 const fileTr = document.querySelector("#imgTr");
@@ -721,7 +722,6 @@ async function sendMessageToServer(message, token) {
 // // Example usage
 sendMessageToServer('Hello!', token);
  function reLoad(){
-  console.log(mC);
   if(mC){
     location.reload();
   }else{
