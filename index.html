@@ -129,26 +129,23 @@
                         </tbody>
                     </table>
                 </div>
-            <div id="popBtn" >
-                    
-                    <div style="display:grid;grid-template-rows:7vh 12vh;row-gap:1vh">
-                        <div style="display:grid;grid-template-columns:1fr 1fr">
-                            <button id="btnClose" style="font-weight: bold;font-size:large;"onclick="popClose()">닫기(목록으로)</button>
-                            <button id="btnReport " style="font-weight: bold;font-size:large;"onclick="popSaveAll()">사진 전체저장</button>
+                    <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
+                        <div >
+                            <label>닫기(목록으로)
+                                <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
+                            </label>
+                            <label>사진 전체저장
+                                <button id="btnReport" onclick="popSaveAll()"></button>
+                            </label>
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:3vw;">
-                            <div class="filebox">
-                                <label for="fileInput" style="margin-left:10%">파일찾기</label> 
-                                <!-- <input class="upload-name" value="첨부파일" placeholder="첨부파일"> -->
-                                <input type="file" id="fileInput" multiple accept="image/*"  >
-                            </div>
-                            <div class="filebox">
-                                <label for="btnUpLoad" >사진등록</label>
-                                <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()">사진등록</button>
-                            </div>
-                           
+                        <div >
+                                <label >파일찾기
+                                    <input type="file" id="fileInput" multiple accept="image/*"  >
+                                </label> 
+                                <label for="btnUpLoad" >사진등록
+                                    <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
+                                </label>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
