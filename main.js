@@ -606,18 +606,17 @@ function osSubmit(){
     toastOn(osObject);
   }).catch((e)=>{});
 }
-
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
       function requestPermission(){
-        Notification.requestPermission().then((permission)=>{
-          if(permission =="granted"){
+        Notification.requestPermission().then((permission)=> {
+          if(permission == "granted"){
             console.log("Notification Permission Granted");
-            getToken();;
-          }else{
-            console.log("Unable to get Permission to Notify.")
+            getToken();
+          } else {
+            console.log("Unable to get Permission to Notify.");
           }
         });
         if(!("Notification" in window)){
@@ -626,7 +625,7 @@ if ('serviceWorker' in navigator) {
       }
       
       function getToken() {
-        return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+        return messaging.getToken({ vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
           .then(currentToken => {
             if (currentToken) {
               token = currentToken;
@@ -656,6 +655,55 @@ if ('serviceWorker' in navigator) {
       console.error('Service Worker registration failed:', err);
     });
 }
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
+//     .then((registration) => {
+//       console.log('Service Worker registered with scope:', registration.scope);
+//       function requestPermission(){
+//         Notification.requestPermission().then((permission)=>{
+//           if(permission =="granted"){
+//             console.log("Notification Permission Granted");
+//             getToken();
+//           }else{
+//             console.log("Unable to get Permission to Notify.")
+//           }
+//         });
+//         if(!("Notification" in window)){
+//           console.log("This browser does not support notifications.");
+//         }
+//       }
+      
+//       function getToken() {
+//         return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+//           .then(currentToken => {
+//             if (currentToken) {
+//               token = currentToken;
+//               return currentToken;
+//             } else {
+//               console.log('No registration token available. Request permission to generate one.');
+//               return null;
+//             }
+//           })
+//           .catch(err => {
+//             console.log('An error occurred while retrieving token. ', err);
+//             return null;
+//           });
+//       }
+//       document.addEventListener('DOMContentLoaded', () => {
+//         requestPermission();
+      
+//         // Example: Send a message after getting the token
+//         getToken().then(token => {
+//           if (token) {
+//             sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+//           }
+//         });
+//       });
+//     })
+//     .catch((err) => {
+//       console.error('Service Worker registration failed:', err);
+//     });
+// }
 
 messaging.onMessage((payload) => {
   console.log('Message received. ', payload);
