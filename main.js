@@ -625,6 +625,7 @@ if ('serviceWorker' in navigator) {
       }
       
       function getToken() {
+        console.log(registration);
         return messaging.getToken({ vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
           .then(currentToken => {
             if (currentToken) {
