@@ -479,7 +479,6 @@ function upLoad(){
               imgUrls.push(imgSrc);
             }
             const storageRef = storage_f.ref(refFile);
-            console.log(imgUrls);
     imgUrls.forEach((imgUrl, index) => {
       fetch(imgUrl)
           .then(response => response.blob())
