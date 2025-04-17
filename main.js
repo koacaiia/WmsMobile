@@ -404,7 +404,7 @@ function popUp(){
         img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.style.width="32.5vw";
-        imgTag.style.height="29vh";
+        imgTag.style.height="36vh";
         img.style.width="100%";
         img.style.height="100%";
         img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
@@ -447,7 +447,7 @@ function popUp(){
           showModal(url,itemRef.name)
         });
         img.style.display="block";
-        td.style="width:32.5vw;height:29vh;border:1px dashed red;border-radius:5px";
+        td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
         img.style.width="100%";
         img.style.height="100%";
         img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
@@ -520,7 +520,7 @@ function upLoad(){
                             });
                             img.style.display="block";
                             img.style.display="block";
-                            td.style="width:32.5vw;height:29vh;border:1px dashed red;border-radius:5px";
+                            td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
                             img.style.width="100%";
                             img.style.height="100%";
                             img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
