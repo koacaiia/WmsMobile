@@ -471,6 +471,9 @@ const fileTr = document.querySelector("#imgTr");
 function upLoad(){
     let imgUrls = [];
     const img = fileTr.querySelectorAll(".local-img");
+    const h3List = document.querySelectorAll(".popTitleC");
+    const stockList ={"client":h3List[0].innerHTML};
+    stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
     if(img.length==0){
       toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
           }else{
@@ -479,6 +482,7 @@ function upLoad(){
               imgUrls.push(imgSrc);
             }
             const storageRef = storage_f.ref(refFile);
+            
     imgUrls.forEach((imgUrl, index) => {
       fetch(imgUrl)
           .then(response => response.blob())

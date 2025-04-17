@@ -154,7 +154,7 @@ button{
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 35vh 24vh;
+        grid-template-rows: 44vh 15vh;
         border:3px solid black;
         border-radius: 10px;
         row-gap: 1vh;
@@ -195,6 +195,7 @@ button{
     margin-left: 10%;
     margin-right: 10%;
     margin-bottom:4%;
+    height:80%;
     /* cursor: pointer; */
     /* height: 2; */
     /* width:80%;
@@ -222,6 +223,8 @@ button{
     
 }
 #imgTableDiv{
+    display: grid;
+    grid-template-rows: 5vh 38vh;
     overflow-x: scroll;
     border-bottom:2px double black;
     border-radius: 10px;
