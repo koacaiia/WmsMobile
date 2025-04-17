@@ -793,7 +793,12 @@ function returnTime(){
   return formattedTime;
 }
 function otherContents(e){
-  location.href=e.id+".html";
+  if(e.id==otherPlt){
+    location.href=e.id+".html";
+  }else{
+    window.location.href="https://koacaiia.github.io/CargoStatus/stockList.html"
+  }
+  
 }
 function showModal(url,imgTag){
     const modal = document.getElementById("imgModal");
