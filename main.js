@@ -232,6 +232,10 @@ function popUp(){
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
+          const regTime = val["regTime"];
+          if(regTime !=undefined){
+            document.querySelector("#regTime").innerHTML=regTime;
+          }
           h3List[0].innerHTML=val["consignee"];
           h3List[1].innerHTML=val["container"];
           h3List[2].innerHTML=val["bl"];
@@ -241,7 +245,10 @@ function popUp(){
               for(let i in val){
               const cont = val[i]["container"];
               if(container==cont){
-                  
+                const regTime = val["regTime"];
+                if(regTime !=undefined){
+                  document.querySelector("#regTime").innerHTML=regTime;
+                }
                   const tr = document.createElement("tr");
                   const td2 = document.createElement("td");
                   td2.innerHTML=val[i]["description"];
@@ -542,9 +549,9 @@ function upLoad(){
           }
     let w;
     if(ioValue=="InCargo"){
-      w={"working":"컨테이너진입"}
+      w={"working":"컨테이너진입","regTime":returnTime()};
     }else{
-      w={"workprocess":"완"}
+      w={"workprocess":"완","regTime:":returnTime()};
     }
     database_f.ref(ref).update(w);
  
