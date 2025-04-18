@@ -245,7 +245,7 @@ function popUp(){
               for(let i in val){
               const cont = val[i]["container"];
               if(container==cont){
-                const regTime = val["regTime"];
+                const regTime = val[i]["regTime"];
                 if(regTime !=undefined){
                   document.querySelector("#regTime").innerHTML=regTime;
                 }
@@ -275,6 +275,10 @@ function popUp(){
     thList=["품명","관리번호","PLT","EA","비고"];
      database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
+          const regTime = val["regTime"];
+          if(regTime !=undefined){
+            document.querySelector("#regTime").innerHTML=regTime;
+          }
           const des=val["description"].split(",");
           const manNo=val["managementNo"].split(",");
           const pQty = val["pltQty"].split(",");
@@ -284,6 +288,7 @@ function popUp(){
           // const remark = val["remark"].split(" ,");
           let totalPlt=0;
           for(let i=0;i<des.length;i++){
+            
               const tr = document.createElement("tr");
               const td1 = document.createElement("td");
               td1.innerHTML=des[i];
@@ -551,7 +556,7 @@ function upLoad(){
     if(ioValue=="InCargo"){
       w={"working":"컨테이너진입","regTime":returnTime()};
     }else{
-      w={"workprocess":"완","regTime:":returnTime()};
+      w={"workprocess":"완","regTime":returnTime()};
     }
     database_f.ref(ref).update(w);
  
