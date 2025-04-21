@@ -456,7 +456,8 @@ function popUp(){
           });
           img.parentNode.classList.toggle("file-selected");
           console.log(img.parentNode.classList);
-          showModal(url,itemRef.name)
+          // showModal(url,itemRef.name)
+          popDetail(imgRef);
         });
         img.style.display="block";
         td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";

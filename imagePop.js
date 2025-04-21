@@ -21,12 +21,11 @@ function getQueryParam(param) {
   // Example usage
 const ref = getQueryParam('ref');
 let count=0;
-
+console.log(ref);
 // document.querySelector('#imageTitle').innerHTML = ref;
 const fileTr = document.querySelector("#imgTr");
 loadImage(count);
 function loadImage(c){
-  
   count=c;
   storage_f.ref(ref).listAll().then((res)=>{
     res.items[count].getDownloadURL().then((url)=>{
@@ -45,7 +44,7 @@ function loadImage(c){
         fileTr.appendChild(td);
   })
 }).catch((error)=>{
-  toastOn("Last image");
+  toastOn("Last image",error);
 });;
 }
 
