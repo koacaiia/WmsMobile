@@ -38,6 +38,8 @@ function loadImage(c){
           img.parentNode.classList.toggle("file-selected");
         });
         img.style.display="block";
+        img.style.height="85vh";
+        img.style.objectFit="contain";
         // img.style.width="100px";
         // img.style.height="100px";
         td.appendChild(img);
