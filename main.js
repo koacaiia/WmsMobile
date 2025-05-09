@@ -1,3 +1,14 @@
+const logData = localStorage.getItem("logData");
+if(logData == null){
+  const log = prompt("로그인 후 사용 가능합니다. 사용자 입력 후 사용 바랍니다.");
+  if(log == null){
+    alert("로그인 후 사용 가능합니다.");
+    location.href="https://koacaiia.github.io/WmsMobile/";}
+    else{
+      localStorage.setItem("logData",log);
+      location.href="https://koacaiia.github.io/WmsMobile/";
+    }
+}
 const firebaseConfig = {
     apiKey: "AIzaSyDLzmZyt5nZwCk98iZ6wi01y7Jxio1ppZQ",
     authDomain: "fine-bondedwarehouse.firebaseapp.com",
@@ -56,6 +67,15 @@ const dateT = (d)=>{
     return result_date ="미정";
     }
 };
+function loaData() {
+  const log=prompt(logData+" User 정보 수정 하시겠습니까?");
+  if(log){
+    localStorage.setItem("logData",log);
+    alert("User 정보 "+log +"로 변경 완료");
+  }else{
+    alert("User 정보 변경사항 없습니다.")
+  }
+}
 
 const titleDate = document.querySelector("#titleDate");
 const dateSelect = document.querySelector("#dateSelect");
@@ -806,7 +826,7 @@ function returnTime(){
   return formattedTime;
 }
 function otherContents(e){
-  if(e.id==otherPlt){
+  if(e.id=="otherPlt"){
     location.href=e.id+".html";
   }else{
     window.location.href="https://koacaiia.github.io/CargoStatus/stockList.html"
