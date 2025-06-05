@@ -575,9 +575,9 @@ function upLoad(){
           }
     let w;
     if(ioValue=="InCargo"){
-      w={"working":"컨테이너진입","regTime":returnTime()};
+      w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect")+"_"+returnTime()};
     }else{
-      w={"workprocess":"완","regTime":returnTime()};
+      w={"workprocess":"완","regTime":document.querySelector("#dateSelect")+"_"+returnTime()};
     }
     database_f.ref(ref).update(w);
  
