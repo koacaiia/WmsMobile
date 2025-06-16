@@ -50,6 +50,7 @@ let ioValue;
 let upfileList;
 let token;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const popup = document.getElementById('popup');
 const dateT = (d)=>{
     let result_date;
     try{
@@ -310,13 +311,26 @@ function popUp(){
           for(let i=0;i<des.length;i++){
             
               const tr = document.createElement("tr");
+              tr.addEventListener('mouseover', (e) => {
+                popup.style.display = 'block';
+                popup.style.left = e.pageX + 'px';
+                popup.style.top = e.pageY + 'px';
+                popup.textContent = tr.cells[1].textContent;
+              });
+              // tr.addEventListener('mousemove', (e) => {
+              //   popup.style.left = e.pageX + 'px';
+              //   popup.style.top = e.pageY + 'px';
+              // });
+              tr.addEventListener('mouseout', () => {
+                popup.style.display = 'none';
+              });
               const td1 = document.createElement("td");
               td1.innerHTML=des[i];
               const td2 = document.createElement("td");
               td2.innerHTML=manNo[i];
-              td2.addEventListener("click", (e) => {
-                alert(e.target.innerHTML);
-              });
+              // td2.addEventListener("click", (e) => {
+              //   alert(e.target.innerHTML);
+              // });
               const td3 = document.createElement("td");
               td3.innerHTML=pQty[i];
               totalPlt+=parseInt(pQty[i]);
