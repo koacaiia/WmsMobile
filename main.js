@@ -311,18 +311,14 @@ function popUp(){
           for(let i=0;i<des.length;i++){
             
               const tr = document.createElement("tr");
-              tr.addEventListener('mouseover', (e) => {
+              tr.addEventListener('click', (e) => {
                 popup.style.display = 'block';
                 popup.style.left = e.pageX + 'px';
                 popup.style.top = e.pageY + 'px';
                 popup.textContent = tr.cells[1].textContent;
-              });
-              // tr.addEventListener('mousemove', (e) => {
-              //   popup.style.left = e.pageX + 'px';
-              //   popup.style.top = e.pageY + 'px';
-              // });
-              tr.addEventListener('mouseout', () => {
-                popup.style.display = 'none';
+                setTimeout(() => {
+                  popup.style.display = 'none';
+                }, 5000); // 
               });
               const td1 = document.createElement("td");
               td1.innerHTML=des[i];
