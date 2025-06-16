@@ -314,6 +314,9 @@ function popUp(){
               td1.innerHTML=des[i];
               const td2 = document.createElement("td");
               td2.innerHTML=manNo[i];
+              td2.addEventListener("click", (e) => {
+                alert(e.target.innerHTML);
+              });
               const td3 = document.createElement("td");
               td3.innerHTML=pQty[i];
               totalPlt+=parseInt(pQty[i]);
