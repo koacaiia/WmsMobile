@@ -1088,13 +1088,8 @@ function sendLocalNotification(title, body, icon) {
       requireInteraction: true,
       tag: 'wms-local-notification',
       timestamp: Date.now(),
-      silent: false,
-      actions: [
-        {
-          action: 'view',
-          title: '확인'
-        }
-      ]
+      silent: false
+      // actions는 일반 브라우저 알림에서 지원되지 않음 (Service Worker 전용)
     });
     
     // 알림 클릭 이벤트
