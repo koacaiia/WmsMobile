@@ -563,7 +563,7 @@ function upLoad(){
         sendMessage(token, 
           "작업 완료 등록", 
           `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
-          '/images/icon.png'
+          '/WmsMobile/images/icon.png'
         );
       }
           }else{
@@ -603,7 +603,7 @@ function upLoad(){
                         sendMessage(token, 
                           "이미지 업로드 완료", 
                           `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
-                          '/images/icon.png'
+                          '/WmsMobile/images/icon.png'
                         );
                       }
                       
@@ -667,7 +667,7 @@ function upLoad(){
         sendMessage(token, 
           "파일 업로드 완료", 
           `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`, 
-          '/images/icon.png'
+          '/WmsMobile/images/icon.png'
         );
       }
           }
@@ -695,7 +695,7 @@ function upLoad(){
         sendMessage(token, 
           "작업 상태 업데이트", 
           `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`, 
-          '/images/icon.png'
+          '/WmsMobile/images/icon.png'
         );
       }
     }).catch((error) => {
@@ -803,7 +803,7 @@ if ('serviceWorker' in navigator) {
             if ('Notification' in window) {
               new Notification('알림 설정 완료', {
                 body: 'WMS 알림이 활성화되었습니다.',
-                icon: '/images/icon.png',
+                icon: '/WmsMobile/images/icon.png',
                 tag: 'permission-granted'
               });
             }
@@ -958,7 +958,7 @@ if (typeof messaging !== 'undefined') {
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
-         icon: payload.notification.icon || '/images/default-icon.png'
+         icon: payload.notification.icon || '/WmsMobile/images/default-icon.png'
     };
     console.log(notificationTitle,notificationOptions);
     
@@ -982,10 +982,10 @@ function sendMessage(token, title, body, icon) {
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(title, {
       body: body,
-      icon: icon || '/images/default-icon.png',
+      icon: icon || '/WmsMobile/images/default-icon.png',
       requireInteraction: true,
       tag: 'wms-notification',
-      badge: icon || '/images/default-icon.png',
+      badge: icon || '/WmsMobile/images/default-icon.png',
       timestamp: Date.now(),
       silent: false
     });
@@ -1013,7 +1013,7 @@ function sendMessage(token, title, body, icon) {
     notification: {
       title: title,
       body: body,
-      icon: icon || '/images/default-icon.png'
+      icon: icon || '/WmsMobile/images/default-icon.png'
     }
   };
 
@@ -1044,7 +1044,7 @@ function sendMessage(token, title, body, icon) {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body: body,
-        icon: icon || '/images/default-icon.png',
+        icon: icon || '/WmsMobile/images/default-icon.png',
         requireInteraction: true,
         tag: 'wms-notification-fallback'
       });
@@ -1083,8 +1083,8 @@ function sendLocalNotification(title, body, icon) {
   if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification(title, {
       body: body,
-      icon: icon || '/images/icon.png',
-      badge: '/images/icon.png',
+      icon: icon || '/WmsMobile/images/icon.png',
+      badge: '/WmsMobile/images/icon.png',
       requireInteraction: true,
       tag: 'wms-local-notification',
       timestamp: Date.now(),
