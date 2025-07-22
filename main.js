@@ -522,6 +522,18 @@ function upLoad(){
     stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
     if(img.length==0){
       toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
+      
+      // FCM 알림 전송 - 사진 없이 작업 완료
+      if(token) {
+        const h3List = document.querySelectorAll(".popTitleC");
+        const clientName = h3List[0].innerHTML;
+        const containerInfo = h3List[1].innerHTML;
+        sendMessage(token, 
+          "작업 완료 등록", 
+          `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
+          '/images/icon.png'
+        );
+      }
           }else{
             for(let i=0;i<img.length;i++){
               const imgSrc = img[i].src;
@@ -542,6 +554,19 @@ function upLoad(){
                   if (index === imgUrls.length - 1) {
                       // alert(imgUrls.length+" 개 Images업로드 완료");
                       console.log("업로드 완료");
+                      
+                      // FCM 알림 전송 - 모든 이미지 업로드 완료
+                      if(token) {
+                        const h3List = document.querySelectorAll(".popTitleC");
+                        const clientName = h3List[0].innerHTML;
+                        const containerInfo = h3List[1].innerHTML;
+                        sendMessage(token, 
+                          "이미지 업로드 완료", 
+                          `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
+                          '/images/icon.png'
+                        );
+                      }
+                      
                       fileTr.replaceChildren();
                       let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
                       // imgRef.replace("/",",");
@@ -585,6 +610,18 @@ function upLoad(){
         });
       });
       toastOn(imgUrls.length+" 파일 업로드 완료");
+      
+      // FCM 알림 전송 - 파일 업로드 완료
+      if(token) {
+        const h3List = document.querySelectorAll(".popTitleC");
+        const clientName = h3List[0].innerHTML;
+        const containerInfo = h3List[1].innerHTML;
+        sendMessage(token, 
+          "파일 업로드 완료", 
+          `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`, 
+          '/images/icon.png'
+        );
+      }
           }
     let w;
     if(ioValue=="InCargo"){
@@ -592,7 +629,22 @@ function upLoad(){
     }else{
       w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
     }
-    database_f.ref(ref).update(w);
+    database_f.ref(ref).update(w).then(() => {
+      // FCM 알림 전송 - 작업 상태 업데이트 완료
+      if(token) {
+        const h3List = document.querySelectorAll(".popTitleC");
+        const clientName = h3List[0].innerHTML;
+        const containerInfo = h3List[1].innerHTML;
+        const workStatus = ioValue=="InCargo" ? "컨테이너진입" : "작업완료";
+        sendMessage(token, 
+          "작업 상태 업데이트", 
+          `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`, 
+          '/images/icon.png'
+        );
+      }
+    }).catch((error) => {
+      console.error("작업 상태 업데이트 오류:", error);
+    });
  
 }
 
@@ -656,7 +708,12 @@ function osSubmit(){
   }).catch((e)=>{});
 }
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
+  // 현재 환경에 따라 경로 설정
+  const swPath = location.hostname === 'localhost' || location.hostname === '127.0.0.1' 
+    ? './firebase-messaging-sw.js' 
+    : '/WmsMobile/firebase-messaging-sw.js';
+    
+  navigator.serviceWorker.register(swPath)
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
       function requestPermission(){
@@ -674,11 +731,15 @@ if ('serviceWorker' in navigator) {
       }
       
       function getToken() {
-        console.log(registration);
-        return messaging.getToken({ vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+        console.log('Registration:', registration);
+        return messaging.getToken({ 
+          vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
+          serviceWorkerRegistration: registration
+        })
           .then(currentToken => {
             if (currentToken) {
               token = currentToken;
+              console.log('FCM Token acquired:', currentToken);
               return currentToken;
             } else {
               console.log('No registration token available. Request permission to generate one.');
@@ -690,19 +751,24 @@ if ('serviceWorker' in navigator) {
             return null;
           });
       }
-      document.addEventListener('DOMContentLoaded', () => {
-        requestPermission();
       
-        // Example: Send a message after getting the token
-        getToken().then(token => {
-          if (token) {
-            sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-          }
-        });
+      // DOMContentLoaded 대신 즉시 실행
+      requestPermission();
+      
+      // 토큰 획득을 위한 초기화
+      getToken().then(currentToken => {
+        if (currentToken) {
+          console.log('Initial FCM setup complete with token:', currentToken);
+          // 초기 테스트 메시지는 제거 (필요시 활성화)
+          // sendMessage(currentToken, 'Hello!', 'This is a test message.', '/images/icon.png');
+        }
       });
     })
     .catch((err) => {
       console.error('Service Worker registration failed:', err);
+      console.log('FCM 기능을 사용할 수 없습니다. Service Worker 등록에 실패했습니다.');
+      // Service Worker 없이도 기본 기능은 동작하도록 설정
+      token = null;
     });
 }
 // if ('serviceWorker' in navigator) {
@@ -755,22 +821,37 @@ if ('serviceWorker' in navigator) {
 //     });
 // }
 
-messaging.onMessage((payload) => {
-  console.log('Message received. ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-      body: payload.notification.body,
-       icon: payload.notification.icon || '/images/default-icon.png'
-  };
-  console.log(notificationTitle,notificationOptions);
-  new Notification(notificationTitle, notificationOptions);
-  alert(payload.notification.body);
-});
+// FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
+if (typeof messaging !== 'undefined') {
+  messaging.onMessage((payload) => {
+    console.log('Message received. ', payload);
+    // Customize notification here
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
+        body: payload.notification.body,
+         icon: payload.notification.icon || '/images/default-icon.png'
+    };
+    console.log(notificationTitle,notificationOptions);
+    
+    // 브라우저 알림 표시
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notificationTitle, notificationOptions);
+    }
+    
+    // 추가 알림 (선택사항)
+    alert(payload.notification.body);
+  });
+}
 
 // Call requestPermission on page load
 
 function sendMessage(token, title, body, icon) {
+  // 토큰이 없으면 알림 전송하지 않음
+  if (!token) {
+    console.log('FCM token not available. Notification not sent.');
+    return;
+  }
+  
   const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
   const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
 
@@ -791,12 +872,27 @@ function sendMessage(token, title, body, icon) {
     },
     body: JSON.stringify(messagePayload)
   })
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(data => {
-    console.log('Message sent successfully:', data);
+    console.log('FCM message sent successfully:', data);
+    if (data.failure > 0) {
+      console.warn('Some messages failed to send:', data.results);
+    }
   })
   .catch(error => {
-    console.error('Error sending message:', error);
+    console.error('Error sending FCM message:', error);
+    // 로컬 알림으로 대체 (브라우저가 지원하는 경우)
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: body,
+        icon: icon || '/images/default-icon.png'
+      });
+    }
   });
 }
 async function sendMessageToServer(message, token) {
@@ -817,8 +913,10 @@ async function sendMessageToServer(message, token) {
     console.error('Error sending notification request:', error);
   }
 }
-// // Example usage
-sendMessageToServer('Hello!', token);
+
+// Example usage (주석 처리 - 필요시 활성화)
+// sendMessageToServer('Hello!', token);
+
  function reLoad(){
   if(mC){
     location.reload();
