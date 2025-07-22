@@ -45,6 +45,17 @@ console.log('Firebase services initialized:');
 console.log('- Database:', !!database_f);
 console.log('- Messaging:', !!messaging);
 console.log('- Storage:', !!storage_f);
+
+// Firebase 프로젝트 정보 표시
+console.log('🔥 Firebase Project Info:');
+console.log('   Project ID:', firebaseConfig.projectId);
+console.log('   Sender ID:', firebaseConfig.messagingSenderId);
+console.log('   App ID:', firebaseConfig.appId);
+console.log('💡 VAPID Key 확인 방법:');
+console.log('   1. https://console.firebase.google.com/ 접속');
+console.log('   2. 프로젝트:', firebaseConfig.projectId, '선택');
+console.log('   3. Project Settings > Cloud Messaging > Web configuration');
+console.log('   4. Web Push certificates 섹션에서 키 확인/생성');
 const deptName = "WareHouseDept2";
 // messaging.onBackgroundMessage(function(payload) {
 //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
@@ -767,17 +778,34 @@ if ('serviceWorker' in navigator) {
       function getToken() {
         console.log('Registration:', registration);
         
-        // 여러 VAPID 키 시도 (올바른 키로 교체하세요)
-        const vapidKeys = [
-          'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
-          // 추가 VAPID 키가 있다면 여기에 추가
-        ];
-        
         async function tryGetToken() {
-          // VAPID 키들을 순차적으로 시도
+          // 1. 먼저 VAPID 키 없이 시도 (가장 간단한 방법)
+          try {
+            console.log('Trying without VAPID key first...');
+            const currentToken = await messaging.getToken({
+              serviceWorkerRegistration: registration
+            });
+            
+            if (currentToken) {
+              token = currentToken;
+              console.log('✅ FCM Token acquired without VAPID key:', currentToken);
+              return currentToken;
+            }
+          } catch (err) {
+            console.log('❌ Failed without VAPID key:', err.message);
+          }
+          
+          // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
+          const vapidKeys = [
+            // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
+            'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
+          ];
+          
+          // 3. VAPID 키들을 순차적으로 시도
           for (const vapidKey of vapidKeys) {
             try {
-              console.log('Trying VAPID key:', vapidKey.substring(0, 10) + '...');
+              console.log('Trying VAPID key:', vapidKey.substring(0, 15) + '...');
               const currentToken = await messaging.getToken({ 
                 vapidKey: vapidKey,
                 serviceWorkerRegistration: registration
@@ -785,33 +813,17 @@ if ('serviceWorker' in navigator) {
               
               if (currentToken) {
                 token = currentToken;
-                console.log('FCM Token acquired with VAPID key:', currentToken);
+                console.log('✅ FCM Token acquired with VAPID key:', currentToken);
                 return currentToken;
               }
             } catch (err) {
-              console.log('Error with VAPID key:', vapidKey.substring(0, 10) + '...', err.message);
+              console.log('❌ Error with VAPID key:', vapidKey.substring(0, 15) + '...', err.message);
             }
           }
           
-          // 모든 VAPID 키가 실패하면 VAPID 키 없이 시도
-          try {
-            console.log('Trying without VAPID key...');
-            const currentToken = await messaging.getToken({
-              serviceWorkerRegistration: registration
-            });
-            
-            if (currentToken) {
-              token = currentToken;
-              console.log('FCM Token acquired without VAPID key:', currentToken);
-              return currentToken;
-            } else {
-              console.log('No registration token available.');
-              return null;
-            }
-          } catch (fallbackErr) {
-            console.log('Failed to get token without VAPID key:', fallbackErr);
-            return null;
-          }
+          // 4. 모든 시도가 실패했을 경우
+          console.log('❌ All token acquisition attempts failed');
+          return null;
         }
         
         return tryGetToken();
@@ -823,9 +835,16 @@ if ('serviceWorker' in navigator) {
       // 토큰 획득을 위한 초기화
       getToken().then(currentToken => {
         if (currentToken) {
-          console.log('Initial FCM setup complete with token:', currentToken);
+          console.log('✅ Initial FCM setup complete with token:', currentToken);
+          console.log('🔔 FCM 알림 기능이 활성화되었습니다.');
           // 초기 테스트 메시지는 제거 (필요시 활성화)
           // sendMessage(currentToken, 'Hello!', 'This is a test message.', '/images/icon.png');
+        } else {
+          console.log('❌ FCM token not available. 알림 기능을 사용할 수 없습니다.');
+          console.log('💡 해결 방법:');
+          console.log('   1. Firebase Console > Project Settings > Cloud Messaging 이동');
+          console.log('   2. Web configuration > Web Push certificates에서 올바른 VAPID key 확인');
+          console.log('   3. 코드의 vapidKeys 배열에 올바른 키 추가');
         }
       });
     })
@@ -911,9 +930,24 @@ if (typeof messaging !== 'undefined') {
 // Call requestPermission on page load
 
 function sendMessage(token, title, body, icon) {
-  // 토큰이 없으면 알림 전송하지 않음
+  // 토큰이 없으면 로컬 브라우저 알림으로 대체
   if (!token) {
-    console.log('FCM token not available. Notification not sent.');
+    console.log('FCM token not available. Using local notification instead.');
+    
+    // 로컬 브라우저 알림 시도
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: body,
+        icon: icon || '/images/default-icon.png',
+        requireInteraction: true,
+        tag: 'wms-notification'
+      });
+      console.log('✅ Local notification sent:', title);
+    } else {
+      // 브라우저 알림도 불가능한 경우 콘솔과 alert으로 알림
+      console.log('📢 알림:', title, '-', body);
+      // alert(`${title}\n${body}`); // 너무 방해가 될 수 있으므로 주석 처리
+    }
     return;
   }
   
@@ -944,19 +978,23 @@ function sendMessage(token, title, body, icon) {
     return response.json();
   })
   .then(data => {
-    console.log('FCM message sent successfully:', data);
+    console.log('✅ FCM message sent successfully:', data);
     if (data.failure > 0) {
-      console.warn('Some messages failed to send:', data.results);
+      console.warn('⚠️ Some messages failed to send:', data.results);
     }
   })
   .catch(error => {
-    console.error('Error sending FCM message:', error);
-    // 로컬 알림으로 대체 (브라우저가 지원하는 경우)
+    console.error('❌ Error sending FCM message:', error);
+    
+    // FCM 실패 시 로컬 알림으로 fallback
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body: body,
-        icon: icon || '/images/default-icon.png'
+        icon: icon || '/images/default-icon.png',
+        requireInteraction: true,
+        tag: 'wms-notification-fallback'
       });
+      console.log('✅ Fallback local notification sent:', title);
     }
   });
 }
@@ -981,6 +1019,51 @@ async function sendMessageToServer(message, token) {
 
 // Example usage (주석 처리 - 필요시 활성화)
 // sendMessageToServer('Hello!', token);
+
+// 개발자 도구에서 VAPID 키를 테스트하기 위한 헬퍼 함수
+window.testVapidKey = async function(vapidKey) {
+  if (!vapidKey) {
+    console.log('❌ VAPID 키를 입력해주세요. 예: testVapidKey("BK8n...")');
+    return;
+  }
+  
+  try {
+    console.log('🧪 Testing VAPID key:', vapidKey.substring(0, 15) + '...');
+    
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        const testToken = await messaging.getToken({ 
+          vapidKey: vapidKey,
+          serviceWorkerRegistration: registration
+        });
+        
+        if (testToken) {
+          console.log('✅ VAPID 키가 유효합니다!');
+          console.log('🔑 토큰:', testToken);
+          token = testToken; // 전역 토큰 업데이트
+          return testToken;
+        }
+      }
+    }
+  } catch (error) {
+    console.log('❌ VAPID 키 테스트 실패:', error.message);
+  }
+  
+  return null;
+};
+
+// Firebase Console 바로가기 함수
+window.openFirebaseConsole = function() {
+  const url = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/settings/cloudmessaging`;
+  window.open(url, '_blank');
+  console.log('🔥 Firebase Console이 새 탭에서 열립니다.');
+  console.log('📍 Cloud Messaging 설정 페이지로 이동합니다.');
+};
+
+console.log('🛠️ 개발자 도구 사용 가능한 함수:');
+console.log('   - testVapidKey("새로운_VAPID_키") : VAPID 키 테스트');
+console.log('   - openFirebaseConsole() : Firebase Console 열기');
 
  function reLoad(){
   if(mC){
