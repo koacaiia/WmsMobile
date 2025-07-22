@@ -882,6 +882,26 @@ if ('serviceWorker' in navigator) {
         if (currentToken) {
           console.log('✅ Initial FCM setup complete with token:', currentToken);
           console.log('🔔 FCM 알림 기능이 활성화되었습니다.');
+          
+          // 기존 구독 상태 확인
+          const existingSubscription = localStorage.getItem('fcm_topic_fine2');
+          if (!existingSubscription) {
+            // fine2 토픽 구독 설정 (처음 방문 시에만)
+            console.log('🆕 fine2 토픽 구독을 새로 설정합니다.');
+            subscribeToTopic(currentToken, 'fine2');
+          } else {
+            console.log('✅ fine2 토픽이 이미 구독되어 있습니다:', existingSubscription);
+            const subscribeDate = localStorage.getItem('fcm_topic_fine2_date');
+            if (subscribeDate) {
+              console.log('📅 구독 날짜:', new Date(subscribeDate).toLocaleString());
+            }
+          }
+          
+          // 현재 구독 상태 표시
+          setTimeout(() => {
+            checkTopicSubscriptions();
+          }, 1000);
+          
           // 초기 테스트 메시지는 제거 (필요시 활성화)
           // sendMessage(currentToken, 'Hello!', 'This is a test message.', '/images/icon.png');
         } else {
@@ -1054,6 +1074,109 @@ function sendMessage(token, title, body, icon) {
     }
   });
 }
+
+// 토픽 구독 함수
+function subscribeToTopic(token, topicName) {
+  console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
+  
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+  
+  const subscribePayload = {
+    to: `/topics/${topicName}`,
+    registration_tokens: [token]
+  };
+
+  fetch('https://iid.googleapis.com/iid/v1:batchAdd', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(subscribePayload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(`✅ 토픽 '${topicName}' 구독 성공:`, data);
+    
+    // 로컬 저장소에 구독 상태 저장
+    localStorage.setItem(`fcm_topic_${topicName}`, 'subscribed');
+    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
+    
+    // 구독 성공 알림
+    sendLocalNotification(
+      "토픽 구독 완료", 
+      `'${topicName}' 토픽 구독이 완료되었습니다. 해당 토픽의 알림을 받을 수 있습니다.`
+    );
+  })
+  .catch(error => {
+    console.log(`❌ 토픽 '${topicName}' 구독 실패 (CORS 제한):`, error.message);
+    
+    // CORS 문제로 인해 직접 구독이 실패하더라도 로컬에 상태 저장
+    localStorage.setItem(`fcm_topic_${topicName}`, 'attempted');
+    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
+    
+    console.log(`💡 토픽 구독을 위한 대안 방법:`);
+    console.log(`   1. 서버 측에서 토큰을 사용해 토픽 구독 처리`);
+    console.log(`   2. Firebase Admin SDK를 통한 구독 관리`);
+    console.log(`   3. 토큰: ${token}`);
+    console.log(`   4. 토픽: ${topicName}`);
+    
+    // 구독 시도 알림
+    sendLocalNotification(
+      "토픽 구독 시도", 
+      `'${topicName}' 토픽 구독을 시도했습니다. 서버에서 추가 설정이 필요할 수 있습니다.`
+    );
+  });
+}
+
+// 토픽 구독 해제 함수
+function unsubscribeFromTopic(token, topicName) {
+  console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
+  
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+  
+  const unsubscribePayload = {
+    to: `/topics/${topicName}`,
+    registration_tokens: [token]
+  };
+
+  fetch('https://iid.googleapis.com/iid/v1:batchRemove', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(unsubscribePayload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공:`, data);
+    
+    // 로컬 저장소에서 구독 상태 제거
+    localStorage.removeItem(`fcm_topic_${topicName}`);
+    localStorage.removeItem(`fcm_topic_${topicName}_date`);
+    
+    // 구독 해제 성공 알림
+    sendLocalNotification(
+      "토픽 구독 해제", 
+      `'${topicName}' 토픽 구독이 해제되었습니다.`
+    );
+  })
+  .catch(error => {
+    console.log(`❌ 토픽 '${topicName}' 구독 해제 실패:`, error.message);
+  });
+}
+
 async function sendMessageToServer(message, token) {
   try {
     const response = await fetch('https://fcm.googleapis.com/fcm/send', { // Your server's endpoint
@@ -1158,6 +1281,70 @@ console.log('   - testVapidKey("새로운_VAPID_키") : VAPID 키 테스트');
 console.log('   - openFirebaseConsole() : Firebase Console 열기');
 console.log('   - testLocalNotification() : 로컬 알림 테스트');
 console.log('   - checkNotificationPermission() : 알림 권한 상태 확인');
+console.log('   - subscribeToTopicManual("토픽명") : 수동 토픽 구독');
+console.log('   - unsubscribeFromTopicManual("토픽명") : 수동 토픽 구독 해제');
+console.log('   - checkTopicSubscriptions() : 현재 구독 상태 확인');
+
+// 토픽 관련 개발자 도구 함수들
+window.subscribeToTopicManual = function(topicName) {
+  if (!topicName) {
+    console.log('❌ 토픽명을 입력해주세요. 예: subscribeToTopicManual("fine2")');
+    return;
+  }
+  
+  if (!token) {
+    console.log('❌ FCM 토큰이 없습니다. 먼저 알림 권한을 허용하고 토큰을 획득해주세요.');
+    return;
+  }
+  
+  subscribeToTopic(token, topicName);
+};
+
+window.unsubscribeFromTopicManual = function(topicName) {
+  if (!topicName) {
+    console.log('❌ 토픽명을 입력해주세요. 예: unsubscribeFromTopicManual("fine2")');
+    return;
+  }
+  
+  if (!token) {
+    console.log('❌ FCM 토큰이 없습니다.');
+    return;
+  }
+  
+  unsubscribeFromTopic(token, topicName);
+};
+
+window.checkTopicSubscriptions = function() {
+  console.log('📋 현재 토픽 구독 상태:');
+  
+  const topics = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('fcm_topic_') && !key.endsWith('_date')) {
+      const topicName = key.replace('fcm_topic_', '');
+      const status = localStorage.getItem(key);
+      const dateKey = key + '_date';
+      const date = localStorage.getItem(dateKey);
+      
+      topics.push({
+        topic: topicName,
+        status: status,
+        date: date ? new Date(date).toLocaleString() : '알 수 없음'
+      });
+    }
+  }
+  
+  if (topics.length === 0) {
+    console.log('   구독한 토픽이 없습니다.');
+  } else {
+    topics.forEach(topic => {
+      console.log(`   📌 ${topic.topic}: ${topic.status} (${topic.date})`);
+    });
+  }
+  
+  console.log(`📱 현재 FCM 토큰: ${token || '없음'}`);
+  return topics;
+};
 
 // 알림 테스트 함수
 window.testLocalNotification = function() {
