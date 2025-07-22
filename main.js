@@ -21,8 +21,16 @@ const firebaseConfig = {
 };
 if(firebase.apps.length==0){
   firebase.initializeApp(firebaseConfig);
+  console.log('Firebase initialized with config:', {
+    projectId: firebaseConfig.projectId,
+    messagingSenderId: firebaseConfig.messagingSenderId,
+    appId: firebaseConfig.appId
+  });
 }
-else{firebase.app();}
+else{
+  firebase.app();
+  console.log('Firebase app already initialized');
+}
 // const doc =document.documentElement;
 // function fullScreen(){
 //   doc.requestFullscreen();
@@ -32,6 +40,11 @@ else{firebase.app();}
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
+
+console.log('Firebase services initialized:');
+console.log('- Database:', !!database_f);
+console.log('- Messaging:', !!messaging);
+console.log('- Storage:', !!storage_f);
 const deptName = "WareHouseDept2";
 // messaging.onBackgroundMessage(function(payload) {
 //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
@@ -717,39 +730,91 @@ if ('serviceWorker' in navigator) {
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
       function requestPermission(){
-        Notification.requestPermission().then((permission)=> {
-          if(permission == "granted"){
-            console.log("Notification Permission Granted");
-            getToken();
-          } else {
-            console.log("Unable to get Permission to Notify.");
-          }
-        });
+        console.log('Requesting notification permission...');
+        
         if(!("Notification" in window)){
           console.log("This browser does not support notifications.");
+          return Promise.resolve(false);
         }
+        
+        if (Notification.permission === 'granted') {
+          console.log("Notification permission already granted");
+          getToken();
+          return Promise.resolve(true);
+        }
+        
+        if (Notification.permission === 'denied') {
+          console.log("Notification permission denied");
+          return Promise.resolve(false);
+        }
+        
+        return Notification.requestPermission().then((permission) => {
+          console.log('Notification permission result:', permission);
+          if(permission === "granted"){
+            console.log("Notification Permission Granted");
+            getToken();
+            return true;
+          } else {
+            console.log("Unable to get Permission to Notify.");
+            return false;
+          }
+        }).catch(err => {
+          console.error('Error requesting notification permission:', err);
+          return false;
+        });
       }
       
       function getToken() {
         console.log('Registration:', registration);
-        return messaging.getToken({ 
-          vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
-          serviceWorkerRegistration: registration
-        })
-          .then(currentToken => {
+        
+        // 여러 VAPID 키 시도 (올바른 키로 교체하세요)
+        const vapidKeys = [
+          'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
+          // 추가 VAPID 키가 있다면 여기에 추가
+        ];
+        
+        async function tryGetToken() {
+          // VAPID 키들을 순차적으로 시도
+          for (const vapidKey of vapidKeys) {
+            try {
+              console.log('Trying VAPID key:', vapidKey.substring(0, 10) + '...');
+              const currentToken = await messaging.getToken({ 
+                vapidKey: vapidKey,
+                serviceWorkerRegistration: registration
+              });
+              
+              if (currentToken) {
+                token = currentToken;
+                console.log('FCM Token acquired with VAPID key:', currentToken);
+                return currentToken;
+              }
+            } catch (err) {
+              console.log('Error with VAPID key:', vapidKey.substring(0, 10) + '...', err.message);
+            }
+          }
+          
+          // 모든 VAPID 키가 실패하면 VAPID 키 없이 시도
+          try {
+            console.log('Trying without VAPID key...');
+            const currentToken = await messaging.getToken({
+              serviceWorkerRegistration: registration
+            });
+            
             if (currentToken) {
               token = currentToken;
-              console.log('FCM Token acquired:', currentToken);
+              console.log('FCM Token acquired without VAPID key:', currentToken);
               return currentToken;
             } else {
-              console.log('No registration token available. Request permission to generate one.');
+              console.log('No registration token available.');
               return null;
             }
-          })
-          .catch(err => {
-            console.log('An error occurred while retrieving token. ', err);
+          } catch (fallbackErr) {
+            console.log('Failed to get token without VAPID key:', fallbackErr);
             return null;
-          });
+          }
+        }
+        
+        return tryGetToken();
       }
       
       // DOMContentLoaded 대신 즉시 실행
