@@ -959,7 +959,7 @@ function formatDateTime(date = new Date()) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-// sendLocalNotification 함수 완전히 새로 작성
+// sendLocalNotification 함수 수정 (forceNotificationTest 호출 제거)
 function sendLocalNotification(title, body, icon) {
     console.log('🔔 sendLocalNotification 호출됨');
     console.log('📱 파라미터:', { title, body, icon });
@@ -976,14 +976,165 @@ function sendLocalNotification(title, body, icon) {
     
     if (Notification.permission === "denied") {
         console.log("❌ 알림 권한이 거부되어 있습니다.");
-        alert("알림이 차단되어 있습니다.\n\n해결 방법:\n1. 브라우저 주소창 왼쪽의 자물쇠 아이콘 클릭\n2. '알림' 설정을 '허용'으로 변경\n3. 페이지 새로고침");
+        alert(`알림이 차단되어 있습니다.\n\n${title}\n${body}`);
         return false;
+    }
+    
+    if (Notification.permission !== "granted") {
+        console.log("⚠️ 알림 권한이 허용되지 않았습니다. 권한을 요청합니다...");
+        
+        // 권한 요청
+        Notification.requestPermission().then(permission => {
+            console.log('권한 요청 결과:', permission);
+            if (permission === "granted") {
+                // 권한 받은 후 재시도
+                setTimeout(() => {
+                    sendLocalNotification(title, body, icon);
+                }, 100);
+            } else {
+                alert(`알림 권한이 거부되었습니다.\n\n${title}\n${body}`);
+            }
+        });
+        return false;
+    }
+    
+    try {
+        // 3. 아이콘 경로 설정
+        const iconPath = icon || getIconPath();
+        console.log('🖼️ 사용할 아이콘 경로:', iconPath);
+        
+        // 4. 시간 정보 추가
+        const currentTime = formatDateTime();
+        let enhancedBody = body;
+        
+        // 작업상태 관련 알림인 경우 등록시간 추가
+        if (title.includes('작업 상태 업데이트') || 
+            title.includes('작업 완료') ||
+            title.includes('컨테이너진입') ||
+            title.includes('이미지 업로드') ||
+            title.includes('파일 업로드')) {
+            enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
+        }
+        
+        console.log('📝 최종 알림 내용:', { title, body: enhancedBody, icon: iconPath });
+        
+        // 5. 알림 생성 및 표시
+        const notification = new Notification(title, {
+            body: enhancedBody,
+            icon: iconPath,
+            badge: iconPath,
+            timestamp: Date.now(),
+            requireInteraction: false,
+            tag: 'wms-local-notification-' + Date.now(),
+            silent: false,
+            vibrate: [200, 100, 200],
+            data: {
+                timestamp: currentTime,
+                originalBody: body,
+                created: Date.now()
+            }
+        });
+
+        console.log('✅ Notification 객체 생성 완료:', notification);
+
+        // 6. 이벤트 리스너 설정
+        notification.onshow = function() {
+            console.log('🔔 알림이 화면에 표시되었습니다:', title);
+        };
+        
+        notification.onclick = function(event) {
+            console.log('🖱️ 알림 클릭됨:', event);
+            window.focus();
+            notification.close();
+        };
+        
+        notification.onclose = function() {
+            console.log('🔕 알림이 닫혔습니다:', title);
+        };
+        
+        notification.onerror = function(error) {
+            console.error('❌ 알림 오류:', error);
+        };
+
+        // 7. 자동 닫기
+        setTimeout(() => {
+            if (notification) {
+                notification.close();
+                console.log('⏰ 알림 자동 닫기:', title);
+            }
+        }, 8000);
+
+        console.log('✅ 로컬 알림 전송 성공:', title);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ 로컬 알림 생성 중 오류:', error);
+        alert(`알림 표시 중 오류가 발생했습니다.\n\n${title}\n${body}\n\n오류: ${error.message}`);
+        return false;
+    }
+}
+
+// forceNotificationTest 함수 추가
+function forceNotificationTest() {
+    console.log('🚨 강제 알림 테스트 시작');
+    
+    // 1. 간단한 기본 알림
+    if (Notification.permission === 'granted') {
+        try {
+            const simpleNotification = new Notification('🧪 즉시 테스트', {
+                body: '가장 기본적인 알림입니다.',
+                icon: getIconPath()
+            });
+            
+            simpleNotification.onclick = () => {
+                console.log('간단한 알림 클릭됨');
+                simpleNotification.close();
+            };
+            
+            console.log('✅ 간단한 알림 생성 완료');
+        } catch (error) {
+            console.error('❌ 간단한 알림 생성 실패:', error);
+        }
+    }
+    
+    // 2. sendLocalNotification 함수 테스트
+    setTimeout(() => {
+        sendLocalNotification(
+            '🧪 함수 테스트',
+            '이것은 sendLocalNotification 함수 테스트입니다.'
+        );
+    }, 1000);
+    
+    // 3. 작업 상태 알림 테스트
+    setTimeout(() => {
+        sendLocalNotification(
+            '작업 상태 업데이트',
+            '테스트고객 - TEST123: 작업완료 상태로 업데이트됨'
+        );
+    }, 2000);
+}
+
+// forceRequestNotificationPermission 함수 수정 (forceNotificationTest 호출 제거)
+function forceRequestNotificationPermission() {
+    console.log('🔔 강제 알림 권한 요청 시작');
+    
+    if (!("Notification" in window)) {
+        alert("이 브라우저는 데스크톱 알림을 지원하지 않습니다.");
+        return Promise.resolve(false);
+    }
+    
+    console.log('현재 권한 상태:', Notification.permission);
+    
+    if (Notification.permission === "denied") {
+        console.log("❌ 알림이 차단되어 있습니다.");
+        alert("알림이 차단되어 있습니다.\n\n해결 방법:\n1. 브라우저 주소창 왼쪽의 자물쇠 아이콘 클릭\n2. '알림' 설정을 '허용'으로 변경\n3. 페이지 새로고침");
+        return Promise.resolve(false);
     }
     
     if (Notification.permission === "granted") {
         console.log("✅ 알림 권한이 이미 허용되어 있습니다.");
         forceNotificationTest();
-        return true;
+        return Promise.resolve(true);
     }
     
     // 권한 요청
@@ -1025,111 +1176,100 @@ function sendLocalNotification(title, body, icon) {
     });
 }
 
-// 종합 진단 함수 개선
-function comprehensiveNotificationDiagnostic() {
-    console.log('🔍 브라우저 알림 종합 진단 시작...');
+// immediateNotificationTest 함수 추가
+function immediateNotificationTest() {
+    console.log('⚡ 즉시 알림 테스트 시작');
+    console.log('🖼️ 사용할 아이콘 경로:', getIconPath());
     
-    const results = {
-        browserSupport: false,
-        permission: 'unknown',
-        serviceWorker: false,
-        testResult: false
-    };
-    
-    // 1. 브라우저 지원 확인
-    console.log('1️⃣ 브라우저 지원 확인:');
-    if ("Notification" in window) {
-        console.log('   ✅ Notification API 지원됨');
-        results.browserSupport = true;
-    } else {
-        console.log('   ❌ Notification API 지원되지 않음');
-        return results;
+    // 1. 로컬 알림 즉시 테스트
+    if (Notification.permission === 'granted') {
+        new Notification('⚡ 즉시 로컬 알림', {
+            body: '로컬 브라우저 알림이 즉시 표시됩니다.',
+            icon: getIconPath()
+        });
     }
     
-    // 2. 권한 상태 확인
-    console.log('2️⃣ 알림 권한 상태:');
-    results.permission = Notification.permission;
-    console.log(`   📋 현재 권한: ${Notification.permission}`);
-    
-    switch(Notification.permission) {
-        case 'granted':
-            console.log('   ✅ 권한 허용됨 - 알림 표시 가능');
-            break;
-        case 'denied':
-            console.log('   ❌ 권한 거부됨 - 브라우저 설정에서 수동 허용 필요');
-            break;
-        case 'default':
-            console.log('   ⚠️ 권한 미요청 - forceRequestNotificationPermission() 실행 필요');
-            break;
-    }
-    
-    // 3. Service Worker 확인
-    console.log('3️⃣ Service Worker 상태:');
+    // 2. Service Worker 즉시 테스트
     if ('serviceWorker' in navigator) {
-        console.log('   ✅ Service Worker API 지원됨');
-        results.serviceWorker = true;
-        
-        navigator.serviceWorker.getRegistrations().then(registrations => {
-            console.log(`   📄 등록된 Service Worker: ${registrations.length}개`);
-            registrations.forEach((reg, index) => {
-                console.log(`   - SW ${index + 1}: ${reg.active ? '활성' : '비활성'}`);
-            });
+        navigator.serviceWorker.ready.then((registration) => {
+            if (registration.active) {
+                registration.active.postMessage({
+                    type: 'IMMEDIATE_TEST'
+                });
+            }
+        });
+    }
+}
+
+// testServiceWorkerNotification 함수 추가
+function testServiceWorkerNotification() {
+    console.log('🧪 Service Worker 알림 테스트를 시작합니다...');
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((registration) => {
+            if (registration.active) {
+                console.log('📤 Service Worker에 테스트 메시지 전송');
+                registration.active.postMessage({
+                    type: 'TEST_NOTIFICATION'
+                });
+                console.log('✅ Service Worker 테스트 알림 요청 완료');
+            } else {
+                console.log('❌ Service Worker가 활성화되지 않았습니다.');
+            }
+        }).catch(error => {
+            console.error('❌ Service Worker 준비 실패:', error);
         });
     } else {
-        console.log('   ❌ Service Worker API 지원되지 않음');
+        console.log('❌ Service Worker를 지원하지 않는 브라우저입니다.');
     }
+}
+
+// testAllNotificationMethods 함수 추가
+function testAllNotificationMethods() {
+    console.log('🧪 모든 알림 방법을 테스트합니다...');
     
-    // 4. FCM 토큰 확인
-    console.log('4️⃣ FCM 상태:');
+    // 1. 권한 상태 확인
+    checkNotificationPermission();
+    
+    // 2. 로컬 알림 테스트
+    setTimeout(() => {
+        console.log('🧪 1. 로컬 알림 테스트');
+        testLocalNotification();
+    }, 1000);
+    
+    // 3. Service Worker 알림 테스트
+    setTimeout(() => {
+        console.log('🧪 2. Service Worker 알림 테스트');
+        testServiceWorkerNotification();
+    }, 2000);
+    
+    // 4. 강제 알림 테스트
+    setTimeout(() => {
+        console.log('🧪 3. 강제 알림 테스트');
+        forceNotificationTest();
+    }, 3000);
+    
+    // 5. 작업 상태 알림 테스트
+    setTimeout(() => {
+        console.log('🧪 4. 작업 상태 알림 테스트');
+        sendLocalNotification(
+            '작업 상태 업데이트', 
+            '테스트고객 - TEST123: 작업완료 상태로 업데이트됨'
+        );
+    }, 4000);
+    
+    // 6. FCM 토큰이 있는 경우 FCM 테스트
     if (token) {
-        console.log(`   ✅ FCM 토큰 존재: ${token.substring(0, 20)}...`);
-    } else {
-        console.log('   ❌ FCM 토큰 없음');
+        setTimeout(() => {
+            console.log('🧪 5. FCM 메시지 테스트');
+            sendMessage(
+                token,
+                'FCM 테스트 알림', 
+                `테스트고객 - TEST123: FCM을 통한 알림 테스트`,
+                getIconPath()
+            );
+        }, 5000);
     }
-    
-    // 5. 즉시 알림 테스트 (권한이 있는 경우)
-    if (Notification.permission === 'granted') {
-        console.log('5️⃣ 즉시 알림 테스트:');
-        try {
-            const testNotification = new Notification('🧪 진단 테스트', {
-                body: '브라우저 알림 진단 테스트입니다.',
-                icon: getIconPath()
-            });
-            
-            testNotification.onshow = () => {
-                console.log('   ✅ 테스트 알림 표시 성공');
-                results.testResult = true;
-            };
-            
-            testNotification.onerror = (error) => {
-                console.log('   ❌ 테스트 알림 표시 실패:', error);
-                results.testResult = false;
-            };
-            
-            testNotification.onclick = () => {
-                testNotification.close();
-            };
-            
-        } catch (error) {
-            console.log('   ❌ 테스트 알림 생성 실패:', error);
-            results.testResult = false;
-        }
-    } else {
-        console.log('5️⃣ 알림 테스트 건너뜀 (권한 없음)');
-    }
-    
-    // 6. 권장 조치사항
-    console.log('6️⃣ 권장 조치사항:');
-    if (Notification.permission !== 'granted') {
-        console.log('   🔧 forceRequestNotificationPermission() 실행');
-    }
-    if (!results.testResult && Notification.permission === 'granted') {
-        console.log('   🔧 브라우저 새로고침 후 재시도');
-        console.log('   🔧 브라우저 설정에서 사이트별 알림 설정 확인');
-    }
-    console.log('   🔧 forceNotificationTest() 실행으로 강제 테스트');
-    
-    return results;
 }
 
 // 개발자 도구 함수 목록 업데이트
@@ -1143,12 +1283,20 @@ console.log(`
 ⚡ 강제 테스트:
    forceRequestNotificationPermission()   - 권한 요청 + 즉시 테스트
    forceNotificationTest()               - 다양한 방식으로 강제 테스트
+   immediateNotificationTest()           - 즉시 알림 테스트
    testLocalNotification()               - 기본 로컬 알림 테스트
+   testServiceWorkerNotification()       - Service Worker 알림 테스트
+   testAllNotificationMethods()          - 모든 방법 순차 테스트
    
-🔔 즉시 실행 권장:
+🔔 토픽 관리:
+   subscribeToTopicManual("토픽명")      - 토픽 구독
+   unsubscribeFromTopicManual("토픽명")  - 토픽 구독 해제
+   checkTopicSubscriptions()             - 구독 상태 확인
+   
+💡 즉시 실행 권장:
    1. comprehensiveNotificationDiagnostic()
    2. forceRequestNotificationPermission()
-   3. forceNotificationTest()
+   3. testAllNotificationMethods()
 `);
 
 // returnTime 함수 추가 (upLoad 함수에서 사용됨)
@@ -1226,7 +1374,7 @@ function sendMessage(token, title, body, icon) {
         console.log('❌ FCM 전송 실패 (CORS 제한):', error.message);
         console.log('🔄 로컬 알림으로 대체합니다...');
         
-        // FCM 실패 시 로컬 알림으로 대체
+        // FCM 실패 시 로컬 알림로 대체
         sendLocalNotification(title, enhancedBody, iconPath);
     });
 }
