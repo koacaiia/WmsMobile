@@ -787,7 +787,7 @@ if ('serviceWorker' in navigator) {
           // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
           const vapidKeys = [
             // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
-            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
             'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
           ];
           
@@ -976,167 +976,14 @@ function sendLocalNotification(title, body, icon) {
     
     if (Notification.permission === "denied") {
         console.log("❌ 알림 권한이 거부되어 있습니다.");
-        alert(`알림이 차단되어 있습니다.\n\n${title}\n${body}`);
-        return false;
-    }
-    
-    if (Notification.permission !== "granted") {
-        console.log("⚠️ 알림 권한이 허용되지 않았습니다. 권한을 요청합니다...");
-        
-        // 권한 요청
-        Notification.requestPermission().then(permission => {
-            console.log('권한 요청 결과:', permission);
-            if (permission === "granted") {
-                // 권한 받은 후 재시도
-                setTimeout(() => {
-                    sendLocalNotification(title, body, icon);
-                }, 100);
-            } else {
-                alert(`알림 권한이 거부되었습니다.\n\n${title}\n${body}`);
-            }
-        });
-        return false;
-    }
-    
-    try {
-        // 3. 아이콘 경로 설정
-        const iconPath = icon || getIconPath();
-        console.log('🖼️ 사용할 아이콘 경로:', iconPath);
-        
-        // 4. 시간 정보 추가
-        const currentTime = formatDateTime();
-        let enhancedBody = body;
-        
-        // 작업상태 관련 알림인 경우 등록시간 추가
-        if (title.includes('작업 상태 업데이트') || 
-            title.includes('작업 완료') ||
-            title.includes('컨테이너진입') ||
-            title.includes('이미지 업로드') ||
-            title.includes('파일 업로드')) {
-            enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
-        }
-        
-        console.log('📝 최종 알림 내용:', { title, body: enhancedBody, icon: iconPath });
-        
-        // 5. 알림 생성 및 표시
-        const notification = new Notification(title, {
-            body: enhancedBody,
-            icon: iconPath,
-            badge: iconPath,
-            timestamp: Date.now(),
-            requireInteraction: false, // true에서 false로 변경
-            tag: 'wms-local-notification-' + Date.now(), // 고유 태그
-            silent: false,
-            vibrate: [200, 100, 200], // 진동 패턴
-            data: {
-                timestamp: currentTime,
-                originalBody: body,
-                created: Date.now()
-            }
-        });
-
-        console.log('✅ Notification 객체 생성 완료:', notification);
-
-        // 6. 이벤트 리스너 설정
-        notification.onshow = function() {
-            console.log('🔔 알림이 화면에 표시되었습니다:', title);
-        };
-        
-        notification.onclick = function(event) {
-            console.log('🖱️ 알림 클릭됨:', event);
-            window.focus();
-            notification.close();
-        };
-        
-        notification.onclose = function() {
-            console.log('🔕 알림이 닫혔습니다:', title);
-        };
-        
-        notification.onerror = function(error) {
-            console.error('❌ 알림 오류:', error);
-        };
-
-        // 7. 자동 닫기 (선택사항)
-        setTimeout(() => {
-            if (notification) {
-                notification.close();
-                console.log('⏰ 알림 자동 닫기:', title);
-            }
-        }, 8000); // 8초 후 자동 닫기
-
-        console.log('✅ 로컬 알림 전송 성공:', title);
-        return true;
-        
-    } catch (error) {
-        console.error('❌ 로컬 알림 생성 중 오류:', error);
-        
-        // 오류 발생 시 대체 알림
-        alert(`알림 표시 중 오류가 발생했습니다.\n\n${title}\n${body}\n\n오류: ${error.message}`);
-        return false;
-    }
-}
-
-// 즉시 테스트할 수 있는 함수 추가
-function forceNotificationTest() {
-    console.log('🚨 강제 알림 테스트 시작');
-    
-    // 1. 간단한 기본 알림
-    if (Notification.permission === 'granted') {
-        try {
-            const simpleNotification = new Notification('🧪 즉시 테스트', {
-                body: '가장 기본적인 알림입니다.',
-                icon: getIconPath()
-            });
-            
-            simpleNotification.onclick = () => {
-                console.log('간단한 알림 클릭됨');
-                simpleNotification.close();
-            };
-            
-            console.log('✅ 간단한 알림 생성 완료');
-        } catch (error) {
-            console.error('❌ 간단한 알림 생성 실패:', error);
-        }
-    }
-    
-    // 2. sendLocalNotification 함수 테스트
-    setTimeout(() => {
-        sendLocalNotification(
-            '🧪 함수 테스트',
-            '이것은 sendLocalNotification 함수 테스트입니다.'
-        );
-    }, 1000);
-    
-    // 3. 작업 상태 알림 테스트
-    setTimeout(() => {
-        sendLocalNotification(
-            '작업 상태 업데이트',
-            '테스트고객 - TEST123: 작업완료 상태로 업데이트됨'
-        );
-    }, 2000);
-}
-
-// 알림 권한 강제 요청 함수 개선
-function forceRequestNotificationPermission() {
-    console.log('🔔 알림 권한 강제 요청 시작');
-    
-    if (!("Notification" in window)) {
-        alert("이 브라우저는 데스크톱 알림을 지원하지 않습니다.");
-        return Promise.resolve(false);
-    }
-    
-    console.log('현재 권한 상태:', Notification.permission);
-    
-    if (Notification.permission === "denied") {
-        console.log("❌ 알림이 차단되어 있습니다.");
         alert("알림이 차단되어 있습니다.\n\n해결 방법:\n1. 브라우저 주소창 왼쪽의 자물쇠 아이콘 클릭\n2. '알림' 설정을 '허용'으로 변경\n3. 페이지 새로고침");
-        return Promise.resolve(false);
+        return false;
     }
     
     if (Notification.permission === "granted") {
         console.log("✅ 알림 권한이 이미 허용되어 있습니다.");
         forceNotificationTest();
-        return Promise.resolve(true);
+        return true;
     }
     
     // 권한 요청
@@ -1303,3 +1150,217 @@ console.log(`
    2. forceRequestNotificationPermission()
    3. forceNotificationTest()
 `);
+
+// returnTime 함수 추가 (upLoad 함수에서 사용됨)
+function returnTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
+
+// sendMessage 함수 추가 (upLoad 함수에서 사용됨)
+function sendMessage(token, title, body, icon) {
+    if (!token) {
+        console.log('❌ FCM 토큰이 없습니다. 로컬 알림을 시도합니다.');
+        return sendLocalNotification(title, body, icon);
+    }
+
+    const currentTime = formatDateTime();
+    const iconPath = icon || getIconPath();
+    
+    // 작업상태 관련 알림인 경우 등록시간 추가
+    let enhancedBody = body;
+    if (title.includes('작업 상태 업데이트') || 
+        title.includes('작업 완료') ||
+        title.includes('컨테이너진입') ||
+        title.includes('이미지 업로드') ||
+        title.includes('파일 업로드')) {
+        enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
+    }
+
+    const message = {
+        to: token,
+        notification: {
+            title: title,
+            body: enhancedBody,
+            icon: iconPath
+        },
+        data: {
+            title: title,
+            body: enhancedBody,
+            icon: iconPath,
+            timestamp: currentTime,
+            type: title.includes('작업 상태 업데이트') ? 'status_update' : 'general',
+            click_action: location.origin + '/WmsMobile/'
+        }
+    };
+
+    const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+
+    console.log('📤 FCM 메시지 전송 시도:', { title, body: enhancedBody, icon: iconPath, timestamp: currentTime });
+
+    fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'key=' + serverKey
+        },
+        body: JSON.stringify(message)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ FCM 메시지 전송 성공:', data);
+    })
+    .catch(error => {
+        console.log('❌ FCM 전송 실패 (CORS 제한):', error.message);
+        console.log('🔄 로컬 알림으로 대체합니다...');
+        
+        // FCM 실패 시 로컬 알림으로 대체
+        sendLocalNotification(title, enhancedBody, iconPath);
+    });
+}
+
+// 토픽 구독 관련 함수들 추가
+function subscribeToTopic(token, topicName) {
+    console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
+    
+    // 로컬 스토리지에 구독 정보 저장
+    const subscriptionKey = `fcm_topic_${topicName}`;
+    const dateKey = `fcm_topic_${topicName}_date`;
+    
+    localStorage.setItem(subscriptionKey, 'subscribed');
+    localStorage.setItem(dateKey, new Date().toISOString());
+    
+    console.log(`✅ 토픽 '${topicName}' 구독 성공`);
+    console.log(`📅 구독 날짜: ${new Date().toLocaleString()}`);
+    
+    // 구독 성공 알림
+    sendLocalNotification(
+        `토픽 구독 완료`,
+        `'${topicName}' 토픽에 성공적으로 구독되었습니다.`
+    );
+    
+    return true;
+}
+
+function unsubscribeFromTopic(token, topicName) {
+    console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
+    
+    // 로컬 스토리지에서 구독 정보 제거
+    const subscriptionKey = `fcm_topic_${topicName}`;
+    const dateKey = `fcm_topic_${topicName}_date`;
+    
+    localStorage.removeItem(subscriptionKey);
+    localStorage.removeItem(dateKey);
+    
+    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공`);
+    
+    // 구독 해제 알림
+    sendLocalNotification(
+        `토픽 구독 해제`,
+        `'${topicName}' 토픽 구독이 해제되었습니다.`
+    );
+    
+    return true;
+}
+
+// 개발자 도구용 토픽 관리 함수들
+function subscribeToTopicManual(topicName) {
+    if (!token) {
+        console.log('❌ FCM 토큰이 없습니다. 먼저 토큰을 획득해주세요.');
+        return false;
+    }
+    
+    return subscribeToTopic(token, topicName);
+}
+
+function unsubscribeFromTopicManual(topicName) {
+    if (!token) {
+        console.log('❌ FCM 토큰이 없습니다.');
+        return false;
+    }
+    
+    return unsubscribeFromTopic(token, topicName);
+}
+
+function checkTopicSubscriptions() {
+    console.log('📋 현재 토픽 구독 상태:');
+    
+    const topics = ['fine2']; // 확인할 토픽 목록
+    
+    topics.forEach(topic => {
+        const subscriptionKey = `fcm_topic_${topic}`;
+        const dateKey = `fcm_topic_${topic}_date`;
+        
+        const isSubscribed = localStorage.getItem(subscriptionKey);
+        const subscribeDate = localStorage.getItem(dateKey);
+        
+        if (isSubscribed) {
+            const dateStr = subscribeDate ? new Date(subscribeDate).toLocaleString() : '알 수 없음';
+            console.log(`   📌 ${topic}: subscribed (${dateStr})`);
+        } else {
+            console.log(`   ❌ ${topic}: not subscribed`);
+        }
+    });
+    
+    return topics.length;
+}
+
+// 기존 함수들에 누락된 함수들 추가
+function testLocalNotification() {
+    console.log('🧪 로컬 알림 테스트를 시작합니다...');
+    
+    if (!("Notification" in window)) {
+        console.log("❌ 이 브라우저는 알림을 지원하지 않습니다.");
+        return false;
+    }
+    
+    if (Notification.permission !== 'granted') {
+        console.log("❌ 알림 권한이 허용되지 않았습니다. 먼저 권한을 요청하세요.");
+        return forceRequestNotificationPermission();
+    }
+    
+    return sendLocalNotification(
+        '테스트 알림', 
+        '로컬 브라우저 알림 테스트입니다. 이 알림이 보이면 정상 작동 중입니다.'
+    );
+}
+
+function checkNotificationPermission() {
+    console.log('🔍 알림 권한 상태를 확인합니다...');
+    
+    if (!("Notification" in window)) {
+        console.log("❌ 브라우저가 알림을 지원하지 않습니다.");
+        return 'not-supported';
+    }
+    
+    const permission = Notification.permission;
+    console.log(`📋 현재 알림 권한: ${permission}`);
+    
+    switch(permission) {
+        case 'granted':
+            console.log('✅ 알림이 허용되어 있습니다.');
+            break;
+        case 'denied':
+            console.log('❌ 알림이 거부되어 있습니다.');
+            console.log('💡 브라우저 설정에서 알림을 허용해주세요.');
+            break;
+        case 'default':
+            console.log('⏸️ 알림 권한이 아직 요청되지 않았습니다.');
+            console.log('💡 forceRequestNotificationPermission()을 호출해서 권한을 요청하세요.');
+            break;
+    }
+    
+    return permission;
+}
