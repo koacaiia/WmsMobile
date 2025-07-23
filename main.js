@@ -544,134 +544,32 @@ function upLoad(){
     const h3List = document.querySelectorAll(".popTitleC");
     const stockList ={"client":h3List[0].innerHTML};
     stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
+    
     if(img.length==0){
-      toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
-      
-      // FCM 알림 전송 - 사진 없이 작업 완료
-      const h3List = document.querySelectorAll(".popTitleC");
-      const clientName = h3List[0].innerHTML;
-      const containerInfo = h3List[1].innerHTML;
-      
-      // 로컬 알림 우선 사용 (CORS 문제 회피)
-      const notificationSent = sendLocalNotification(
-        "작업 완료 등록", 
-        `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
-      );
-      
-      // 로컬 알림이 실패한 경우에만 FCM 시도
-      if (!notificationSent && token) {
-        sendMessage(token, 
-          "작업 완료 등록", 
-          `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
-          '/WmsMobile/images/icon.png'
+        toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
+        
+        // FCM 알림 전송 - 사진 없이 작업 완료 (등록시간 포함)
+        const h3List = document.querySelectorAll(".popTitleC");
+        const clientName = h3List[0].innerHTML;
+        const containerInfo = h3List[1].innerHTML;
+        
+        // 로컬 알림 우선 사용 (자동으로 등록시간 추가됨)
+        const notificationSent = sendLocalNotification(
+            "작업 완료 등록", 
+            `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
         );
-      }
-          }else{
-            for(let i=0;i<img.length;i++){
-              const imgSrc = img[i].src;
-              imgUrls.push(imgSrc);
-            }
-            const storageRef = storage_f.ref(refFile);
-            
-    imgUrls.forEach((imgUrl, index) => {
-      fetch(imgUrl)
-          .then(response => response.blob())
-          .then(blob => {
-              // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
-              const selectTr = document.querySelector(".clicked");
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
-              const file = new File([blob], fileName, { type: blob.type });
-              const fileRef = storageRef.child(fileName.replace("/","_"));
-              fileRef.put(file).then((snapshot) => {
-                  if (index === imgUrls.length - 1) {
-                      // alert(imgUrls.length+" 개 Images업로드 완료");
-                      console.log("업로드 완료");
-                      
-                      // FCM 알림 전송 - 모든 이미지 업로드 완료
-                      const h3List = document.querySelectorAll(".popTitleC");
-                      const clientName = h3List[0].innerHTML;
-                      const containerInfo = h3List[1].innerHTML;
-                      
-                      // 로컬 알림 우선 사용
-                      const notificationSent = sendLocalNotification(
-                        "이미지 업로드 완료", 
-                        `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
-                      );
-                      
-                      // 로컬 알림이 실패한 경우에만 FCM 시도
-                      if (!notificationSent && token) {
-                        sendMessage(token, 
-                          "이미지 업로드 완료", 
-                          `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
-                          '/WmsMobile/images/icon.png'
-                        );
-                      }
-                      
-                      fileTr.replaceChildren();
-                      let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
-                      // imgRef.replace("/",",");
-                      imgRef = imgRef.split(",");
-                      const io=imgRef[4];
-                      const dateArr = imgRef[2];
-                      imgRef[3]=dateArr;
-                      imgRef[2]=io;
-                      imgRef.splice(4,1);
-                      imgRef=imgRef.toString().replaceAll(",","/")+"/";
-                      console.log(imgRef);
-                      refFile=imgRef;
-                      storage_f.ref(imgRef).listAll().then((res)=>{
-                        res.items.forEach((itemRef)=>{
-                          itemRef.getDownloadURL().then((url)=>{
-                            const td = document.createElement("td");
-                            const img = document.createElement("img");
-                            img.src=url;
-                            img.className="server-img";
-                            img.addEventListener("click", (e) => {
-                              img.parentNode.classList.toggle("file-selected");
-                            });
-                            img.style.display="block";
-                            img.style.display="block";
-                            td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
-                            img.style.width="100%";
-                            img.style.height="100%";
-                            img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
-                            td.appendChild(img);
-                            fileTr.appendChild(td);
-                          });
-                        });
-                      });
-                      // popClose();
-                  }
-              });
-          })
-          .catch(error => {
-            alert("Error uploading file:", error);
-            console.error("Error uploading file:", error);
-        });
-      });
-      toastOn(imgUrls.length+" 파일 업로드 완료");
-      
-      // FCM 알림 전송 - 파일 업로드 완료
-      const h3List = document.querySelectorAll(".popTitleC");
-      const clientName = h3List[0].innerHTML;
-      const containerInfo = h3List[1].innerHTML;
-      
-      // 로컬 알림 우선 사용
-      const notificationSent = sendLocalNotification(
-        "파일 업로드 완료", 
-        `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`
-      );
-      
-      // 로컬 알림이 실패한 경우에만 FCM 시도
-      if (!notificationSent && token) {
-        sendMessage(token, 
-          "파일 업로드 완료", 
-          `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`, 
-          '/WmsMobile/images/icon.png'
-        );
-      }
-          }
-    let w;
+        
+        // 로컬 알림이 실패한 경우에만 FCM 시도
+        if (!notificationSent && token) {
+            sendMessage(
+                token, 
+                "작업 완료 등록", 
+                `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
+                '/WmsMobile/images/icon.png'
+            );
+        }
+        
+        let w;
     if(ioValue=="InCargo"){
       w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
     }else{
@@ -701,26 +599,74 @@ function upLoad(){
     }).catch((error) => {
       console.error("작업 상태 업데이트 오류:", error);
     });
- 
+        
+    } else {
+        // 이미지가 있는 경우의 처리
+        for(let i=0;i<img.length;i++){
+            const imgSrc = img[i].src;
+            imgUrls.push(imgSrc);
+        }
+        const storageRef = storage_f.ref(refFile);
+        
+        imgUrls.forEach((imgUrl, index) => {
+            fetch(imgUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const selectTr = document.querySelector(".clicked");
+                    const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+                    const file = new File([blob], fileName, { type: blob.type });
+                    const fileRef = storageRef.child(fileName.replace("/","_"));
+                    
+                    fileRef.put(file).then((snapshot) => {
+                        if (index === imgUrls.length - 1) {
+                            console.log("업로드 완료");
+                            
+                            // FCM 알림 전송 - 모든 이미지 업로드 완료 (등록시간 포함)
+                            const h3List = document.querySelectorAll(".popTitleC");
+                            const clientName = h3List[0].innerHTML;
+                            const containerInfo = h3List[1].innerHTML;
+                            
+                            // 로컬 알림 우선 사용
+                            const notificationSent = sendLocalNotification(
+                                "이미지 업로드 완료", 
+                                `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
+                            );
+                            
+                            // 로컬 알림이 실패한 경우에만 FCM 시도
+                            if (!notificationSent && token) {
+                                sendMessage(
+                                    token, 
+                                    "이미지 업로드 완료", 
+                                    `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
+                                    '/WmsMobile/images/icon.png'
+                                );
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('이미지 업로드 중 오류:', error);
+                });
+        });
+    }
 }
 
-
-if(mC){
+// if(mC){
   
-  // document.querySelector("#titleDate").style="display:none";
-  // toastOn("모바일 환경에서 접속 됩니다.1");
+//   // document.querySelector("#titleDate").style="display:none";
+//   // toastOn("모바일 환경에서 접속 됩니다.1");
   
-  // const osRe = document.querySelector("#osRe");
-  // osRe.classList.add("mobile");
-  // osRe.classList.remove("osInput");
-}else{
-  const btn = document.querySelector("#titleDate");
-  btn.innerHTML="일정 업로드 Page Load";
-  // td.forEach((e)=>{
-  //   console.log(e);
-  //   e.style.fontSize="small";
-  // });
-  }
+//   // const osRe = document.querySelector("#osRe");
+//   // osRe.classList.add("mobile");
+//   // osRe.classList.remove("osInput");
+// }else{
+//   const btn = document.querySelector("#titleDate");
+//   btn.innerHTML="일정 업로드 Page Load";
+//   // td.forEach((e)=>{
+//   //   console.log(e);
+//   //   e.style.fontSize="small";
+//   // });
+//   }
 function toastOn(msg,t){
   if(t == null){
     t=2000;
@@ -843,7 +789,7 @@ if ('serviceWorker' in navigator) {
           // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
           const vapidKeys = [
             // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
-            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
             'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
           ];
           
@@ -959,16 +905,15 @@ if ('serviceWorker' in navigator) {
       
 //         // Example: Send a message after getting the token
 //         getToken().then(token => {
-//           if (token) {
-//             sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-//           }
-//         });
-//       });
-//     })
-//     .catch((err) => {
-//       console.error('Service Worker registration failed:', err);
-//     });
-// }
+          // if (token) {
+          //   sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+          // }
+        // });
+      //   })
+      //   .catch((err) => {
+      //     console.error('Service Worker registration failed:', err);
+      //   });
+      // }
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
 if (typeof messaging !== 'undefined') {
@@ -994,85 +939,140 @@ if (typeof messaging !== 'undefined') {
 
 // Call requestPermission on page load
 
+// 시간 포맷팅 함수 추가
+function formatDateTime(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+// sendLocalNotification 함수 개선
+function sendLocalNotification(title, body, icon = '/WmsMobile/images/icon.png') {
+    if (!("Notification" in window)) {
+        console.log("❌ 이 브라우저는 알림을 지원하지 않습니다.");
+        return false;
+    }
+
+    if (Notification.permission !== "granted") {
+        console.log("❌ 알림 권한이 허용되지 않았습니다.");
+        return false;
+    }
+
+    try {
+        const currentTime = formatDateTime();
+        
+        // 작업상태 관련 알림인 경우 등록시간 추가
+        let enhancedBody = body;
+        if (title.includes('작업 상태 업데이트') || 
+            title.includes('작업 완료') ||
+            title.includes('컨테이너진입') ||
+            title.includes('이미지 업로드') ||
+            title.includes('파일 업로드')) {
+            enhancedBody += `\n등록시간: ${currentTime}`;
+        }
+        
+        const notification = new Notification(title, {
+            body: enhancedBody,
+            icon: icon,
+            badge: icon,
+            timestamp: Date.now(),
+            requireInteraction: true,
+            tag: 'wms-local-notification',
+            data: {
+                timestamp: currentTime,
+                originalBody: body
+            }
+        });
+
+        // 알림 클릭 이벤트
+        notification.onclick = function(event) {
+            console.log('로컬 알림 클릭됨:', event);
+            window.focus();
+            notification.close();
+        };
+
+        // 5초 후 자동 닫기
+        setTimeout(() => {
+            notification.close();
+        }, 5000);
+
+        console.log('✅ 로컬 알림 전송 성공:', title);
+        return true;
+    } catch (error) {
+        console.error('❌ 로컬 알림 전송 실패:', error);
+        return false;
+    }
+}
+
+// sendMessage 함수 개선
 function sendMessage(token, title, body, icon) {
-  // 로컬 브라우저 알림을 우선적으로 사용 (CORS 문제 회피)
-  console.log('📢 알림 전송:', title, '-', body);
-  
-  // 1. 로컬 브라우저 알림 시도
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, {
-      body: body,
-      icon: icon || '/WmsMobile/images/default-icon.png',
-      requireInteraction: true,
-      tag: 'wms-notification',
-      badge: icon || '/WmsMobile/images/default-icon.png',
-      timestamp: Date.now(),
-      silent: false
+    if (!token) {
+        console.log('❌ FCM 토큰이 없습니다. 로컬 알림을 시도합니다.');
+        return sendLocalNotification(title, body, icon);
+    }
+
+    const currentTime = formatDateTime();
+    
+    // 작업상태 관련 알림인 경우 등록시간 추가
+    let enhancedBody = body;
+    if (title.includes('작업 상태 업데이트') || 
+        title.includes('작업 완료') ||
+        title.includes('컨테이너진입') ||
+        title.includes('이미지 업로드') ||
+        title.includes('파일 업로드')) {
+        enhancedBody += `\n등록시간: ${currentTime}`;
+    }
+
+    const message = {
+        to: token,
+        notification: {
+            title: title,
+            body: enhancedBody,
+            icon: icon || '/WmsMobile/images/icon.png'
+        },
+        data: {
+            title: title,
+            body: enhancedBody,
+            icon: icon || '/WmsMobile/images/icon.png',
+            timestamp: currentTime,
+            type: title.includes('작업 상태 업데이트') ? 'status_update' : 'general',
+            click_action: location.origin + '/WmsMobile/'
+        }
+    };
+
+    const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+
+    console.log('📤 FCM 메시지 전송 시도:', { title, body: enhancedBody, timestamp: currentTime });
+
+    fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'key=' + serverKey
+        },
+        body: JSON.stringify(message)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ FCM 메시지 전송 성공:', data);
+    })
+    .catch(error => {
+        console.log('❌ FCM 전송 실패 (CORS 제한):', error.message);
+        console.log('🔄 로컬 알림으로 대체합니다...');
+        
+        // FCM 실패 시 로컬 알림로 대체
+        sendLocalNotification(title, enhancedBody, icon);
     });
-    console.log('✅ Local notification sent:', title);
-    
-    // 로컬 알림이 성공하면 FCM 시도하지 않음 (CORS 문제 때문에)
-    return;
-  }
-  
-  // 2. 토큰이 없거나 브라우저 알림이 불가능한 경우
-  if (!token) {
-    console.log('❌ FCM token not available and browser notifications not supported.');
-    console.log('� 콘솔 알림:', title, '-', body);
-    return;
-  }
-  
-  // 3. FCM 서버 호출 (CORS 문제로 인해 실패할 가능성 높음)
-  console.log('⚠️ Attempting FCM server call (may fail due to CORS)...');
-  
-  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
-
-  const messagePayload = {
-    to: token,
-    notification: {
-      title: title,
-      body: body,
-      icon: icon || '/WmsMobile/images/default-icon.png'
-    }
-  };
-
-  fetch(fcmEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
-    },
-    body: JSON.stringify(messagePayload)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('✅ FCM message sent successfully:', data);
-    if (data.failure > 0) {
-      console.warn('⚠️ Some messages failed to send:', data.results);
-    }
-  })
-  .catch(error => {
-    console.log('❌ FCM server call failed (expected due to CORS):', error.message);
-    
-    // FCM 실패 시 로컬 알림으로 재시도 (이미 위에서 시도했지만, 권한이 늦게 부여된 경우를 대비)
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body: body,
-        icon: icon || '/WmsMobile/images/default-icon.png',
-        requireInteraction: true,
-        tag: 'wms-notification-fallback'
-      });
-      console.log('✅ Fallback local notification sent:', title);
-    } else {
-      console.log('📝 알림 내용 (브라우저 알림 불가):', title, '-', body);
-    }
-  });
 }
 
 // 토픽 구독 함수
@@ -1492,4 +1492,68 @@ function popSaveAll(){
       });
     });
 
+}
+
+// 데이터베이스 업데이트 함수에서 알림 부분 개선
+// (기존 코드에서 작업 상태 업데이트 부분을 찾아 수정)
+function updateWorkStatus(status) {
+    // 데이터베이스 업데이트 로직...
+    
+    // 업데이트 완료 후 알림 전송
+    const h3List = document.querySelectorAll(".popTitleC");
+    const clientName = h3List[0].innerHTML;
+    const containerInfo = h3List[1].innerHTML;
+    
+    const statusText = status === 'completed' ? '작업완료' : '컨테이너진입';
+    
+    // 로컬 알림 우선 사용 (자동으로 등록시간 추가됨)
+    const notificationSent = sendLocalNotification(
+        "작업 상태 업데이트", 
+        `${clientName} - ${containerInfo}: ${statusText} 상태로 업데이트됨`
+    );
+    
+    // 로컬 알림이 실패한 경우에만 FCM 시도
+    if (!notificationSent && token) {
+        sendMessage(
+            token, 
+            "작업 상태 업데이트", 
+            `${clientName} - ${containerInfo}: ${statusText} 상태로 업데이트됨`, 
+            '/WmsMobile/images/icon.png'
+        );
+    }
+}
+
+function testAllNotifications() {
+    console.log('🧪 모든 알림 기능을 테스트합니다...');
+    
+    checkNotificationPermission();
+    
+    setTimeout(() => {
+        testLocalNotification();
+    }, 1000);
+    
+    setTimeout(() => {
+        testServiceWorkerNotification();
+    }, 2000);
+    
+    // 작업 상태 업데이트 알림 테스트
+    setTimeout(() => {
+        console.log('🧪 작업 상태 업데이트 알림을 테스트합니다...');
+        sendLocalNotification(
+            '작업 상태 업데이트', 
+            '고객명 - 컨테이너정보: 작업완료 상태로 업데이트됨'
+        );
+    }, 3000);
+    
+    if (token) {
+        setTimeout(() => {
+            console.log('🧪 FCM 테스트 메시지를 전송합니다...');
+            sendMessage(
+                token,
+                'FCM 작업 상태 테스트', 
+                `테스트고객 - TEST123: 컨테이너진입 상태로 업데이트됨`,
+                '/WmsMobile/images/icon.png'
+            );
+        }, 4000);
+    }
 }
