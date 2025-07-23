@@ -27,76 +27,130 @@ function formatDateTime(date = new Date()) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-// 백그라운드 메시지 처리 개선
-messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Received background message:', payload);
-    
-    // 현재 시간 생성
-    const currentTime = formatDateTime();
-    
-    // 알림 제목과 내용 설정
-    const notificationTitle = payload.notification?.title || payload.data?.title || 'WMS 알림';
-    let notificationBody = payload.notification?.body || payload.data?.body || '새로운 메시지가 도착했습니다.';
-    
-    // 작업상태 업데이트 알림인 경우 등록시간 추가
-    if (notificationTitle.includes('작업 상태 업데이트') || 
-        notificationTitle.includes('작업 완료') ||
-        notificationTitle.includes('컨테이너진입') ||
-        payload.data?.type === 'status_update') {
-        notificationBody += `\n등록시간: ${currentTime}`;
+// 올바른 아이콘 경로 결정 함수
+function getIconPath() {
+    // 로컬 개발환경과 GitHub Pages 구분
+    if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+        return './images/icon.png';  // 로컬 개발환경
+    } else {
+        return '/WmsMobile/images/icon.png';  // GitHub Pages
     }
-    
-    const notificationIcon = payload.notification?.icon || payload.data?.icon || '/WmsMobile/images/icon.png';
-    
-    const notificationOptions = {
-        body: notificationBody,
-        icon: notificationIcon,
-        badge: '/WmsMobile/images/icon.png',
-        data: {
-            ...payload.data,
-            timestamp: currentTime,
-            receivedAt: Date.now()
-        },
-        requireInteraction: true,
-        tag: 'wms-notification',
-        vibrate: [200, 100, 200],
-        actions: [
-            {
-                action: 'open',
-                title: '열기'
-            },
-            {
-                action: 'close',
-                title: '닫기'
-            }
-        ]
-    };
+}
 
-    console.log('Showing notification with timestamp:', notificationTitle, notificationOptions);
+// 백그라운드 메시지 처리
+messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] 📨 백그라운드 메시지 수신:', payload);
     
-    return self.registration.showNotification(notificationTitle, notificationOptions);
+    try {
+        // 현재 시간 생성
+        const currentTime = formatDateTime();
+        const iconPath = getIconPath();
+        
+        // 안전한 알림 제목과 내용 설정
+        const notificationTitle = payload?.notification?.title || 
+                                 payload?.data?.title || 
+                                 'WMS 알림';
+        
+        let notificationBody = payload?.notification?.body || 
+                              payload?.data?.body || 
+                              '새로운 메시지가 도착했습니다.';
+        
+        // 작업상태 업데이트 알림인 경우 등록시간 추가
+        if (notificationTitle.includes('작업 상태 업데이트') || 
+            notificationTitle.includes('작업 완료') ||
+            notificationTitle.includes('컨테이너진입') ||
+            notificationTitle.includes('이미지 업로드') ||
+            notificationTitle.includes('파일 업로드') ||
+            (payload?.data?.type === 'status_update')) {
+            notificationBody += `\n⏰ 등록시간: ${currentTime}`;
+        }
+        
+        const notificationIcon = payload?.notification?.icon || 
+                               payload?.data?.icon || 
+                               iconPath;
+        
+        const notificationOptions = {
+            body: notificationBody,
+            icon: notificationIcon,
+            badge: iconPath,
+            data: {
+                ...payload.data,
+                timestamp: currentTime,
+                receivedAt: Date.now(),
+                originalTitle: notificationTitle,
+                originalBody: payload?.notification?.body || payload?.data?.body
+            },
+            requireInteraction: true,
+            tag: 'wms-notification-' + Date.now(),
+            vibrate: [200, 100, 200, 100, 200],
+            silent: false,
+            actions: [
+                {
+                    action: 'open',
+                    title: '📱 열기'
+                },
+                {
+                    action: 'close',
+                    title: '❌ 닫기'
+                }
+            ]
+        };
+
+        console.log('🔔 알림 표시 시도:', {
+            title: notificationTitle,
+            body: notificationBody,
+            icon: notificationIcon,
+            timestamp: currentTime
+        });
+        
+        // 알림 표시
+        return self.registration.showNotification(notificationTitle, notificationOptions);
+        
+    } catch (error) {
+        console.error('❌ 백그라운드 메시지 처리 오류:', error);
+        
+        // 오류 발생 시 기본 알림 표시
+        const fallbackOptions = {
+            body: '메시지를 받았지만 처리 중 오류가 발생했습니다.',
+            icon: getIconPath(),
+            requireInteraction: true,
+            tag: 'error-notification'
+        };
+        
+        return self.registration.showNotification('WMS 알림 오류', fallbackOptions);
+    }
 });
 
 // 알림 클릭 이벤트 처리
 self.addEventListener('notificationclick', (event) => {
-    console.log('[firebase-messaging-sw.js] Notification clicked:', event);
+    console.log('[firebase-messaging-sw.js] 🖱️ 알림 클릭됨:', event);
     
     event.notification.close();
     
     if (event.action === 'open' || !event.action) {
-        // 메인 앱 열기
         event.waitUntil(
-            clients.matchAll({ type: 'window' }).then((clientList) => {
-                // 이미 열린 탭이 있으면 포커스
+            clients.matchAll({ 
+                type: 'window',
+                includeUncontrolled: true 
+            }).then((clientList) => {
+                console.log('현재 열린 클라이언트:', clientList.length);
+                
+                // 이미 열린 WMS 탭이 있으면 포커스
                 for (let i = 0; i < clientList.length; i++) {
                     const client = clientList[i];
                     if (client.url.includes('/WmsMobile/') && 'focus' in client) {
+                        console.log('기존 탭에 포커스');
                         return client.focus();
                     }
                 }
+                
                 // 새 탭 열기
                 if (clients.openWindow) {
-                    return clients.openWindow('/WmsMobile/');
+                    console.log('새 탭 열기');
+                    const targetUrl = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
+                        ? '/WmsMobile/'
+                        : '/WmsMobile/';
+                    return clients.openWindow(targetUrl);
                 }
             })
         );
@@ -105,29 +159,114 @@ self.addEventListener('notificationclick', (event) => {
 
 // 알림 닫기 이벤트 처리
 self.addEventListener('notificationclose', (event) => {
-    console.log('[firebase-messaging-sw.js] Notification closed:', event);
+    console.log('[firebase-messaging-sw.js] 🔕 알림 닫힘:', event?.notification?.data);
 });
 
-// 수동 알림 테스트 함수
+// 수동 테스트를 위한 메시지 처리
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'TEST_NOTIFICATION') {
-        console.log('Manual notification test requested');
+    console.log('[firebase-messaging-sw.js] 📩 메시지 수신:', event.data);
+    
+    const iconPath = getIconPath();
+    
+    if (event.data?.type === 'TEST_NOTIFICATION') {
+        console.log('🧪 수동 알림 테스트 요청');
         
         const currentTime = formatDateTime();
         
         const notificationOptions = {
-            body: `테스트 알림입니다.\n등록시간: ${currentTime}`,
-            icon: '/WmsMobile/images/icon.png',
-            badge: '/WmsMobile/images/icon.png',
+            body: `Service Worker 테스트 알림입니다.\n⏰ 등록시간: ${currentTime}`,
+            icon: iconPath,
+            badge: iconPath,
             requireInteraction: true,
-            tag: 'test-notification',
+            tag: 'test-notification-' + Date.now(),
             vibrate: [200, 100, 200],
             data: {
                 timestamp: currentTime,
-                type: 'test'
-            }
+                type: 'test',
+                testId: Date.now()
+            },
+            actions: [
+                {
+                    action: 'open',
+                    title: '📱 열기'
+                },
+                {
+                    action: 'close',
+                    title: '❌ 닫기'
+                }
+            ]
         };
         
-        self.registration.showNotification('테스트 알림', notificationOptions);
+        self.registration.showNotification('🧪 SW 테스트 알림', notificationOptions)
+            .then(() => {
+                console.log('✅ 테스트 알림 표시 완료');
+            })
+            .catch((error) => {
+                console.error('❌ 테스트 알림 표시 실패:', error);
+            });
+    }
+    
+    if (event.data?.type === 'FORCE_NOTIFICATION') {
+        console.log('🚨 강제 알림 테스트');
+        
+        const currentTime = formatDateTime();
+        
+        self.registration.showNotification('🚨 강제 테스트 알림', {
+            body: `Service Worker 강제 알림 테스트\n⏰ ${currentTime}`,
+            icon: iconPath,
+            badge: iconPath,
+            requireInteraction: true,
+            tag: 'force-test-' + Date.now(),
+            vibrate: [300, 200, 300, 200, 300],
+            data: {
+                timestamp: currentTime,
+                type: 'force_test'
+            }
+        }).then(() => {
+            console.log('✅ 강제 알림 표시 완료');
+        }).catch((error) => {
+            console.error('❌ 강제 알림 실패:', error);
+        });
+    }
+    
+    // 즉시 알림 테스트
+    if (event.data?.type === 'IMMEDIATE_TEST') {
+        console.log('⚡ 즉시 알림 테스트');
+        
+        self.registration.showNotification('⚡ 즉시 테스트', {
+            body: '즉시 표시되는 테스트 알림입니다.',
+            icon: iconPath,
+            requireInteraction: false,
+            tag: 'immediate-test'
+        });
     }
 });
+
+// Service Worker 라이프사이클 이벤트
+self.addEventListener('install', (event) => {
+    console.log('[firebase-messaging-sw.js] 🔧 Service Worker 설치 중...');
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('[firebase-messaging-sw.js] ✅ Service Worker 활성화됨');
+    event.waitUntil(clients.claim());
+    
+    console.log('🔔 Service Worker 활성화 완료 - 테스트 알림 준비됨');
+    console.log('📍 현재 위치:', self.location.hostname);
+    console.log('🖼️ 아이콘 경로:', getIconPath());
+});
+
+// 전역 오류 처리
+self.addEventListener('error', (event) => {
+    console.error('[firebase-messaging-sw.js] ❌ Service Worker 오류:', event);
+});
+
+self.addEventListener('unhandledrejection', (event) => {
+    console.error('[firebase-messaging-sw.js] ❌ 처리되지 않은 Promise 거부:', event);
+});
+
+// 서비스 워커 시작 로그
+console.log('[firebase-messaging-sw.js] 🚀 Firebase Messaging Service Worker 시작됨');
+console.log('📍 실행 환경:', self.location.hostname);
+console.log('🖼️ 사용할 아이콘 경로:', getIconPath());

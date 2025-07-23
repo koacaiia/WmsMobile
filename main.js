@@ -548,12 +548,12 @@ function upLoad(){
     if(img.length==0){
         toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
         
-        // FCM 알림 전송 - 사진 없이 작업 완료 (등록시간 포함)
+        // FCM 알림 전송 - 사진 없이 작업 완료 (올바른 아이콘 경로)
         const h3List = document.querySelectorAll(".popTitleC");
         const clientName = h3List[0].innerHTML;
         const containerInfo = h3List[1].innerHTML;
         
-        // 로컬 알림 우선 사용 (자동으로 등록시간 추가됨)
+        // 로컬 알림 우선 사용 (자동으로 올바른 아이콘 경로 사용됨)
         const notificationSent = sendLocalNotification(
             "작업 완료 등록", 
             `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
@@ -564,8 +564,7 @@ function upLoad(){
             sendMessage(
                 token, 
                 "작업 완료 등록", 
-                `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
-                '/WmsMobile/images/icon.png'
+                `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
             );
         }
         
@@ -621,7 +620,7 @@ function upLoad(){
                         if (index === imgUrls.length - 1) {
                             console.log("업로드 완료");
                             
-                            // FCM 알림 전송 - 모든 이미지 업로드 완료 (등록시간 포함)
+                            // FCM 알림 전송 - 모든 이미지 업로드 완료 (올바른 아이콘 경로)
                             const h3List = document.querySelectorAll(".popTitleC");
                             const clientName = h3List[0].innerHTML;
                             const containerInfo = h3List[1].innerHTML;
@@ -637,8 +636,7 @@ function upLoad(){
                                 sendMessage(
                                     token, 
                                     "이미지 업로드 완료", 
-                                    `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
-                                    '/WmsMobile/images/icon.png'
+                                    `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
                                 );
                             }
                         }
