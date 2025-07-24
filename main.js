@@ -703,7 +703,7 @@ function upLoad(){
     });
  
 }
-
+console.log("mCValue",mC)
 if(mC){
   
   // document.querySelector("#titleDate").style="display:none";
