@@ -544,31 +544,134 @@ function upLoad(){
     const h3List = document.querySelectorAll(".popTitleC");
     const stockList ={"client":h3List[0].innerHTML};
     stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
-    
     if(img.length==0){
-        toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
-        
-        // FCM 알림 전송 - 사진 없이 작업 완료 (올바른 아이콘 경로)
-        const h3List = document.querySelectorAll(".popTitleC");
-        const clientName = h3List[0].innerHTML;
-        const containerInfo = h3List[1].innerHTML;
-        
-        // 로컬 알림 우선 사용 (자동으로 올바른 아이콘 경로 사용됨)
-        const notificationSent = sendLocalNotification(
-            "작업 완료 등록", 
-            `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
+      toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
+      
+      // FCM 알림 전송 - 사진 없이 작업 완료
+      const h3List = document.querySelectorAll(".popTitleC");
+      const clientName = h3List[0].innerHTML;
+      const containerInfo = h3List[1].innerHTML;
+      
+      // 로컬 알림 우선 사용 (CORS 문제 회피)
+      const notificationSent = sendLocalNotification(
+        "작업 완료 등록", 
+        `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
+      );
+      
+      // 로컬 알림이 실패한 경우에만 FCM 시도
+      if (!notificationSent && token) {
+        sendMessage(token, 
+          "작업 완료 등록", 
+          `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
+          '/WmsMobile/images/icon.png'
         );
-        
-        // 로컬 알림이 실패한 경우에만 FCM 시도
-        if (!notificationSent && token) {
-            sendMessage(
-                token, 
-                "작업 완료 등록", 
-                `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`
-            );
-        }
-        
-        let w;
+      }
+          }else{
+            for(let i=0;i<img.length;i++){
+              const imgSrc = img[i].src;
+              imgUrls.push(imgSrc);
+            }
+            const storageRef = storage_f.ref(refFile);
+            
+    imgUrls.forEach((imgUrl, index) => {
+      fetch(imgUrl)
+          .then(response => response.blob())
+          .then(blob => {
+              // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
+              const selectTr = document.querySelector(".clicked");
+              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+              const file = new File([blob], fileName, { type: blob.type });
+              const fileRef = storageRef.child(fileName.replace("/","_"));
+              fileRef.put(file).then((snapshot) => {
+                  if (index === imgUrls.length - 1) {
+                      // alert(imgUrls.length+" 개 Images업로드 완료");
+                      console.log("업로드 완료");
+                      
+                      // FCM 알림 전송 - 모든 이미지 업로드 완료
+                      const h3List = document.querySelectorAll(".popTitleC");
+                      const clientName = h3List[0].innerHTML;
+                      const containerInfo = h3List[1].innerHTML;
+                      
+                      // 로컬 알림 우선 사용
+                      const notificationSent = sendLocalNotification(
+                        "이미지 업로드 완료", 
+                        `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
+                      );
+                      
+                      // 로컬 알림이 실패한 경우에만 FCM 시도
+                      if (!notificationSent && token) {
+                        sendMessage(token, 
+                          "이미지 업로드 완료", 
+                          `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`, 
+                          '/WmsMobile/images/icon.png'
+                        );
+                      }
+                      
+                      fileTr.replaceChildren();
+                      let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
+                      // imgRef.replace("/",",");
+                      imgRef = imgRef.split(",");
+                      const io=imgRef[4];
+                      const dateArr = imgRef[2];
+                      imgRef[3]=dateArr;
+                      imgRef[2]=io;
+                      imgRef.splice(4,1);
+                      imgRef=imgRef.toString().replaceAll(",","/")+"/";
+                      console.log(imgRef);
+                      refFile=imgRef;
+                      storage_f.ref(imgRef).listAll().then((res)=>{
+                        res.items.forEach((itemRef)=>{
+                          itemRef.getDownloadURL().then((url)=>{
+                            const td = document.createElement("td");
+                            const img = document.createElement("img");
+                            img.src=url;
+                            img.className="server-img";
+                            img.addEventListener("click", (e) => {
+                              img.parentNode.classList.toggle("file-selected");
+                            });
+                            img.style.display="block";
+                            img.style.display="block";
+                            td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
+                            img.style.width="100%";
+                            img.style.height="100%";
+                            img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
+                            td.appendChild(img);
+                            fileTr.appendChild(td);
+                          });
+                        });
+                      });
+                      // popClose();
+                  }
+              });
+          })
+          .catch(error => {
+            alert("Error uploading file:", error);
+            console.error("Error uploading file:", error);
+        });
+      });
+      toastOn(imgUrls.length+" 파일 업로드 완료");
+      
+      // FCM 알림 전송 - 파일 업로드 완료
+      const h3List = document.querySelectorAll(".popTitleC");
+      const clientName = h3List[0].innerHTML;
+      const containerInfo = h3List[1].innerHTML;
+      
+      // 로컬 알림 우선 사용
+      const notificationSent = sendLocalNotification(
+        "파일 업로드 완료", 
+        `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`
+      );
+      
+      // 로컬 알림이 실패한 경우에만 FCM 시도
+      if (!notificationSent && token) {
+        sendMessage(token, 
+          "파일 업로드 완료", 
+          `${clientName} - ${containerInfo}: ${imgUrls.length}개 파일 업로드 완료`, 
+          '/WmsMobile/images/icon.png'
+        );
+      }
+          }
+    let w;
     if(ioValue=="InCargo"){
       w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
     }else{
@@ -598,79 +701,26 @@ function upLoad(){
     }).catch((error) => {
       console.error("작업 상태 업데이트 오류:", error);
     });
-        
-    } else {
-        // 이미지가 있는 경우의 처리
-        for(let i=0;i<img.length;i++){
-            const imgSrc = img[i].src;
-            imgUrls.push(imgSrc);
-        }
-        const storageRef = storage_f.ref(refFile);
-        
-        imgUrls.forEach((imgUrl, index) => {
-            fetch(imgUrl)
-                .then(response => response.blob())
-                .then(blob => {
-                    const selectTr = document.querySelector(".clicked");
-                    const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
-                    const file = new File([blob], fileName, { type: blob.type });
-                    const fileRef = storageRef.child(fileName.replace("/","_"));
-                    
-                    fileRef.put(file).then((snapshot) => {
-                        if (index === imgUrls.length - 1) {
-                              let w;
-                              if(ioValue=="InCargo"){
-                                w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-                              }else{
-                                w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-                              }
-                            console.log("업로드 완료");
-                            
-                            // FCM 알림 전송 - 모든 이미지 업로드 완료 (올바른 아이콘 경로)
-                            const h3List = document.querySelectorAll(".popTitleC");
-                            const clientName = h3List[0].innerHTML;
-                            const containerInfo = h3List[1].innerHTML;
-                            
-                            // 로컬 알림 우선 사용
-                            const notificationSent = sendLocalNotification(
-                                "이미지 업로드 완료", 
-                                `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
-                            );
-                            
-                            // 로컬 알림이 실패한 경우에만 FCM 시도
-                            if (!notificationSent && token) {
-                                sendMessage(
-                                    token, 
-                                    "이미지 업로드 완료", 
-                                    `${clientName} - ${containerInfo}: ${imgUrls.length}개 이미지 Firebase 업로드 완료`
-                                );
-                            }
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('이미지 업로드 중 오류:', error);
-                });
-        });
-    }
+ 
 }
 
-// if(mC){
+if(mC){
   
-//   // document.querySelector("#titleDate").style="display:none";
-//   // toastOn("모바일 환경에서 접속 됩니다.1");
+  // document.querySelector("#titleDate").style="display:none";
+  // toastOn("모바일 환경에서 접속 됩니다.1");
   
-//   // const osRe = document.querySelector("#osRe");
-//   // osRe.classList.add("mobile");
-//   // osRe.classList.remove("osInput");
-// }else{
-//   const btn = document.querySelector("#titleDate");
-//   btn.innerHTML="일정 업로드 Page Load";
-//   // td.forEach((e)=>{
-//   //   console.log(e);
-//   //   e.style.fontSize="small";
-//   // });
-//   }
+  // const osRe = document.querySelector("#osRe");
+  // osRe.classList.add("mobile");
+  // osRe.classList.remove("osInput");
+}else{
+  const btn = document.querySelector("#titleDate");
+  btn.innerHTML="일정 업로드 Page Load";
+  
+  // td.forEach((e)=>{
+  //   console.log(e);
+  //   e.style.fontSize="small";
+  // });
+  }
 function toastOn(msg,t){
   if(t == null){
     t=2000;
@@ -793,7 +843,7 @@ if ('serviceWorker' in navigator) {
           // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
           const vapidKeys = [
             // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
-            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
             'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
           ];
           
@@ -909,15 +959,16 @@ if ('serviceWorker' in navigator) {
       
 //         // Example: Send a message after getting the token
 //         getToken().then(token => {
-          // if (token) {
-          //   sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-          // }
-        // });
-      //   })
-      //   .catch((err) => {
-      //     console.error('Service Worker registration failed:', err);
-      //   });
-      // }
+//           if (token) {
+//             sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+//           }
+//         });
+//       });
+//     })
+//     .catch((err) => {
+//       console.error('Service Worker registration failed:', err);
+//     });
+// }
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
 if (typeof messaging !== 'undefined') {
@@ -943,578 +994,502 @@ if (typeof messaging !== 'undefined') {
 
 // Call requestPermission on page load
 
-// 아이콘 경로 결정 함수 추가
-function getIconPath() {
-    // 로컬 개발환경과 배포환경 구분
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        return './images/icon.png';  // 로컬 개발환경
-    } else {
-        return '/WmsMobile/images/icon.png';  // GitHub Pages
-    }
-}
-
-// 시간 포맷팅 함수 (기존 함수 그대로 유지)
-function formatDateTime(date = new Date()) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
-// sendLocalNotification 함수 수정 (forceNotificationTest 호출 제거)
-function sendLocalNotification(title, body, icon) {
-    console.log('🔔 sendLocalNotification 호출됨');
-    console.log('📱 파라미터:', { title, body, icon });
-    
-    // 1. 기본 지원 확인
-    if (!("Notification" in window)) {
-        console.log("❌ 이 브라우저는 Notification API를 지원하지 않습니다.");
-        alert(`알림: ${title}\n${body}`); // 대체 알림
-        return false;
-    }
-    
-    // 2. 권한 상태 확인
-    console.log('🔍 현재 알림 권한 상태:', Notification.permission);
-    
-    if (Notification.permission === "denied") {
-        console.log("❌ 알림 권한이 거부되어 있습니다.");
-        alert(`알림이 차단되어 있습니다.\n\n${title}\n${body}`);
-        return false;
-    }
-    
-    if (Notification.permission !== "granted") {
-        console.log("⚠️ 알림 권한이 허용되지 않았습니다. 권한을 요청합니다...");
-        
-        // 권한 요청
-        Notification.requestPermission().then(permission => {
-            console.log('권한 요청 결과:', permission);
-            if (permission === "granted") {
-                // 권한 받은 후 재시도
-                setTimeout(() => {
-                    sendLocalNotification(title, body, icon);
-                }, 100);
-            } else {
-                alert(`알림 권한이 거부되었습니다.\n\n${title}\n${body}`);
-            }
-        });
-        return false;
-    }
-    
-    try {
-        // 3. 아이콘 경로 설정
-        const iconPath = icon || getIconPath();
-        console.log('🖼️ 사용할 아이콘 경로:', iconPath);
-        
-        // 4. 시간 정보 추가
-        const currentTime = formatDateTime();
-        let enhancedBody = body;
-        
-        // 작업상태 관련 알림인 경우 등록시간 추가
-        if (title.includes('작업 상태 업데이트') || 
-            title.includes('작업 완료') ||
-            title.includes('컨테이너진입') ||
-            title.includes('이미지 업로드') ||
-            title.includes('파일 업로드')) {
-            enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
-        }
-        
-        console.log('📝 최종 알림 내용:', { title, body: enhancedBody, icon: iconPath });
-        
-        // 5. 알림 생성 및 표시
-        const notification = new Notification(title, {
-            body: enhancedBody,
-            icon: iconPath,
-            badge: iconPath,
-            timestamp: Date.now(),
-            requireInteraction: false,
-            tag: 'wms-local-notification-' + Date.now(),
-            silent: false,
-            vibrate: [200, 100, 200],
-            data: {
-                timestamp: currentTime,
-                originalBody: body,
-                created: Date.now()
-            }
-        });
-
-        console.log('✅ Notification 객체 생성 완료:', notification);
-
-        // 6. 이벤트 리스너 설정
-        notification.onshow = function() {
-            console.log('🔔 알림이 화면에 표시되었습니다:', title);
-        };
-        
-        notification.onclick = function(event) {
-            console.log('🖱️ 알림 클릭됨:', event);
-            window.focus();
-            notification.close();
-        };
-        
-        notification.onclose = function() {
-            console.log('🔕 알림이 닫혔습니다:', title);
-        };
-        
-        notification.onerror = function(error) {
-            console.error('❌ 알림 오류:', error);
-        };
-
-        // 7. 자동 닫기
-        setTimeout(() => {
-            if (notification) {
-                notification.close();
-                console.log('⏰ 알림 자동 닫기:', title);
-            }
-        }, 8000);
-
-        console.log('✅ 로컬 알림 전송 성공:', title);
-        return true;
-        
-    } catch (error) {
-        console.error('❌ 로컬 알림 생성 중 오류:', error);
-        alert(`알림 표시 중 오류가 발생했습니다.\n\n${title}\n${body}\n\n오류: ${error.message}`);
-        return false;
-    }
-}
-
-// forceNotificationTest 함수 추가
-function forceNotificationTest() {
-    console.log('🚨 강제 알림 테스트 시작');
-    
-    // 1. 간단한 기본 알림
-    if (Notification.permission === 'granted') {
-        try {
-            const simpleNotification = new Notification('🧪 즉시 테스트', {
-                body: '가장 기본적인 알림입니다.',
-                icon: getIconPath()
-            });
-            
-            simpleNotification.onclick = () => {
-                console.log('간단한 알림 클릭됨');
-                simpleNotification.close();
-            };
-            
-            console.log('✅ 간단한 알림 생성 완료');
-        } catch (error) {
-            console.error('❌ 간단한 알림 생성 실패:', error);
-        }
-    }
-    
-    // 2. sendLocalNotification 함수 테스트
-    setTimeout(() => {
-        sendLocalNotification(
-            '🧪 함수 테스트',
-            '이것은 sendLocalNotification 함수 테스트입니다.'
-        );
-    }, 1000);
-    
-    // 3. 작업 상태 알림 테스트
-    setTimeout(() => {
-        sendLocalNotification(
-            '작업 상태 업데이트',
-            '테스트고객 - TEST123: 작업완료 상태로 업데이트됨'
-        );
-    }, 2000);
-}
-
-// forceRequestNotificationPermission 함수 수정 (forceNotificationTest 호출 제거)
-function forceRequestNotificationPermission() {
-    console.log('🔔 강제 알림 권한 요청 시작');
-    
-    if (!("Notification" in window)) {
-        alert("이 브라우저는 데스크톱 알림을 지원하지 않습니다.");
-        return Promise.resolve(false);
-    }
-    
-    console.log('현재 권한 상태:', Notification.permission);
-    
-    if (Notification.permission === "denied") {
-        console.log("❌ 알림이 차단되어 있습니다.");
-        alert("알림이 차단되어 있습니다.\n\n해결 방법:\n1. 브라우저 주소창 왼쪽의 자물쇠 아이콘 클릭\n2. '알림' 설정을 '허용'으로 변경\n3. 페이지 새로고침");
-        return Promise.resolve(false);
-    }
-    
-    if (Notification.permission === "granted") {
-        console.log("✅ 알림 권한이 이미 허용되어 있습니다.");
-        forceNotificationTest();
-        return Promise.resolve(true);
-    }
-    
-    // 권한 요청
-    return Notification.requestPermission().then(permission => {
-        console.log('📋 권한 요청 결과:', permission);
-        
-        if (permission === "granted") {
-            console.log("🎉 알림 권한 허용됨!");
-            
-            // 즉시 환영 알림
-            try {
-                const welcomeNotification = new Notification("🎉 알림 설정 완료", {
-                    body: "WMS 알림이 활성화되었습니다!",
-                    icon: getIconPath()
-                });
-                
-                welcomeNotification.onclick = () => {
-                    console.log('환영 알림 클릭됨');
-                    welcomeNotification.close();
-                };
-            } catch (error) {
-                console.error('환영 알림 생성 실패:', error);
-            }
-            
-            // 추가 테스트
-            setTimeout(() => {
-                forceNotificationTest();
-            }, 1000);
-            
-            return true;
-        } else {
-            console.log("❌ 알림 권한이 거부되었습니다:", permission);
-            alert("알림 권한이 거부되었습니다.\n브라우저 설정에서 수동으로 허용해주세요.");
-            return false;
-        }
-    }).catch(error => {
-        console.error('❌ 권한 요청 중 오류:', error);
-        return false;
-    });
-}
-
-// immediateNotificationTest 함수 추가
-function immediateNotificationTest() {
-    console.log('⚡ 즉시 알림 테스트 시작');
-    console.log('🖼️ 사용할 아이콘 경로:', getIconPath());
-    
-    // 1. 로컬 알림 즉시 테스트
-    if (Notification.permission === 'granted') {
-        new Notification('⚡ 즉시 로컬 알림', {
-            body: '로컬 브라우저 알림이 즉시 표시됩니다.',
-            icon: getIconPath()
-        });
-    }
-    
-    // 2. Service Worker 즉시 테스트
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then((registration) => {
-            if (registration.active) {
-                registration.active.postMessage({
-                    type: 'IMMEDIATE_TEST'
-                });
-            }
-        });
-    }
-}
-
-// testServiceWorkerNotification 함수 추가
-function testServiceWorkerNotification() {
-    console.log('🧪 Service Worker 알림 테스트를 시작합니다...');
-    
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then((registration) => {
-            if (registration.active) {
-                console.log('📤 Service Worker에 테스트 메시지 전송');
-                registration.active.postMessage({
-                    type: 'TEST_NOTIFICATION'
-                });
-                console.log('✅ Service Worker 테스트 알림 요청 완료');
-            } else {
-                console.log('❌ Service Worker가 활성화되지 않았습니다.');
-            }
-        }).catch(error => {
-            console.error('❌ Service Worker 준비 실패:', error);
-        });
-    } else {
-        console.log('❌ Service Worker를 지원하지 않는 브라우저입니다.');
-    }
-}
-
-// testAllNotificationMethods 함수 추가
-function testAllNotificationMethods() {
-    console.log('🧪 모든 알림 방법을 테스트합니다...');
-    
-    // 1. 권한 상태 확인
-    checkNotificationPermission();
-    
-    // 2. 로컬 알림 테스트
-    setTimeout(() => {
-        console.log('🧪 1. 로컬 알림 테스트');
-        testLocalNotification();
-    }, 1000);
-    
-    // 3. Service Worker 알림 테스트
-    setTimeout(() => {
-        console.log('🧪 2. Service Worker 알림 테스트');
-        testServiceWorkerNotification();
-    }, 2000);
-    
-    // 4. 강제 알림 테스트
-    setTimeout(() => {
-        console.log('🧪 3. 강제 알림 테스트');
-        forceNotificationTest();
-    }, 3000);
-    
-    // 5. 작업 상태 알림 테스트
-    setTimeout(() => {
-        console.log('🧪 4. 작업 상태 알림 테스트');
-        sendLocalNotification(
-            '작업 상태 업데이트', 
-            '테스트고객 - TEST123: 작업완료 상태로 업데이트됨'
-        );
-    }, 4000);
-    
-    // 6. FCM 토큰이 있는 경우 FCM 테스트
-    if (token) {
-        setTimeout(() => {
-            console.log('🧪 5. FCM 메시지 테스트');
-            sendMessage(
-                token,
-                'FCM 테스트 알림', 
-                `테스트고객 - TEST123: FCM을 통한 알림 테스트`,
-                getIconPath()
-            );
-        }, 5000);
-    }
-}
-
-// 개발자 도구 함수 목록 업데이트
-console.log(`
-🛠️ WMS 브라우저 알림 진단 및 테스트 도구:
-
-🔧 진단 도구:
-   comprehensiveNotificationDiagnostic() - 종합 알림 시스템 진단
-   checkNotificationPermission()          - 알림 권한 상태만 확인
-   
-⚡ 강제 테스트:
-   forceRequestNotificationPermission()   - 권한 요청 + 즉시 테스트
-   forceNotificationTest()               - 다양한 방식으로 강제 테스트
-   immediateNotificationTest()           - 즉시 알림 테스트
-   testLocalNotification()               - 기본 로컬 알림 테스트
-   testServiceWorkerNotification()       - Service Worker 알림 테스트
-   testAllNotificationMethods()          - 모든 방법 순차 테스트
-   
-🔔 토픽 관리:
-   subscribeToTopicManual("토픽명")      - 토픽 구독
-   unsubscribeFromTopicManual("토픽명")  - 토픽 구독 해제
-   checkTopicSubscriptions()             - 구독 상태 확인
-   
-💡 즉시 실행 권장:
-   1. comprehensiveNotificationDiagnostic()
-   2. forceRequestNotificationPermission()
-   3. testAllNotificationMethods()
-`);
-
-// returnTime 함수 추가 (upLoad 함수에서 사용됨)
-function returnTime() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    
-    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
-}
-
-// sendMessage 함수 추가 (upLoad 함수에서 사용됨)
 function sendMessage(token, title, body, icon) {
-    if (!token) {
-        console.log('❌ FCM 토큰이 없습니다. 로컬 알림을 시도합니다.');
-        return sendLocalNotification(title, body, icon);
-    }
-
-    const currentTime = formatDateTime();
-    const iconPath = icon || getIconPath();
-    
-    // 작업상태 관련 알림인 경우 등록시간 추가
-    let enhancedBody = body;
-    if (title.includes('작업 상태 업데이트') || 
-        title.includes('작업 완료') ||
-        title.includes('컨테이너진입') ||
-        title.includes('이미지 업로드') ||
-        title.includes('파일 업로드')) {
-        enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
-    }
-
-    const message = {
-        to: token,
-        notification: {
-            title: title,
-            body: enhancedBody,
-            icon: iconPath
-        },
-        data: {
-            title: title,
-            body: enhancedBody,
-            icon: iconPath,
-            timestamp: currentTime,
-            type: title.includes('작업 상태 업데이트') ? 'status_update' : 'general',
-            click_action: location.origin + '/WmsMobile/'
-        }
-    };
-
-    const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
-
-    console.log('📤 FCM 메시지 전송 시도:', { title, body: enhancedBody, icon: iconPath, timestamp: currentTime });
-
-    fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'key=' + serverKey
-        },
-        body: JSON.stringify(message)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('✅ FCM 메시지 전송 성공:', data);
-    })
-    .catch(error => {
-        console.log('❌ FCM 전송 실패 (CORS 제한):', error.message);
-        console.log('🔄 로컬 알림으로 대체합니다...');
-        
-        // FCM 실패 시 로컬 알림로 대체
-        sendLocalNotification(title, enhancedBody, iconPath);
+  // 로컬 브라우저 알림을 우선적으로 사용 (CORS 문제 회피)
+  console.log('📢 알림 전송:', title, '-', body);
+  
+  // 1. 로컬 브라우저 알림 시도
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, {
+      body: body,
+      icon: icon || '/WmsMobile/images/default-icon.png',
+      requireInteraction: true,
+      tag: 'wms-notification',
+      badge: icon || '/WmsMobile/images/default-icon.png',
+      timestamp: Date.now(),
+      silent: false
     });
+    console.log('✅ Local notification sent:', title);
+    
+    // 로컬 알림이 성공하면 FCM 시도하지 않음 (CORS 문제 때문에)
+    return;
+  }
+  
+  // 2. 토큰이 없거나 브라우저 알림이 불가능한 경우
+  if (!token) {
+    console.log('❌ FCM token not available and browser notifications not supported.');
+    console.log('� 콘솔 알림:', title, '-', body);
+    return;
+  }
+  
+  // 3. FCM 서버 호출 (CORS 문제로 인해 실패할 가능성 높음)
+  console.log('⚠️ Attempting FCM server call (may fail due to CORS)...');
+  
+  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+
+  const messagePayload = {
+    to: token,
+    notification: {
+      title: title,
+      body: body,
+      icon: icon || '/WmsMobile/images/default-icon.png'
+    }
+  };
+
+  fetch(fcmEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(messagePayload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('✅ FCM message sent successfully:', data);
+    if (data.failure > 0) {
+      console.warn('⚠️ Some messages failed to send:', data.results);
+    }
+  })
+  .catch(error => {
+    console.log('❌ FCM server call failed (expected due to CORS):', error.message);
+    
+    // FCM 실패 시 로컬 알림으로 재시도 (이미 위에서 시도했지만, 권한이 늦게 부여된 경우를 대비)
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: body,
+        icon: icon || '/WmsMobile/images/default-icon.png',
+        requireInteraction: true,
+        tag: 'wms-notification-fallback'
+      });
+      console.log('✅ Fallback local notification sent:', title);
+    } else {
+      console.log('📝 알림 내용 (브라우저 알림 불가):', title, '-', body);
+    }
+  });
 }
 
-// 토픽 구독 관련 함수들 추가
+// 토픽 구독 함수
 function subscribeToTopic(token, topicName) {
-    console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
+  console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
+  
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+  
+  const subscribePayload = {
+    to: `/topics/${topicName}`,
+    registration_tokens: [token]
+  };
+
+  fetch('https://iid.googleapis.com/iid/v1:batchAdd', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(subscribePayload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(`✅ 토픽 '${topicName}' 구독 성공:`, data);
     
-    // 로컬 스토리지에 구독 정보 저장
-    const subscriptionKey = `fcm_topic_${topicName}`;
-    const dateKey = `fcm_topic_${topicName}_date`;
-    
-    localStorage.setItem(subscriptionKey, 'subscribed');
-    localStorage.setItem(dateKey, new Date().toISOString());
-    
-    console.log(`✅ 토픽 '${topicName}' 구독 성공`);
-    console.log(`📅 구독 날짜: ${new Date().toLocaleString()}`);
+    // 로컬 저장소에 구독 상태 저장
+    localStorage.setItem(`fcm_topic_${topicName}`, 'subscribed');
+    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
     
     // 구독 성공 알림
     sendLocalNotification(
-        `토픽 구독 완료`,
-        `'${topicName}' 토픽에 성공적으로 구독되었습니다.`
+      "토픽 구독 완료", 
+      `'${topicName}' 토픽 구독이 완료되었습니다. 해당 토픽의 알림을 받을 수 있습니다.`
     );
+  })
+  .catch(error => {
+    console.log(`❌ 토픽 '${topicName}' 구독 실패 (CORS 제한):`, error.message);
     
-    return true;
-}
-
-function unsubscribeFromTopic(token, topicName) {
-    console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
+    // CORS 문제로 인해 직접 구독이 실패하더라도 로컬에 상태 저장
+    localStorage.setItem(`fcm_topic_${topicName}`, 'attempted');
+    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
     
-    // 로컬 스토리지에서 구독 정보 제거
-    const subscriptionKey = `fcm_topic_${topicName}`;
-    const dateKey = `fcm_topic_${topicName}_date`;
+    console.log(`💡 토픽 구독을 위한 대안 방법:`);
+    console.log(`   1. 서버 측에서 토큰을 사용해 토픽 구독 처리`);
+    console.log(`   2. Firebase Admin SDK를 통한 구독 관리`);
+    console.log(`   3. 토큰: ${token}`);
+    console.log(`   4. 토픽: ${topicName}`);
     
-    localStorage.removeItem(subscriptionKey);
-    localStorage.removeItem(dateKey);
-    
-    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공`);
-    
-    // 구독 해제 알림
+    // 구독 시도 알림
     sendLocalNotification(
-        `토픽 구독 해제`,
-        `'${topicName}' 토픽 구독이 해제되었습니다.`
+      "토픽 구독 시도", 
+      `'${topicName}' 토픽 구독을 시도했습니다. 서버에서 추가 설정이 필요할 수 있습니다.`
     );
-    
-    return true;
+  });
 }
 
-// 개발자 도구용 토픽 관리 함수들
-function subscribeToTopicManual(topicName) {
-    if (!token) {
-        console.log('❌ FCM 토큰이 없습니다. 먼저 토큰을 획득해주세요.');
-        return false;
+// 토픽 구독 해제 함수
+function unsubscribeFromTopic(token, topicName) {
+  console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
+  
+  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
+  
+  const unsubscribePayload = {
+    to: `/topics/${topicName}`,
+    registration_tokens: [token]
+  };
+
+  fetch('https://iid.googleapis.com/iid/v1:batchRemove', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=' + serverKey
+    },
+    body: JSON.stringify(unsubscribePayload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    return response.json();
+  })
+  .then(data => {
+    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공:`, data);
     
-    return subscribeToTopic(token, topicName);
+    // 로컬 저장소에서 구독 상태 제거
+    localStorage.removeItem(`fcm_topic_${topicName}`);
+    localStorage.removeItem(`fcm_topic_${topicName}_date`);
+    
+    // 구독 해제 성공 알림
+    sendLocalNotification(
+      "토픽 구독 해제", 
+      `'${topicName}' 토픽 구독이 해제되었습니다.`
+    );
+  })
+  .catch(error => {
+    console.log(`❌ 토픽 '${topicName}' 구독 해제 실패:`, error.message);
+  });
 }
 
-function unsubscribeFromTopicManual(topicName) {
-    if (!token) {
-        console.log('❌ FCM 토큰이 없습니다.');
-        return false;
+async function sendMessageToServer(message, token) {
+  try {
+    const response = await fetch('https://fcm.googleapis.com/fcm/send', { // Your server's endpoint
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, token }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
     }
-    
-    return unsubscribeFromTopic(token, topicName);
+    console.log('Notification request sent to server.');
+  } catch (error) {
+    console.error('Error sending notification request:', error);
+  }
 }
 
-function checkTopicSubscriptions() {
-    console.log('📋 현재 토픽 구독 상태:');
-    
-    const topics = ['fine2']; // 확인할 토픽 목록
-    
-    topics.forEach(topic => {
-        const subscriptionKey = `fcm_topic_${topic}`;
-        const dateKey = `fcm_topic_${topic}_date`;
-        
-        const isSubscribed = localStorage.getItem(subscriptionKey);
-        const subscribeDate = localStorage.getItem(dateKey);
-        
-        if (isSubscribed) {
-            const dateStr = subscribeDate ? new Date(subscribeDate).toLocaleString() : '알 수 없음';
-            console.log(`   📌 ${topic}: subscribed (${dateStr})`);
-        } else {
-            console.log(`   ❌ ${topic}: not subscribed`);
-        }
+// Example usage (주석 처리 - 필요시 활성화)
+// sendMessageToServer('Hello!', token);
+
+// CORS 문제 없는 로컬 전용 알림 함수
+function sendLocalNotification(title, body, icon) {
+  console.log('📱 Local notification:', title, '-', body);
+  
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      body: body,
+      icon: icon || '/WmsMobile/images/icon.png',
+      badge: '/WmsMobile/images/icon.png',
+      requireInteraction: true,
+      tag: 'wms-local-notification',
+      timestamp: Date.now(),
+      silent: false
+      // actions는 일반 브라우저 알림에서 지원되지 않음 (Service Worker 전용)
     });
     
-    return topics.length;
+    // 알림 클릭 이벤트
+    notification.onclick = function() {
+      window.focus();
+      notification.close();
+    };
+    
+    // 5초 후 자동 닫기
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
+    
+    console.log('✅ Local notification displayed:', title);
+    return true;
+  } else {
+    console.log('❌ Local notification not available');
+    console.log('📝 알림 내용:', title, '-', body);
+    return false;
+  }
 }
 
-// 기존 함수들에 누락된 함수들 추가
-function testLocalNotification() {
-    console.log('🧪 로컬 알림 테스트를 시작합니다...');
+// 개발자 도구에서 VAPID 키를 테스트하기 위한 헬퍼 함수
+window.testVapidKey = async function(vapidKey) {
+  if (!vapidKey) {
+    console.log('❌ VAPID 키를 입력해주세요. 예: testVapidKey("BK8n...")');
+    return;
+  }
+  
+  try {
+    console.log('🧪 Testing VAPID key:', vapidKey.substring(0, 15) + '...');
     
-    if (!("Notification" in window)) {
-        console.log("❌ 이 브라우저는 알림을 지원하지 않습니다.");
-        return false;
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        const testToken = await messaging.getToken({ 
+          vapidKey: vapidKey,
+          serviceWorkerRegistration: registration
+        });
+        
+        if (testToken) {
+          console.log('✅ VAPID 키가 유효합니다!');
+          console.log('🔑 토큰:', testToken);
+          token = testToken; // 전역 토큰 업데이트
+          return testToken;
+        }
+      }
     }
-    
-    if (Notification.permission !== 'granted') {
-        console.log("❌ 알림 권한이 허용되지 않았습니다. 먼저 권한을 요청하세요.");
-        return forceRequestNotificationPermission();
-    }
-    
-    return sendLocalNotification(
-        '테스트 알림', 
-        '로컬 브라우저 알림 테스트입니다. 이 알림이 보이면 정상 작동 중입니다.'
-    );
-}
+  } catch (error) {
+    console.log('❌ VAPID 키 테스트 실패:', error.message);
+  }
+  
+  return null;
+};
 
-function checkNotificationPermission() {
-    console.log('🔍 알림 권한 상태를 확인합니다...');
-    
-    if (!("Notification" in window)) {
-        console.log("❌ 브라우저가 알림을 지원하지 않습니다.");
-        return 'not-supported';
+// Firebase Console 바로가기 함수
+window.openFirebaseConsole = function() {
+  const url = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/settings/cloudmessaging`;
+  window.open(url, '_blank');
+  console.log('🔥 Firebase Console이 새 탭에서 열립니다.');
+  console.log('📍 Cloud Messaging 설정 페이지로 이동합니다.');
+};
+
+console.log('🛠️ 개발자 도구 사용 가능한 함수:');
+console.log('   - testVapidKey("새로운_VAPID_키") : VAPID 키 테스트');
+console.log('   - openFirebaseConsole() : Firebase Console 열기');
+console.log('   - testLocalNotification() : 로컬 알림 테스트');
+console.log('   - checkNotificationPermission() : 알림 권한 상태 확인');
+console.log('   - subscribeToTopicManual("토픽명") : 수동 토픽 구독');
+console.log('   - unsubscribeFromTopicManual("토픽명") : 수동 토픽 구독 해제');
+console.log('   - checkTopicSubscriptions() : 현재 구독 상태 확인');
+
+// 토픽 관련 개발자 도구 함수들
+window.subscribeToTopicManual = function(topicName) {
+  if (!topicName) {
+    console.log('❌ 토픽명을 입력해주세요. 예: subscribeToTopicManual("fine2")');
+    return;
+  }
+  
+  if (!token) {
+    console.log('❌ FCM 토큰이 없습니다. 먼저 알림 권한을 허용하고 토큰을 획득해주세요.');
+    return;
+  }
+  
+  subscribeToTopic(token, topicName);
+};
+
+window.unsubscribeFromTopicManual = function(topicName) {
+  if (!topicName) {
+    console.log('❌ 토픽명을 입력해주세요. 예: unsubscribeFromTopicManual("fine2")');
+    return;
+  }
+  
+  if (!token) {
+    console.log('❌ FCM 토큰이 없습니다.');
+    return;
+  }
+  
+  unsubscribeFromTopic(token, topicName);
+};
+
+window.checkTopicSubscriptions = function() {
+  console.log('📋 현재 토픽 구독 상태:');
+  
+  const topics = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('fcm_topic_') && !key.endsWith('_date')) {
+      const topicName = key.replace('fcm_topic_', '');
+      const status = localStorage.getItem(key);
+      const dateKey = key + '_date';
+      const date = localStorage.getItem(dateKey);
+      
+      topics.push({
+        topic: topicName,
+        status: status,
+        date: date ? new Date(date).toLocaleString() : '알 수 없음'
+      });
     }
+  }
+  
+  if (topics.length === 0) {
+    console.log('   구독한 토픽이 없습니다.');
+  } else {
+    topics.forEach(topic => {
+      console.log(`   📌 ${topic.topic}: ${topic.status} (${topic.date})`);
+    });
+  }
+  
+  console.log(`📱 현재 FCM 토큰: ${token || '없음'}`);
+  return topics;
+};
+
+// 알림 테스트 함수
+window.testLocalNotification = function() {
+  return sendLocalNotification(
+    "테스트 알림", 
+    "로컬 브라우저 알림이 정상적으로 작동합니다."
+  );
+};
+
+// 알림 권한 상태 확인 함수
+window.checkNotificationPermission = function() {
+  if (!('Notification' in window)) {
+    console.log('❌ 브라우저가 알림을 지원하지 않습니다.');
+    return false;
+  }
+  
+  console.log('📋 알림 권한 상태:', Notification.permission);
+  
+  switch(Notification.permission) {
+    case 'granted':
+      console.log('✅ 알림 권한이 허용되었습니다.');
+      return true;
+    case 'denied':
+      console.log('❌ 알림 권한이 거부되었습니다.');
+      console.log('💡 브라우저 설정에서 알림을 허용해주세요.');
+      return false;
+    case 'default':
+      console.log('⚠️ 알림 권한이 아직 요청되지 않았습니다.');
+      console.log('💡 페이지를 새로고침하면 권한 요청이 나타납니다.');
+      return false;
+    default:
+      console.log('❓ 알 수 없는 알림 권한 상태:', Notification.permission);
+      return false;
+  }
+};
+
+ function reLoad(){
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }
+
+function popDetail(ref){
+  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
+}
+function returnTime(){
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+  return formattedTime;
+}
+function otherContents(e){
+  if(e.id=="otherPlt"){
+    location.href=e.id+".html";
+  }else{
+    window.location.href="https://koacaiia.github.io/CargoStatus/"
+  }
+  
+}
+function showModal(url,imgTag){
+    const modal = document.getElementById("imgModal");
+    const modalImg = document.getElementById("modalImg");
+    modalImg.src = url;
+    modal.style.display = "block";
+    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
+    modalImg.dataset.imgTag = imgTag;
     
-    const permission = Notification.permission;
-    console.log(`📋 현재 알림 권한: ${permission}`);
-    
-    switch(permission) {
-        case 'granted':
-            console.log('✅ 알림이 허용되어 있습니다.');
-            break;
-        case 'denied':
-            console.log('❌ 알림이 거부되어 있습니다.');
-            console.log('💡 브라우저 설정에서 알림을 허용해주세요.');
-            break;
-        case 'default':
-            console.log('⏸️ 알림 권한이 아직 요청되지 않았습니다.');
-            console.log('💡 forceRequestNotificationPermission()을 호출해서 권한을 요청하세요.');
-            break;
-    }
-    
-    return permission;
+}
+function fileRemove() {
+  const fileTr = document.querySelector("#imgTr");
+  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
+  const imgUrls = [];
+
+  if (confirmRemove) {
+    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      if (img.classList.contains("local-img")) {
+        imgUrls.push(imgSrc);
+      } else {
+        const storageRef = firebase.storage().refFromURL(imgSrc);
+        storageRef.delete().then(() => {
+          console.log("이미지 삭제 완료:", imgSrc);
+        }).catch((error) => {
+          console.error("이미지 삭제 오류:", error);
+        });
+      }
+      td.remove(); // td 요소 제거
+    });
+  }
+  closeModal();
+}
+function closeModal() {
+  const modal = document.getElementById("imgModal");
+  const tdList = document.querySelectorAll("#imgTr td");
+  tdList.forEach((td)=>{
+    td.classList.remove("file-selected");
+  });
+  modal.style.display = "none";
+}
+function deleteImage() {
+  const modalImg = document.getElementById("modalImg");
+  const imgTag = modalImg.dataset.imgTag;
+  console.log(imgTag);
+  imgTag.remove();
+  closeModal();
+}
+function saveImg() {
+  const modalImg = document.getElementById("modalImg");
+  const url = modalImg.src;
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      saveAs(blob, modalImg.dataset.imgTag);
+    })
+    .catch(error => {
+      console.error("Error saving image:", error);
+    });
+  closeModal();
+  
+}
+function popSaveAll(){
+  const fileTr = document.querySelector("#imgTr");
+  const img = fileTr.querySelectorAll(".server-img");
+  const imgUrls = [];
+  for(let i=0;i<img.length;i++){
+    const imgSrc = img[i].src;
+    imgUrls.push(imgSrc);
+  }
+  imgUrls.forEach((imgUrl, index) => {
+    fetch(imgUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const fileName = "SaveAll_"+index+"_"+returnTime();
+            const file = new File([blob], fileName, { type: blob.type });
+            saveAs(file, fileName);
+        })
+        .catch(error => {
+          alert("Error uploading file:", error);
+          console.error("Error uploading file:", error);
+      });
+    });
+
 }
