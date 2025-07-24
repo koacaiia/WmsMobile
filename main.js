@@ -618,6 +618,12 @@ function upLoad(){
                     
                     fileRef.put(file).then((snapshot) => {
                         if (index === imgUrls.length - 1) {
+                              let w;
+                              if(ioValue=="InCargo"){
+                                w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
+                              }else{
+                                w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
+                              }
                             console.log("업로드 완료");
                             
                             // FCM 알림 전송 - 모든 이미지 업로드 완료 (올바른 아이콘 경로)
