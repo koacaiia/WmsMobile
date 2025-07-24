@@ -721,6 +721,118 @@ if(mC){
   //   e.style.fontSize="small";
   // });
   }
+   function reLoad(){
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }
+
+function popDetail(ref){
+  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
+}
+function returnTime(){
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+  return formattedTime;
+}
+function otherContents(e){
+  if(e.id=="otherPlt"){
+    location.href=e.id+".html";
+  }else{
+    window.location.href="https://koacaiia.github.io/CargoStatus/"
+  }
+  
+}
+function showModal(url,imgTag){
+    const modal = document.getElementById("imgModal");
+    const modalImg = document.getElementById("modalImg");
+    modalImg.src = url;
+    modal.style.display = "block";
+    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
+    modalImg.dataset.imgTag = imgTag;
+    
+}
+function fileRemove() {
+  const fileTr = document.querySelector("#imgTr");
+  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
+  const imgUrls = [];
+
+  if (confirmRemove) {
+    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      if (img.classList.contains("local-img")) {
+        imgUrls.push(imgSrc);
+      } else {
+        const storageRef = firebase.storage().refFromURL(imgSrc);
+        storageRef.delete().then(() => {
+          console.log("이미지 삭제 완료:", imgSrc);
+        }).catch((error) => {
+          console.error("이미지 삭제 오류:", error);
+        });
+      }
+      td.remove(); // td 요소 제거
+    });
+  }
+  closeModal();
+}
+function closeModal() {
+  const modal = document.getElementById("imgModal");
+  const tdList = document.querySelectorAll("#imgTr td");
+  tdList.forEach((td)=>{
+    td.classList.remove("file-selected");
+  });
+  modal.style.display = "none";
+}
+function deleteImage() {
+  const modalImg = document.getElementById("modalImg");
+  const imgTag = modalImg.dataset.imgTag;
+  console.log(imgTag);
+  imgTag.remove();
+  closeModal();
+}
+function saveImg() {
+  const modalImg = document.getElementById("modalImg");
+  const url = modalImg.src;
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      saveAs(blob, modalImg.dataset.imgTag);
+    })
+    .catch(error => {
+      console.error("Error saving image:", error);
+    });
+  closeModal();
+  
+}
+function popSaveAll(){
+  const fileTr = document.querySelector("#imgTr");
+  const img = fileTr.querySelectorAll(".server-img");
+  const imgUrls = [];
+  for(let i=0;i<img.length;i++){
+    const imgSrc = img[i].src;
+    imgUrls.push(imgSrc);
+  }
+  imgUrls.forEach((imgUrl, index) => {
+    fetch(imgUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const fileName = "SaveAll_"+index+"_"+returnTime();
+            const file = new File([blob], fileName, { type: blob.type });
+            saveAs(file, fileName);
+        })
+        .catch(error => {
+          alert("Error uploading file:", error);
+          console.error("Error uploading file:", error);
+      });
+    });
+
+}
 function toastOn(msg,t){
   if(t == null){
     t=2000;
@@ -1381,115 +1493,4 @@ window.checkNotificationPermission = function() {
   }
 };
 
- function reLoad(){
-  if(mC){
-    location.reload();
-  }else{
-    location.href="https://koacaiia.github.io/Wms-fine-/";
-  }
- }
-
-function popDetail(ref){
-  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
-}
-function returnTime(){
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formattedTime;
-}
-function otherContents(e){
-  if(e.id=="otherPlt"){
-    location.href=e.id+".html";
-  }else{
-    window.location.href="https://koacaiia.github.io/CargoStatus/"
-  }
-  
-}
-function showModal(url,imgTag){
-    const modal = document.getElementById("imgModal");
-    const modalImg = document.getElementById("modalImg");
-    modalImg.src = url;
-    modal.style.display = "block";
-    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
-    modalImg.dataset.imgTag = imgTag;
-    
-}
-function fileRemove() {
-  const fileTr = document.querySelector("#imgTr");
-  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
-  const imgUrls = [];
-
-  if (confirmRemove) {
-    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      if (img.classList.contains("local-img")) {
-        imgUrls.push(imgSrc);
-      } else {
-        const storageRef = firebase.storage().refFromURL(imgSrc);
-        storageRef.delete().then(() => {
-          console.log("이미지 삭제 완료:", imgSrc);
-        }).catch((error) => {
-          console.error("이미지 삭제 오류:", error);
-        });
-      }
-      td.remove(); // td 요소 제거
-    });
-  }
-  closeModal();
-}
-function closeModal() {
-  const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr td");
-  tdList.forEach((td)=>{
-    td.classList.remove("file-selected");
-  });
-  modal.style.display = "none";
-}
-function deleteImage() {
-  const modalImg = document.getElementById("modalImg");
-  const imgTag = modalImg.dataset.imgTag;
-  console.log(imgTag);
-  imgTag.remove();
-  closeModal();
-}
-function saveImg() {
-  const modalImg = document.getElementById("modalImg");
-  const url = modalImg.src;
-  fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      saveAs(blob, modalImg.dataset.imgTag);
-    })
-    .catch(error => {
-      console.error("Error saving image:", error);
-    });
-  closeModal();
-  
-}
-function popSaveAll(){
-  const fileTr = document.querySelector("#imgTr");
-  const img = fileTr.querySelectorAll(".server-img");
-  const imgUrls = [];
-  for(let i=0;i<img.length;i++){
-    const imgSrc = img[i].src;
-    imgUrls.push(imgSrc);
-  }
-  imgUrls.forEach((imgUrl, index) => {
-    fetch(imgUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const fileName = "SaveAll_"+index+"_"+returnTime();
-            const file = new File([blob], fileName, { type: blob.type });
-            saveAs(file, fileName);
-        })
-        .catch(error => {
-          alert("Error uploading file:", error);
-          console.error("Error uploading file:", error);
-      });
-    });
-
-}
+console.log("TIme:07241520");
