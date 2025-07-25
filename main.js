@@ -1060,7 +1060,7 @@ function sendMessage(token, title, body, icon) {
   .catch(error => {
     console.log('❌ FCM server call failed (expected due to CORS):', error.message);
     
-    // FCM 실패 시 로컬 알림으로 재시도 (이미 위에서 시도했지만, 권한이 늦게 부여된 경우를 대비)
+    // FCM 실패 시 로컬 알림로 재시도 (이미 위에서 시도했지만, 권한이 늦게 부여된 경우를 대비)
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body: body,
@@ -1706,30 +1706,40 @@ if (isMobile) {
     }, 3000);
 }
 
-// 개발자 도구용 모바일 테스트 함수들
-window.testMobileChromeNotifications = testMobileChromeNotifications;
-window.createMobileToast = createMobileToast;
-window.createFullScreenMobileNotification = createFullScreenMobileNotification;
-window.requestMobileNotificationPermission = requestMobileNotificationPermission;
+// 개발자 도구 함수들을 전역으로 노출
+window.checkTopicSubscriptions = checkTopicSubscriptions;
+window.subscribeToTopicManual = subscribeToTopicManual;
+window.unsubscribeFromTopicManual = unsubscribeFromTopicManual;
+window.subscribeToAllTopics = subscribeToAllTopics;
+window.unsubscribeFromAllTopics = unsubscribeFromAllTopics;
+window.syncTokenWithTopics = syncTokenWithTopics;
+window.resetTopicSubscriptions = resetTopicSubscriptions;
+window.displayTopicSubscriptions = displayTopicSubscriptions;
+window.checkFirebaseConnection = checkFirebaseConnection;
+window.checkSystemStatus = checkSystemStatus;
 
+// 토픽 관리 도구 안내
 console.log(`
-📱 모바일 크롬 알림 시스템 로드 완료
+📢 토픽 구독 관리 도구:
 
-🧪 테스트 함수들:
-   testMobileChromeNotifications()     - 모든 모바일 알림 테스트
-   createMobileToast('제목', '내용')   - 토스트 알림 테스트
-   createFullScreenMobileNotification('제목', '내용') - 전체화면 알림
-   requestMobileNotificationPermission() - 권한 요청
+🔍 상태 확인:
+   checkTopicSubscriptions()     - 토픽 구독 상태 확인
+   displayTopicSubscriptions()   - 토픽 상태 HTML 표시
+   checkSystemStatus()           - 전체 시스템 상태 확인
 
-📱 현재 환경:
-   모바일: ${isMobile}
-   안드로이드: ${isAndroid}
-   iOS: ${isIOS}
-   
-💡 모바일에서 알림이 안 보인다면:
-   1. testMobileChromeNotifications() 실행
-   2. 크롬 설정 > 사이트 설정 > 알림 확인
-   3. 토스트 알림이 대체로 표시됨
+📝 구독 관리:
+   subscribeToTopicManual('토픽명')   - 수동 토픽 구독
+   unsubscribeFromTopicManual('토픽명') - 수동 토픽 해제
+   subscribeToAllTopics()             - 모든 토픽 일괄 구독
+   unsubscribeFromAllTopics()         - 모든 토픽 일괄 해제
+
+🔧 유지보수:
+   syncTokenWithTopics()         - FCM 토큰과 동기화
+   resetTopicSubscriptions()     - 토픽 상태 초기화
+   checkFirebaseConnection()     - Firebase 연결 확인
+
+💡 권장 사용법:
+   1. checkSystemStatus() - 전체 상태 확인
+   2. subscribeToAllTopics() - 모든 토픽 구독
+   3. displayTopicSubscriptions() - 구독 상태 확인
 `);
-
-// ...existing code...
