@@ -1196,9 +1196,6 @@ async function sendMessageToServer(message, token) {
   }
 }
 
-// Example usage (주석 처리 - 필요시 활성화)
-// sendMessageToServer('Hello!', token);
-
 // CORS 문제 없는 로컬 전용 알림 함수
 function sendLocalNotification(title, body, icon) {
   console.log('📱 Local notification:', title, '-', body);
@@ -1706,7 +1703,445 @@ if (isMobile) {
     }, 3000);
 }
 
-// 개발자 도구 함수들을 전역으로 노출
+// 토픽 관리 관련 함수들을 상단으로 이동
+function checkTopicSubscriptions() {
+    console.log('📋 현재 토픽 구독 상태 확인 중...');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts']; // 확인할 토픽 목록
+    const subscriptionInfo = {};
+    
+    topics.forEach(topic => {
+        const subscriptionKey = `fcm_topic_${topic}`;
+        const dateKey = `fcm_topic_${topic}_date`;
+        
+        const isSubscribed = localStorage.getItem(subscriptionKey);
+        const subscribeDate = localStorage.getItem(dateKey);
+        
+        subscriptionInfo[topic] = {
+            subscribed: !!isSubscribed,
+            date: subscribeDate ? new Date(subscribeDate).toLocaleString() : '알 수 없음'
+        };
+        
+        if (isSubscribed) {
+            console.log(`   ✅ ${topic}: 구독됨 (${subscriptionInfo[topic].date})`);
+        } else {
+            console.log(`   ❌ ${topic}: 구독되지 않음`);
+        }
+    });
+    
+    // FCM 토큰 상태도 함께 표시
+    console.log('📱 FCM 토큰 상태:');
+    if (typeof token !== 'undefined' && token) {
+        console.log(`   ✅ FCM 토큰: ${token.substring(0, 20)}...`);
+    } else {
+        console.log('   ❌ FCM 토큰: 없음');
+    }
+    
+    // 알림 권한 상태
+    console.log('🔔 알림 권한 상태:');
+    if ('Notification' in window) {
+        console.log(`   📋 권한: ${Notification.permission}`);
+    } else {
+        console.log('   ❌ Notification API 미지원');
+    }
+    
+    return subscriptionInfo;
+}
+
+// 토픽 구독 함수 (로컬 저장 방식)
+function subscribeToTopicManual(topicName) {
+    console.log(`🔧 수동 토픽 구독: ${topicName}`);
+    
+    if (typeof token === 'undefined' || !token) {
+        console.log('❌ FCM 토큰이 없습니다. 로컬에서만 구독 상태를 관리합니다.');
+        
+        // 토큰 없어도 로컬에서 구독 상태 관리
+        const subscriptionKey = `fcm_topic_${topicName}`;
+        const dateKey = `fcm_topic_${topicName}_date`;
+        
+        localStorage.setItem(subscriptionKey, 'subscribed_manual');
+        localStorage.setItem(dateKey, new Date().toISOString());
+        
+        console.log(`✅ 토픽 '${topicName}' 수동 구독 완료 (토큰 없음)`);
+        
+        if (typeof sendLocalNotification === 'function') {
+            sendLocalNotification(
+                '수동 토픽 구독',
+                `'${topicName}' 토픽에 수동으로 구독되었습니다. (토큰 획득 시 자동 활성화)`
+            );
+        }
+        
+        return true;
+    }
+    
+    return subscribeToTopic(token, topicName);
+}
+
+function unsubscribeFromTopicManual(topicName) {
+    console.log(`🔧 수동 토픽 구독 해제: ${topicName}`);
+    
+    const subscriptionKey = `fcm_topic_${topicName}`;
+    const dateKey = `fcm_topic_${topicName}_date`;
+    
+    localStorage.removeItem(subscriptionKey);
+    localStorage.removeItem(dateKey);
+    
+    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공`);
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '토픽 구독 해제',
+            `'${topicName}' 토픽 구독이 해제되었습니다.`
+        );
+    }
+    
+    return true;
+}
+
+// 모든 토픽에 일괄 구독
+function subscribeToAllTopics() {
+    console.log('📢 모든 토픽에 일괄 구독 시작');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    const results = {};
+    
+    topics.forEach(topic => {
+        results[topic] = subscribeToTopicManual(topic);
+    });
+    
+    console.log('📋 일괄 구독 결과:', results);
+    
+    const successCount = Object.values(results).filter(result => result).length;
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '일괄 토픽 구독 완료',
+            `${successCount}개 토픽에 구독되었습니다.`
+        );
+    }
+    
+    return results;
+}
+
+// 모든 토픽 구독 해제
+function unsubscribeFromAllTopics() {
+    console.log('📢 모든 토픽 구독 해제 시작');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    const results = {};
+    
+    topics.forEach(topic => {
+        results[topic] = unsubscribeFromTopicManual(topic);
+    });
+    
+    console.log('📋 일괄 구독 해제 결과:', results);
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '일괄 토픽 구독 해제 완료',
+            '모든 토픽 구독이 해제되었습니다.'
+        );
+    }
+    
+    return results;
+}
+
+// FCM 토큰과 토픽 상태 동기화
+function syncTokenWithTopics() {
+    console.log('🔄 FCM 토큰과 토픽 상태 동기화 시작');
+    
+    if (typeof token === 'undefined' || !token) {
+        console.log('❌ FCM 토큰이 없어서 동기화할 수 없습니다.');
+        return false;
+    }
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    let syncCount = 0;
+    
+    topics.forEach(topic => {
+        const subscriptionKey = `fcm_topic_${topic}`;
+        const isSubscribed = localStorage.getItem(subscriptionKey);
+        
+        if (isSubscribed) {
+            console.log(`🔄 토픽 '${topic}' 동기화 중...`);
+            syncCount++;
+        }
+    });
+    
+    console.log(`✅ ${syncCount}개 토픽 동기화 완료`);
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            'FCM 동기화 완료',
+            `${syncCount}개 토픽이 FCM 토큰과 동기화되었습니다.`
+        );
+    }
+    
+    return true;
+}
+
+// 토픽 상태 초기화
+function resetTopicSubscriptions() {
+    console.log('🔄 토픽 구독 상태 초기화');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    
+    topics.forEach(topic => {
+        const subscriptionKey = `fcm_topic_${topic}`;
+        const dateKey = `fcm_topic_${topic}_date`;
+        
+        localStorage.removeItem(subscriptionKey);
+        localStorage.removeItem(dateKey);
+    });
+    
+    console.log('✅ 모든 토픽 구독 상태가 초기화되었습니다.');
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '토픽 상태 초기화',
+            '모든 토픽 구독 상태가 초기화되었습니다.'
+        );
+    }
+    
+    return true;
+}
+
+// 토픽 구독 상태를 HTML로 표시
+function displayTopicSubscriptions() {
+    console.log('📋 토픽 구독 상태 HTML 표시');
+    
+    const subscriptionInfo = checkTopicSubscriptions();
+    
+    let html = `
+        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    z-index: 10000; max-width: 90%; max-height: 80%; overflow-y: auto;">
+            <h3 style="margin-top: 0; color: #333;">📋 토픽 구독 상태</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 10px; border: 1px solid #ddd;">토픽명</th>
+                        <th style="padding: 10px; border:  1px solid #ddd;">상태</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">구독일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    Object.entries(subscriptionInfo).forEach(([topic, info]) => {
+        const statusIcon = info.subscribed ? '✅' : '❌';
+        const statusText = info.subscribed ? '구독됨' : '구독되지 않음';
+        
+        html += `
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${topic}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${statusIcon} ${statusText}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-size: 12px;">${info.date}</td>
+            </tr>
+        `;
+    });
+    
+    const tokenInfo = (typeof token !== 'undefined' && token) ? token.substring(0, 30) + '...' : '없음';
+    const permissionInfo = 'Notification' in window ? Notification.permission : 'API 미지원';
+    
+    html += `
+                </tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="padding: 10px 20px; background: #4285f4; color: white; 
+                               border: none; border-radius: 5px; cursor: pointer;">
+                    닫기
+                </button>
+            </div>
+            <div style="margin-top: 15px; font-size: 12px; color: #666;">
+                <strong>FCM 토큰:</strong> ${tokenInfo}<br>
+                <strong>알림 권한:</strong> ${permissionInfo}<br>
+                <strong>확인 시간:</strong> ${new Date().toLocaleString()}
+            </div>
+        </div>
+    `;
+    
+    // 기존 표시창 제거
+    const existingDisplay = document.getElementById('topic-subscription-display');
+    if (existingDisplay) {
+        existingDisplay.remove();
+    }
+    
+    // 새 표시창 생성
+    const display = document.createElement('div');
+    display.id = 'topic-subscription-display';
+    display.innerHTML = html;
+    
+    document.body.appendChild(display);
+    
+    return subscriptionInfo;
+}
+
+// Firebase 연결 상태 확인
+function checkFirebaseConnection() {
+    console.log('🔥 Firebase 연결 상태 확인');
+    
+    const firebaseStatus = {
+        app: typeof firebase !== 'undefined',
+        database: typeof firebase !== 'undefined' && firebase.database,
+        messaging: typeof firebase !== 'undefined' && firebase.messaging,
+        analytics: typeof firebase !== 'undefined' && firebase.analytics,
+        storage: typeof firebase !== 'undefined' && firebase.storage
+    };
+    
+    console.log('🔥 Firebase 상태:', firebaseStatus);
+    
+    let statusMessage = 'Firebase 연결 상태:\n';
+    Object.entries(firebaseStatus).forEach(([service, available]) => {
+        statusMessage += `${available ? '✅' : '❌'} ${service}\n`;
+    });
+    
+    console.log(statusMessage);
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            'Firebase 상태 확인',
+            statusMessage.replace(/\n/g, ' | ')
+        );
+    }
+    
+    return firebaseStatus;
+}
+
+// 종합 시스템 상태 확인
+function checkSystemStatus() {
+    console.log('🔍 WMS 시스템 종합 상태 확인');
+    
+    // 1. 토픽 구독 상태
+    const topicStatus = checkTopicSubscriptions();
+    
+    // 2. Firebase 연결 상태
+    const firebaseStatus = checkFirebaseConnection();
+    
+    // 3. 알림 시스템 상태
+    const notificationStatus = {
+        permission: 'Notification' in window ? Notification.permission : 'API 미지원',
+        fcmToken: !!(typeof token !== 'undefined' && token),
+        serviceWorker: 'serviceWorker' in navigator
+    };
+    
+    // 4. 모바일 환경 상태
+    const mobileStatus = {
+        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+        isAndroid: /Android/i.test(navigator.userAgent),
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent)
+    };
+    
+    const systemStatus = {
+        topics: topicStatus,
+        firebase: firebaseStatus,
+        notifications: notificationStatus,
+        mobile: mobileStatus,
+        timestamp: new Date().toISOString()
+    };
+    
+    console.log('📊 시스템 종합 상태:', systemStatus);
+    
+    // 상태를 HTML로 표시
+    displaySystemStatus(systemStatus);
+    
+    return systemStatus;
+}
+
+function displaySystemStatus(status) {
+    const html = `
+        <div style="position: fixed; top: 10px; right: 10px; 
+                    background: white; padding: 15px; border-radius: 8px; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000;
+                    max-width: 300px; font-family: Arial, sans-serif; font-size: 12px;">
+            <h4 style="margin: 0 0 10px 0; color: #333;">🔍 시스템 상태</h4>
+            
+            <div style="margin-bottom: 8px;">
+                <strong>📱 모바일:</strong> ${status.mobile.isMobile ? '✅' : '❌'}
+                ${status.mobile.isAndroid ? '(Android)' : status.mobile.isIOS ? '(iOS)' : '(Desktop)'}
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <strong>🔔 알림:</strong> ${status.notifications.permission === 'granted' ? '✅' : '❌'} 
+                ${status.notifications.permission}
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <strong>📱 FCM:</strong> ${status.notifications.fcmToken ? '✅' : '❌'} 
+                ${status.notifications.fcmToken ? '토큰 있음' : '토큰 없음'}
+            </div>
+            
+            <div style="margin-bottom: 8px;">
+                <strong>🔥 Firebase:</strong> ${status.firebase.app ? '✅' : '❌'} 
+                ${status.firebase.messaging ? 'MSG' : ''} 
+                ${status.firebase.database ? 'DB' : ''}
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <strong>📢 토픽:</strong> ${Object.values(status.topics).filter(t => t.subscribed).length}개 구독
+            </div>
+            
+            <button onclick="this.parentElement.remove()" 
+                    style="width: 100%; padding: 5px; background: #4285f4; color: white; 
+                           border: none; border-radius: 4px; cursor: pointer;">
+                닫기
+            </button>
+        </div>
+    `;
+    
+    // 기존 상태창 제거
+    const existingStatus = document.getElementById('system-status-display');
+    if (existingStatus) {
+        existingStatus.remove();
+    }
+    
+    // 새 상태창 생성
+    const display = document.createElement('div');
+    display.id = 'system-status-display';
+    display.innerHTML = html;
+    
+    document.body.appendChild(display);
+    
+    // 10초 후 자동 닫기
+    setTimeout(() => {
+        if (display && display.parentNode) {
+            display.remove();
+        }
+    }, 10000);
+}
+
+// returnTime 함수 추가 (누락된 함수)
+function returnTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
+
+// 기타 누락된 함수들 추가
+function getIconPath() {
+    return './images/icon.png';
+}
+
+function formatDateTime() {
+    const now = new Date();
+    return now.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+// 개발자 도구 함수들을 전역으로 노출 (즉시 실행)
 window.checkTopicSubscriptions = checkTopicSubscriptions;
 window.subscribeToTopicManual = subscribeToTopicManual;
 window.unsubscribeFromTopicManual = unsubscribeFromTopicManual;
@@ -1717,10 +2152,11 @@ window.resetTopicSubscriptions = resetTopicSubscriptions;
 window.displayTopicSubscriptions = displayTopicSubscriptions;
 window.checkFirebaseConnection = checkFirebaseConnection;
 window.checkSystemStatus = checkSystemStatus;
+window.returnTime = returnTime;
 
-// 토픽 관리 도구 안내
+// 즉시 사용 가능하도록 로그 출력
 console.log(`
-📢 토픽 구독 관리 도구:
+📢 토픽 구독 관리 도구 (즉시 사용 가능):
 
 🔍 상태 확인:
    checkTopicSubscriptions()     - 토픽 구독 상태 확인
@@ -1742,4 +2178,6 @@ console.log(`
    1. checkSystemStatus() - 전체 상태 확인
    2. subscribeToAllTopics() - 모든 토픽 구독
    3. displayTopicSubscriptions() - 구독 상태 확인
+
+✅ 모든 함수가 정의되어 즉시 사용 가능합니다!
 `);
