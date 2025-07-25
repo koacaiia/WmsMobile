@@ -703,7 +703,8 @@ function upLoad(){
     });
  
 }
-console.log("mCValue",mC)
+
+
 if(mC){
   
   // document.querySelector("#titleDate").style="display:none";
@@ -715,124 +716,11 @@ if(mC){
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
-  
   // td.forEach((e)=>{
   //   console.log(e);
   //   e.style.fontSize="small";
   // });
   }
-   function reLoad(){
-  if(mC){
-    location.reload();
-  }else{
-    location.href="https://koacaiia.github.io/Wms-fine-/";
-  }
- }
-
-function popDetail(ref){
-  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
-}
-function returnTime(){
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formattedTime;
-}
-function otherContents(e){
-  if(e.id=="otherPlt"){
-    location.href=e.id+".html";
-  }else{
-    window.location.href="https://koacaiia.github.io/CargoStatus/"
-  }
-  
-}
-function showModal(url,imgTag){
-    const modal = document.getElementById("imgModal");
-    const modalImg = document.getElementById("modalImg");
-    modalImg.src = url;
-    modal.style.display = "block";
-    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
-    modalImg.dataset.imgTag = imgTag;
-    
-}
-function fileRemove() {
-  const fileTr = document.querySelector("#imgTr");
-  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
-  const imgUrls = [];
-
-  if (confirmRemove) {
-    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      if (img.classList.contains("local-img")) {
-        imgUrls.push(imgSrc);
-      } else {
-        const storageRef = firebase.storage().refFromURL(imgSrc);
-        storageRef.delete().then(() => {
-          console.log("이미지 삭제 완료:", imgSrc);
-        }).catch((error) => {
-          console.error("이미지 삭제 오류:", error);
-        });
-      }
-      td.remove(); // td 요소 제거
-    });
-  }
-  closeModal();
-}
-function closeModal() {
-  const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr td");
-  tdList.forEach((td)=>{
-    td.classList.remove("file-selected");
-  });
-  modal.style.display = "none";
-}
-function deleteImage() {
-  const modalImg = document.getElementById("modalImg");
-  const imgTag = modalImg.dataset.imgTag;
-  console.log(imgTag);
-  imgTag.remove();
-  closeModal();
-}
-function saveImg() {
-  const modalImg = document.getElementById("modalImg");
-  const url = modalImg.src;
-  fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      saveAs(blob, modalImg.dataset.imgTag);
-    })
-    .catch(error => {
-      console.error("Error saving image:", error);
-    });
-  closeModal();
-  
-}
-function popSaveAll(){
-  const fileTr = document.querySelector("#imgTr");
-  const img = fileTr.querySelectorAll(".server-img");
-  const imgUrls = [];
-  for(let i=0;i<img.length;i++){
-    const imgSrc = img[i].src;
-    imgUrls.push(imgSrc);
-  }
-  imgUrls.forEach((imgUrl, index) => {
-    fetch(imgUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const fileName = "SaveAll_"+index+"_"+returnTime();
-            const file = new File([blob], fileName, { type: blob.type });
-            saveAs(file, fileName);
-        })
-        .catch(error => {
-          alert("Error uploading file:", error);
-          console.error("Error uploading file:", error);
-      });
-    });
-
-}
 function toastOn(msg,t){
   if(t == null){
     t=2000;
@@ -955,7 +843,7 @@ if ('serviceWorker' in navigator) {
           // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
           const vapidKeys = [
             // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
-            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
             'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
           ];
           
@@ -1071,15 +959,15 @@ if ('serviceWorker' in navigator) {
       
 //         // Example: Send a message after getting the token
 //         getToken().then(token => {
-//           if (token) {
-//             sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-//           }
-//         });
-//       });
-//     })
-//     .catch((err) => {
-//       console.error('Service Worker registration failed:', err);
-//     });
+          // if (token) {
+          //   sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+          // }
+        // });
+      // });
+    // })
+    // .catch((err) => {
+    //   console.error('Service Worker registration failed:', err);
+    // });
 // }
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
@@ -1493,4 +1381,149 @@ window.checkNotificationPermission = function() {
   }
 };
 
-console.log("TIme:07241520");
+ function reLoad(){
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }
+
+function popDetail(ref){
+  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
+}
+function returnTime(){
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+  return formattedTime;
+}
+function otherContents(e){
+  if(e.id=="otherPlt"){
+    location.href=e.id+".html";
+  }else{
+    window.location.href="https://koacaiia.github.io/CargoStatus/"
+  }
+  
+}
+function showModal(url,imgTag){
+    const modal = document.getElementById("imgModal");
+    const modalImg = document.getElementById("modalImg");
+    modalImg.src = url;
+    modal.style.display = "block";
+    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
+    modalImg.dataset.imgTag = imgTag;
+    
+}
+function fileRemove() {
+  const fileTr = document.querySelector("#imgTr");
+  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
+  const imgUrls = [];
+
+  if (confirmRemove) {
+    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
+      const img = td.querySelector("img");
+      const imgSrc = img.src;
+      if (img.classList.contains("local-img")) {
+        imgUrls.push(imgSrc);
+      } else {
+        const storageRef = firebase.storage().refFromURL(imgSrc);
+        storageRef.delete().then(() => {
+          console.log("이미지 삭제 완료:", imgSrc);
+        }).catch((error) => {
+          console.error("이미지 삭제 오류:", error);
+        });
+      }
+      td.remove(); // td 요소 제거
+    });
+  }
+  closeModal();
+}
+function closeModal() {
+  const modal = document.getElementById("imgModal");
+  const tdList = document.querySelectorAll("#imgTr td");
+  tdList.forEach((td)=>{
+    td.classList.remove("file-selected");
+  });
+  modal.style.display = "none";
+}
+function deleteImage() {
+  const modalImg = document.getElementById("modalImg");
+  const imgTag = modalImg.dataset.imgTag;
+  console.log(imgTag);
+  imgTag.remove();
+  closeModal();
+}
+function saveImg() {
+  const modalImg = document.getElementById("modalImg");
+  const url = modalImg.src;
+  fetch(url)
+    .then(response => response.blob())
+    .then(blob => {
+      saveAs(blob, modalImg.dataset.imgTag);
+    })
+    .catch(error => {
+      console.error("Error saving image:", error);
+    });
+  closeModal();
+  
+}
+function popSaveAll(){
+  const fileTr = document.querySelector("#imgTr");
+  const img = fileTr.querySelectorAll(".server-img");
+  const imgUrls = [];
+  for(let i=0;i<img.length;i++){
+    const imgSrc = img[i].src;
+    imgUrls.push(imgSrc);
+  }
+  imgUrls.forEach((imgUrl, index) => {
+    fetch(imgUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const fileName = "SaveAll_"+index+"_"+returnTime();
+            const file = new File([blob], fileName, { type: blob.type });
+            saveAs(file, fileName);
+        })
+        .catch(error => {
+          alert("Error uploading file:", error);
+          console.error("Error uploading file:", error);
+      });
+    });
+
+}
+
+// Android용 강화된 알림 테스트
+function testMobileNotification() {
+    console.log('📱 모바일 알림 테스트 시작');
+    
+    if (Notification.permission === 'granted') {
+        const notification = new Notification('📱 모바일 테스트', {
+            body: '모바일 브라우저 알림 테스트입니다.',
+            icon: './images/icon.png',
+            badge: './images/icon.png',
+            tag: 'mobile-test',
+            requireInteraction: true,
+            silent: false,
+            vibrate: [200, 100, 200, 100, 200]
+        });
+        
+        notification.onclick = () => {
+            console.log('모바일 알림 클릭됨');
+            notification.close();
+        };
+    } else {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                testMobileNotification();
+            } else {
+                alert('알림 권한이 거부되었습니다.');
+            }
+        });
+    }
+}
+
+// 실행
+// testMobileNotification();
+document.querySelector("#osBtn").innerHTML="0725_1033";
