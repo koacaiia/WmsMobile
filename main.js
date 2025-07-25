@@ -1212,7 +1212,6 @@ function sendLocalNotification(title, body, icon) {
       tag: 'wms-local-notification',
       timestamp: Date.now(),
       silent: false
-      // actions는 일반 브라우저 알림에서 지원되지 않음 (Service Worker 전용)
     });
     
     // 알림 클릭 이벤트
@@ -1235,295 +1234,502 @@ function sendLocalNotification(title, body, icon) {
   }
 }
 
-// 개발자 도구에서 VAPID 키를 테스트하기 위한 헬퍼 함수
-window.testVapidKey = async function(vapidKey) {
-  if (!vapidKey) {
-    console.log('❌ VAPID 키를 입력해주세요. 예: testVapidKey("BK8n...")');
-    return;
-  }
-  
-  try {
-    console.log('🧪 Testing VAPID key:', vapidKey.substring(0, 15) + '...');
+// 모바일 환경 감지 및 알림 시스템 완전 재구성
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isAndroid = /Android/i.test(navigator.userAgent);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+console.log('📱 모바일 환경 감지:', {
+    isMobile: isMobile,
+    isAndroid: isAndroid,
+    isIOS: isIOS,
+    userAgent: navigator.userAgent
+});
+
+// 모바일용 토스트 알림 시스템
+function createMobileToast(title, message, duration = 5000) {
+    console.log('📱 모바일 토스트 생성:', title, message);
     
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration) {
-        const testToken = await messaging.getToken({ 
-          vapidKey: vapidKey,
-          serviceWorkerRegistration: registration
-        });
-        
-        if (testToken) {
-          console.log('✅ VAPID 키가 유효합니다!');
-          console.log('🔑 토큰:', testToken);
-          token = testToken; // 전역 토큰 업데이트
-          return testToken;
+    // 기존 토스트 제거
+    const existingToast = document.getElementById('mobile-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // 새 토스트 생성
+    const toast = document.createElement('div');
+    toast.id = 'mobile-toast';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        z-index: 99999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        text-align: left;
+        border: 2px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        animation: slideInDown 0.5s ease-out;
+    `;
+    
+    // 애니메이션 CSS 추가
+    if (!document.getElementById('toast-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animation-style';
+        style.textContent = `
+            @keyframes slideInDown {
+                from {
+                    transform: translateY(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutUp {
+                from {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateY(-100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 시간 정보 추가
+    const currentTime = new Date().toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    toast.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #fff;">
+                    📱 ${title}
+                </div>
+                <div style="line-height: 1.4; color: rgba(255,255,255,0.9);">
+                    ${message}
+                </div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 8px;">
+                    ⏰ ${currentTime}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: rgba(255,255,255,0.2); border: none; color: white; 
+                           border-radius: 50%; width: 24px; height: 24px; cursor: pointer;
+                           font-size: 16px; line-height: 1; margin-left: 10px;">
+                ×
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 진동 효과 (Android에서 지원)
+    if (navigator.vibrate && isAndroid) {
+        navigator.vibrate([200, 100, 200]);
+    }
+    
+    // 자동 제거
+    setTimeout(() => {
+        if (toast && toast.parentNode) {
+            toast.style.animation = 'slideOutUp 0.5s ease-in';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 500);
         }
-      }
-    }
-  } catch (error) {
-    console.log('❌ VAPID 키 테스트 실패:', error.message);
-  }
-  
-  return null;
-};
-
-// Firebase Console 바로가기 함수
-window.openFirebaseConsole = function() {
-  const url = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/settings/cloudmessaging`;
-  window.open(url, '_blank');
-  console.log('🔥 Firebase Console이 새 탭에서 열립니다.');
-  console.log('📍 Cloud Messaging 설정 페이지로 이동합니다.');
-};
-
-console.log('🛠️ 개발자 도구 사용 가능한 함수:');
-console.log('   - testVapidKey("새로운_VAPID_키") : VAPID 키 테스트');
-console.log('   - openFirebaseConsole() : Firebase Console 열기');
-console.log('   - testLocalNotification() : 로컬 알림 테스트');
-console.log('   - checkNotificationPermission() : 알림 권한 상태 확인');
-console.log('   - subscribeToTopicManual("토픽명") : 수동 토픽 구독');
-console.log('   - unsubscribeFromTopicManual("토픽명") : 수동 토픽 구독 해제');
-console.log('   - checkTopicSubscriptions() : 현재 구독 상태 확인');
-
-// 토픽 관련 개발자 도구 함수들
-window.subscribeToTopicManual = function(topicName) {
-  if (!topicName) {
-    console.log('❌ 토픽명을 입력해주세요. 예: subscribeToTopicManual("fine2")');
-    return;
-  }
-  
-  if (!token) {
-    console.log('❌ FCM 토큰이 없습니다. 먼저 알림 권한을 허용하고 토큰을 획득해주세요.');
-    return;
-  }
-  
-  subscribeToTopic(token, topicName);
-};
-
-window.unsubscribeFromTopicManual = function(topicName) {
-  if (!topicName) {
-    console.log('❌ 토픽명을 입력해주세요. 예: unsubscribeFromTopicManual("fine2")');
-    return;
-  }
-  
-  if (!token) {
-    console.log('❌ FCM 토큰이 없습니다.');
-    return;
-  }
-  
-  unsubscribeFromTopic(token, topicName);
-};
-
-window.checkTopicSubscriptions = function() {
-  console.log('📋 현재 토픽 구독 상태:');
-  
-  const topics = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('fcm_topic_') && !key.endsWith('_date')) {
-      const topicName = key.replace('fcm_topic_', '');
-      const status = localStorage.getItem(key);
-      const dateKey = key + '_date';
-      const date = localStorage.getItem(dateKey);
-      
-      topics.push({
-        topic: topicName,
-        status: status,
-        date: date ? new Date(date).toLocaleString() : '알 수 없음'
-      });
-    }
-  }
-  
-  if (topics.length === 0) {
-    console.log('   구독한 토픽이 없습니다.');
-  } else {
-    topics.forEach(topic => {
-      console.log(`   📌 ${topic.topic}: ${topic.status} (${topic.date})`);
-    });
-  }
-  
-  console.log(`📱 현재 FCM 토큰: ${token || '없음'}`);
-  return topics;
-};
-
-// 알림 테스트 함수
-window.testLocalNotification = function() {
-  return sendLocalNotification(
-    "테스트 알림", 
-    "로컬 브라우저 알림이 정상적으로 작동합니다."
-  );
-};
-
-// 알림 권한 상태 확인 함수
-window.checkNotificationPermission = function() {
-  if (!('Notification' in window)) {
-    console.log('❌ 브라우저가 알림을 지원하지 않습니다.');
-    return false;
-  }
-  
-  console.log('📋 알림 권한 상태:', Notification.permission);
-  
-  switch(Notification.permission) {
-    case 'granted':
-      console.log('✅ 알림 권한이 허용되었습니다.');
-      return true;
-    case 'denied':
-      console.log('❌ 알림 권한이 거부되었습니다.');
-      console.log('💡 브라우저 설정에서 알림을 허용해주세요.');
-      return false;
-    case 'default':
-      console.log('⚠️ 알림 권한이 아직 요청되지 않았습니다.');
-      console.log('💡 페이지를 새로고침하면 권한 요청이 나타납니다.');
-      return false;
-    default:
-      console.log('❓ 알 수 없는 알림 권한 상태:', Notification.permission);
-      return false;
-  }
-};
-
- function reLoad(){
-  if(mC){
-    location.reload();
-  }else{
-    location.href="https://koacaiia.github.io/Wms-fine-/";
-  }
- }
-
-function popDetail(ref){
-  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
-}
-function returnTime(){
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formattedTime;
-}
-function otherContents(e){
-  if(e.id=="otherPlt"){
-    location.href=e.id+".html";
-  }else{
-    window.location.href="https://koacaiia.github.io/CargoStatus/"
-  }
-  
-}
-function showModal(url,imgTag){
-    const modal = document.getElementById("imgModal");
-    const modalImg = document.getElementById("modalImg");
-    modalImg.src = url;
-    modal.style.display = "block";
-    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
-    modalImg.dataset.imgTag = imgTag;
+    }, duration);
     
-}
-function fileRemove() {
-  const fileTr = document.querySelector("#imgTr");
-  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
-  const imgUrls = [];
-
-  if (confirmRemove) {
-    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      if (img.classList.contains("local-img")) {
-        imgUrls.push(imgSrc);
-      } else {
-        const storageRef = firebase.storage().refFromURL(imgSrc);
-        storageRef.delete().then(() => {
-          console.log("이미지 삭제 완료:", imgSrc);
-        }).catch((error) => {
-          console.error("이미지 삭제 오류:", error);
-        });
-      }
-      td.remove(); // td 요소 제거
-    });
-  }
-  closeModal();
-}
-function closeModal() {
-  const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr td");
-  tdList.forEach((td)=>{
-    td.classList.remove("file-selected");
-  });
-  modal.style.display = "none";
-}
-function deleteImage() {
-  const modalImg = document.getElementById("modalImg");
-  const imgTag = modalImg.dataset.imgTag;
-  console.log(imgTag);
-  imgTag.remove();
-  closeModal();
-}
-function saveImg() {
-  const modalImg = document.getElementById("modalImg");
-  const url = modalImg.src;
-  fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      saveAs(blob, modalImg.dataset.imgTag);
-    })
-    .catch(error => {
-      console.error("Error saving image:", error);
-    });
-  closeModal();
-  
-}
-function popSaveAll(){
-  const fileTr = document.querySelector("#imgTr");
-  const img = fileTr.querySelectorAll(".server-img");
-  const imgUrls = [];
-  for(let i=0;i<img.length;i++){
-    const imgSrc = img[i].src;
-    imgUrls.push(imgSrc);
-  }
-  imgUrls.forEach((imgUrl, index) => {
-    fetch(imgUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const fileName = "SaveAll_"+index+"_"+returnTime();
-            const file = new File([blob], fileName, { type: blob.type });
-            saveAs(file, fileName);
-        })
-        .catch(error => {
-          alert("Error uploading file:", error);
-          console.error("Error uploading file:", error);
-      });
-    });
-
+    // 클릭 시 즉시 제거
+    toast.onclick = () => {
+        if (toast && toast.parentNode) {
+            toast.remove();
+        }
+    };
+    
+    console.log('✅ 모바일 토스트 표시 완료');
+    return toast;
 }
 
-// Android용 강화된 알림 테스트
-function testMobileNotification() {
-    console.log('📱 모바일 알림 테스트 시작');
+// 모바일용 전체화면 알림
+function createFullScreenMobileNotification(title, message) {
+    console.log('📱 전체화면 모바일 알림 생성:', title);
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'mobile-fullscreen-notification';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        background: white;
+        margin: 20px;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        text-align: center;
+        max-width: 90%;
+        animation: bounceIn 0.6s ease-out;
+    `;
+    
+    // 애니메이션 추가
+    if (!document.getElementById('fullscreen-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'fullscreen-animation-style';
+        style.textContent = `
+            @keyframes bounceIn {
+                0% { transform: scale(0.3); opacity: 0; }
+                50% { transform: scale(1.05); }
+                70% { transform: scale(0.9); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    const currentTime = new Date().toLocaleString('ko-KR');
+    
+    notification.innerHTML = `
+        <div style="font-size: 24px; margin-bottom: 10px;">📱</div>
+        <h2 style="color: #333; margin: 0 0 15px 0; font-size: 20px;">${title}</h2>
+        <p style="color: #666; line-height: 1.5; margin: 0 0 20px 0; font-size: 16px;">${message}</p>
+        <div style="color: #999; font-size: 12px; margin-bottom: 20px;">⏰ ${currentTime}</div>
+        <button onclick="document.getElementById('mobile-fullscreen-notification').remove()" 
+                style="background: #4285f4; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 8px; font-size: 16px; cursor: pointer; min-width: 100px;">
+            확인
+        </button>
+    `;
+    
+    overlay.appendChild(notification);
+    document.body.appendChild(overlay);
+    
+    // 진동
+    if (navigator.vibrate) {
+        navigator.vibrate([300, 200, 300, 200, 300]);
+    }
+    
+    // 배경 클릭 시 닫기
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+    
+    // 10초 후 자동 닫기
+    setTimeout(() => {
+        if (overlay && overlay.parentNode) {
+            overlay.remove();
+        }
+    }, 10000);
+    
+    return overlay;
+}
+
+// 모바일 크롬 전용 알림 시스템
+function sendMobileChromeNotification(title, body, options = {}) {
+    console.log('📱 모바일 크롬 알림 시작:', title, body);
+    
+    // 1단계: 브라우저 알림 시도
+    if ('Notification' in window) {
+        console.log('📱 현재 알림 권한:', Notification.permission);
+        
+        if (Notification.permission === 'granted') {
+            try {
+                console.log('📱 브라우저 알림 생성 시도...');
+                
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: './images/icon.png',
+                    badge: './images/icon.png',
+                    tag: 'mobile-chrome-' + Date.now(),
+                    requireInteraction: false, // 모바일에서는 false가 더 안정적
+                    silent: false,
+                    vibrate: [200, 100, 200, 100, 200],
+                    timestamp: Date.now(),
+                    data: {
+                        timestamp: new Date().toISOString(),
+                        mobile: true
+                    },
+                    // 모바일 크롬에서 지원하는 추가 옵션들
+                    renotify: true,
+                    sticky: false
+                });
+                
+                notification.onshow = () => {
+                    console.log('✅ 모바일 브라우저 알림 표시 성공');
+                };
+                
+                notification.onerror = (error) => {
+                    console.log('❌ 모바일 브라우저 알림 오류:', error);
+                    // 오류 시 토스트로 대체
+                    createMobileToast(title, body);
+                };
+                
+                notification.onclick = () => {
+                    console.log('📱 모바일 알림 클릭됨');
+                    window.focus();
+                    notification.close();
+                };
+                
+                // 모바일에서는 자동 닫기 시간을 짧게
+                setTimeout(() => {
+                    if (notification) {
+                        notification.close();
+                    }
+                }, 6000);
+                
+                // 브라우저 알림 성공 시 토스트는 표시하지 않음
+                return true;
+                
+            } catch (error) {
+                console.log('❌ 브라우저 알림 생성 실패:', error);
+            }
+        } else if (Notification.permission === 'default') {
+            console.log('📱 알림 권한 요청 중...');
+            
+            Notification.requestPermission().then(permission => {
+                console.log('📱 권한 요청 결과:', permission);
+                if (permission === 'granted') {
+                    // 권한 획득 후 재시도
+                    setTimeout(() => {
+                        sendMobileChromeNotification(title, body, options);
+                    }, 100);
+                } else {
+                    console.log('❌ 알림 권한 거부됨 - 토스트로 대체');
+                    createMobileToast(title, body);
+                }
+            });
+            return false;
+        } else {
+            console.log('❌ 알림 권한 거부됨 - 토스트로 대체');
+        }
+    } else {
+        console.log('❌ Notification API 미지원 - 토스트로 대체');
+    }
+    
+    // 2단계: 브라우저 알림 실패 시 토스트 알림
+    createMobileToast(title, body);
+    
+    // 3단계: 중요한 알림의 경우 전체화면 알림도 추가
+    if (options.important) {
+        setTimeout(() => {
+            createFullScreenMobileNotification(title, body);
+        }, 1000);
+    }
+    
+    return true;
+}
+
+// 기존 sendLocalNotification 함수를 모바일용으로 교체
+function sendLocalNotification(title, body, icon) {
+    console.log('📱 sendLocalNotification 호출:', title, body);
+    
+    // 모바일 환경에서는 모바일 전용 알림 사용
+    if (isMobile) {
+        return sendMobileChromeNotification(title, body, { important: false });
+    } else {
+        // 데스크톱 환경에서는 기존 로직 사용
+        return sendDesktopNotification(title, body, icon);
+    }
+}
+
+// 데스크톱용 알림 함수 (기존 로직)
+function sendDesktopNotification(title, body, icon) {
+    console.log('🖥️ 데스크톱 알림:', title, body);
+    
+    if (!("Notification" in window)) {
+        console.log("❌ 브라우저가 알림을 지원하지 않습니다.");
+        alert(`알림: ${title}\n${body}`);
+        return false;
+    }
+    
+    if (Notification.permission === "granted") {
+        try {
+            const iconPath = icon || getIconPath();
+            const currentTime = formatDateTime();
+            let enhancedBody = body;
+            
+            if (title.includes('작업 상태 업데이트') || 
+                title.includes('작업 완료') ||
+                title.includes('컨테이너진입') ||
+                title.includes('이미지 업로드') ||
+                title.includes('파일 업로드')) {
+                enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
+            }
+            
+            const notification = new Notification(title, {
+                body: enhancedBody,
+                icon: iconPath,
+                badge: iconPath,
+                timestamp: Date.now(),
+                requireInteraction: false,
+                tag: 'wms-desktop-notification-' + Date.now(),
+                silent: false
+            });
+
+            notification.onclick = function(event) {
+                window.focus();
+                notification.close();
+            };
+            
+            setTimeout(() => {
+                if (notification) {
+                    notification.close();
+                }
+            }, 8000);
+
+            console.log('✅ 데스크톱 알림 전송 성공');
+            return true;
+            
+        } catch (error) {
+            console.error('❌ 데스크톱 알림 생성 오류:', error);
+            alert(`알림: ${title}\n${body}`);
+            return false;
+        }
+    } else {
+        console.log('❌ 알림 권한 없음');
+        alert(`알림: ${title}\n${body}`);
+        return false;
+    }
+}
+
+// 모바일 크롬 전용 테스트 함수들
+function testMobileChromeNotifications() {
+    console.log('📱 모바일 크롬 알림 테스트 시작');
+    
+    // 1. 토스트 알림 테스트
+    setTimeout(() => {
+        createMobileToast('🧪 토스트 테스트', '모바일 토스트 알림이 정상 작동합니다.');
+    }, 500);
+    
+    // 2. 브라우저 알림 테스트
+    setTimeout(() => {
+        sendMobileChromeNotification('📱 브라우저 알림', '모바일 크롬 브라우저 알림 테스트입니다.');
+    }, 2000);
+    
+    // 3. 전체화면 알림 테스트
+    setTimeout(() => {
+        createFullScreenMobileNotification('🔔 전체화면 알림', '중요한 알림입니다. 전체화면으로 표시됩니다.');
+    }, 4000);
+    
+    // 4. 작업 상태 알림 테스트
+    setTimeout(() => {
+        sendLocalNotification('작업 상태 업데이트', '테스트고객 - TEST123: 컨테이너진입 완료');
+    }, 6000);
+}
+
+// 모바일 환경에서 자동으로 권한 요청
+function requestMobileNotificationPermission() {
+    console.log('📱 모바일 알림 권한 요청');
+    
+    if (!('Notification' in window)) {
+        console.log('❌ 모바일 브라우저가 알림을 지원하지 않습니다.');
+        createMobileToast('알림 미지원', '이 브라우저는 알림을 지원하지 않습니다. 토스트 메시지를 사용합니다.');
+        return Promise.resolve(false);
+    }
     
     if (Notification.permission === 'granted') {
-        const notification = new Notification('📱 모바일 테스트', {
-            body: '모바일 브라우저 알림 테스트입니다.',
-            icon: './images/icon.png',
-            badge: './images/icon.png',
-            tag: 'mobile-test',
-            requireInteraction: true,
-            silent: false,
-            vibrate: [200, 100, 200, 100, 200]
-        });
-        
-        notification.onclick = () => {
-            console.log('모바일 알림 클릭됨');
-            notification.close();
-        };
-    } else {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                testMobileNotification();
-            } else {
-                alert('알림 권한이 거부되었습니다.');
-            }
-        });
+        console.log('✅ 모바일 알림 권한이 이미 허용되어 있습니다.');
+        return Promise.resolve(true);
     }
+    
+    if (Notification.permission === 'denied') {
+        console.log('❌ 모바일 알림 권한이 거부되어 있습니다.');
+        createMobileToast(
+            '알림 권한 필요', 
+            '크롬 브라우저 설정 > 사이트 설정 > 알림에서 이 사이트의 알림을 허용해주세요.',
+            8000
+        );
+        return Promise.resolve(false);
+    }
+    
+    return Notification.requestPermission().then(permission => {
+        console.log('📱 모바일 권한 요청 결과:', permission);
+        
+        if (permission === 'granted') {
+            createMobileToast('알림 설정 완료', 'WMS 모바일 알림이 활성화되었습니다!');
+            return true;
+        } else {
+            createMobileToast(
+                '알림 권한 거부됨', 
+                '브라우저 설정에서 수동으로 알림을 허용해주세요.',
+                8000
+            );
+            return false;
+        }
+    });
 }
 
-// 실행
-// testMobileNotification();
-document.querySelector("#osBtn").innerHTML="0725_1033";
+// 모바일 환경 초기화
+if (isMobile) {
+    console.log('📱 모바일 환경 감지됨 - 모바일 알림 시스템 초기화');
+    
+    // 페이지 로드 시 모바일 환경 안내
+    setTimeout(() => {
+        createMobileToast(
+            'WMS 모바일 모드', 
+            '모바일 환경에 최적화된 알림 시스템이 활성화되었습니다.',
+            3000
+        );
+    }, 1000);
+    
+    // 2초 후 권한 요청
+    setTimeout(() => {
+        requestMobileNotificationPermission();
+    }, 3000);
+}
+
+// 개발자 도구용 모바일 테스트 함수들
+window.testMobileChromeNotifications = testMobileChromeNotifications;
+window.createMobileToast = createMobileToast;
+window.createFullScreenMobileNotification = createFullScreenMobileNotification;
+window.requestMobileNotificationPermission = requestMobileNotificationPermission;
+
+console.log(`
+📱 모바일 크롬 알림 시스템 로드 완료
+
+🧪 테스트 함수들:
+   testMobileChromeNotifications()     - 모든 모바일 알림 테스트
+   createMobileToast('제목', '내용')   - 토스트 알림 테스트
+   createFullScreenMobileNotification('제목', '내용') - 전체화면 알림
+   requestMobileNotificationPermission() - 권한 요청
+
+📱 현재 환경:
+   모바일: ${isMobile}
+   안드로이드: ${isAndroid}
+   iOS: ${isIOS}
+   
+💡 모바일에서 알림이 안 보인다면:
+   1. testMobileChromeNotifications() 실행
+   2. 크롬 설정 > 사이트 설정 > 알림 확인
+   3. 토스트 알림이 대체로 표시됨
+`);
+
+// ...existing code...
