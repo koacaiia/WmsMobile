@@ -527,6 +527,13 @@ function popUp(){
     });
   });
 };
+function reLoad(){
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }
 function popClose(){
   location.reload();;
     // document.querySelector("#mainTitle").style="display:grid";
@@ -2140,7 +2147,7 @@ function formatDateTime() {
         second: '2-digit'
     });
 }
-
+console.log("Time:1407");
 // 개발자 도구 함수들을 전역으로 노출 (즉시 실행)
 window.checkTopicSubscriptions = checkTopicSubscriptions;
 window.subscribeToTopicManual = subscribeToTopicManual;
@@ -2154,30 +2161,4 @@ window.checkFirebaseConnection = checkFirebaseConnection;
 window.checkSystemStatus = checkSystemStatus;
 window.returnTime = returnTime;
 
-// 즉시 사용 가능하도록 로그 출력
-console.log(`
-📢 토픽 구독 관리 도구 (즉시 사용 가능):
-
-🔍 상태 확인:
-   checkTopicSubscriptions()     - 토픽 구독 상태 확인
-   displayTopicSubscriptions()   - 토픽 상태 HTML 표시
-   checkSystemStatus()           - 전체 시스템 상태 확인
-
-📝 구독 관리:
-   subscribeToTopicManual('토픽명')   - 수동 토픽 구독
-   unsubscribeFromTopicManual('토픽명') - 수동 토픽 해제
-   subscribeToAllTopics()             - 모든 토픽 일괄 구독
-   unsubscribeFromAllTopics()         - 모든 토픽 일괄 해제
-
-🔧 유지보수:
-   syncTokenWithTopics()         - FCM 토큰과 동기화
-   resetTopicSubscriptions()     - 토픽 상태 초기화
-   checkFirebaseConnection()     - Firebase 연결 확인
-
-💡 권장 사용법:
-   1. checkSystemStatus() - 전체 상태 확인
-   2. subscribeToAllTopics() - 모든 토픽 구독
-   3. displayTopicSubscriptions() - 구독 상태 확인
-
-✅ 모든 함수가 정의되어 즉시 사용 가능합니다!
-`);
+//
