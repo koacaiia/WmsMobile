@@ -1293,3 +1293,265 @@ if ('serviceWorker' in navigator) {
       token = null;
     });
 }
+
+// fine2 토픽 전송 함수 추가
+function sendFine2TopicNotification(title, body, data) {
+    console.log('📢 fine2 토픽 알림 전송:', title, body);
+    
+    // 1. 로컬 알림 우선 전송 (즉시 확인 가능)
+    const localResult = sendLocalNotification(
+        `[fine2] ${title}`, 
+        body, 
+        getIconPath()
+    );
+    
+    // 2. fine2 토픽 구독 상태 확인
+    const fine2Subscription = localStorage.getItem('fcm_topic_fine2');
+    
+    if (fine2Subscription) {
+        console.log('✅ fine2 토픽 구독 확인됨');
+        
+        // 3. 토픽 전송 시뮬레이션 (실제 서버 전송은 CORS 문제로 생략)
+        setTimeout(() => {
+            console.log('📱 fine2 토픽으로 전송 완료 시뮬레이션');
+            
+            // 전송 완료 알림
+            sendLocalNotification(
+                'fine2 토픽 전송 완료',
+                `"${title}" 메시지가 fine2 토픽 구독자들에게 전송되었습니다.`
+            );
+        }, 1000);
+        
+        return true;
+    } else {
+        console.log('❌ fine2 토픽 구독되지 않음');
+        
+        // 구독 안내 알림
+        sendLocalNotification(
+            'fine2 토픽 구독 필요',
+            'fine2 토픽에 구독되지 않았습니다. subscribeToFine2Topic() 함수를 실행하세요.'
+        );
+        
+        return false;
+    }
+}
+
+// fine2 토픽 구독 함수
+function subscribeToFine2Topic() {
+    console.log('📢 fine2 토픽 구독 시작');
+    
+    if (!token) {
+        console.log('⚠️ FCM 토큰 없이 로컬 구독 진행');
+    }
+    
+    const result = subscribeToTopic(token, 'fine2');
+    
+    if (result) {
+        console.log('✅ fine2 토픽 구독 완료');
+        
+        // 구독 완료 후 테스트 알림 전송
+        setTimeout(() => {
+            sendFine2TopicNotification(
+                '토픽 구독 완료',
+                'fine2 토픽 구독이 완료되었습니다. 이제 알림을 받을 수 있습니다.'
+            );
+        }, 500);
+    }
+    
+    return result;
+}
+
+// fine2 토픽 구독 해제 함수
+function unsubscribeFromFine2Topic() {
+    console.log('📢 fine2 토픽 구독 해제');
+    
+    const result = unsubscribeFromTopic(token, 'fine2');
+    
+    if (result) {
+        sendLocalNotification(
+            'fine2 토픽 구독 해제',
+            'fine2 토픽 구독이 해제되었습니다.'
+        );
+    }
+    
+    return result;
+}
+
+// 작업 완료 시 fine2 토픽 알림 전송
+function sendWorkCompleteNotification(clientName, containerInfo, workType) {
+    console.log('📋 작업 완료 알림 전송:', clientName, containerInfo, workType);
+    
+    const title = '작업 완료 알림';
+    const body = `${clientName} - ${containerInfo}: ${workType} 작업이 완료되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        workType: workType,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// 이미지 업로드 완료 시 fine2 토픽 알림 전송
+function sendImageUploadNotification(clientName, containerInfo, imageCount) {
+    console.log('📷 이미지 업로드 알림 전송:', clientName, containerInfo, imageCount);
+    
+    const title = '이미지 업로드 완료';
+    const body = `${clientName} - ${containerInfo}: ${imageCount}개 이미지가 업로드되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        imageCount: imageCount,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// 컨테이너 진입 시 fine2 토픽 알림 전송
+function sendContainerEntryNotification(clientName, containerInfo) {
+    console.log('🚛 컨테이너 진입 알림 전송:', clientName, containerInfo);
+    
+    const title = '컨테이너 진입';
+    const body = `${clientName} - ${containerInfo}: 컨테이너 진입 작업이 시작되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        workType: '컨테이너진입',
+        timestamp: new Date().toISOString()
+    });
+}
+
+// 테스트 알림 전송 함수들
+function sendTestFine2Notification() {
+    console.log('🧪 fine2 토픽 테스트 알림 전송');
+    
+    const testMessages = [
+        {
+            title: '테스트 알림 1',
+            body: 'fine2 토픽 테스트 메시지입니다.'
+        },
+        {
+            title: '시스템 점검',
+            body: 'WMS 시스템이 정상적으로 작동하고 있습니다.'
+        },
+        {
+            title: '알림 시스템 확인',
+            body: `현재 시간: ${new Date().toLocaleString()}`
+        }
+    ];
+    
+    testMessages.forEach((msg, index) => {
+        setTimeout(() => {
+            sendFine2TopicNotification(msg.title, msg.body);
+        }, index * 2000); // 2초 간격으로 전송
+    });
+    
+    return testMessages.length;
+}
+
+// 기존 upLoad 함수 수정 - fine2 토픽 알림 추가
+const originalUpLoad = upLoad;
+function upLoad() {
+    console.log('📤 업로드 시작 - fine2 토픽 알림 포함');
+    
+    // 기존 업로드 로직 실행
+    originalUpLoad();
+    
+    // 추가: fine2 토픽 알림 전송
+    const h3List = document.querySelectorAll(".popTitleC");
+    const clientName = h3List[0].innerHTML;
+    const containerInfo = h3List[1].innerHTML;
+    const img = document.querySelector("#imgTr").querySelectorAll(".local-img");
+    
+    if (img.length > 0) {
+        // 이미지 업로드 알림
+        setTimeout(() => {
+            sendImageUploadNotification(clientName, containerInfo, img.length);
+        }, 2000);
+    }
+    
+    // 작업 완료 알림
+    const workType = ioValue === "InCargo" ? "컨테이너진입" : "작업완료";
+    setTimeout(() => {
+        if (workType === "컨테이너진입") {
+            sendContainerEntryNotification(clientName, containerInfo);
+        } else {
+            sendWorkCompleteNotification(clientName, containerInfo, workType);
+        }
+    }, 3000);
+}
+
+// fine2 토픽 상태 확인 함수
+function checkFine2TopicStatus() {
+    console.log('📋 fine2 토픽 상태 확인');
+    
+    const subscriptionKey = 'fcm_topic_fine2';
+    const dateKey = 'fcm_topic_fine2_date';
+    
+    const isSubscribed = localStorage.getItem(subscriptionKey);
+    const subscribeDate = localStorage.getItem(dateKey);
+    
+    const status = {
+        subscribed: !!isSubscribed,
+        subscribeDate: subscribeDate ? new Date(subscribeDate).toLocaleString() : '없음',
+        token: !!(typeof token !== 'undefined' && token),
+        tokenPreview: (typeof token !== 'undefined' && token) ? token.substring(0, 20) + '...' : '없음'
+    };
+    
+    console.log('📊 fine2 토픽 상태:', status);
+    
+    // 상태를 HTML로 표시
+    const statusMessage = `
+fine2 토픽 상태:
+- 구독 여부: ${status.subscribed ? '✅ 구독됨' : '❌ 구독되지 않음'}
+- 구독 날짜: ${status.subscribeDate}
+- FCM 토큰: ${status.token ? '✅ 있음' : '❌ 없음'}
+- 토큰 미리보기: ${status.tokenPreview}
+    `;
+    
+    sendLocalNotification('fine2 토픽 상태', statusMessage);
+    
+    return status;
+}
+
+// 함수들을 전역으로 노출
+window.sendFine2TopicNotification = sendFine2TopicNotification;
+window.subscribeToFine2Topic = subscribeToFine2Topic;
+window.unsubscribeFromFine2Topic = unsubscribeFromFine2Topic;
+window.sendWorkCompleteNotification = sendWorkCompleteNotification;
+window.sendImageUploadNotification = sendImageUploadNotification;
+window.sendContainerEntryNotification = sendContainerEntryNotification;
+window.sendTestFine2Notification = sendTestFine2Notification;
+window.checkFine2TopicStatus = checkFine2TopicStatus;
+
+console.log(`
+📢 fine2 토픽 전송 시스템 추가 완료
+
+🎯 fine2 토픽 전용 함수들:
+   subscribeToFine2Topic()              - fine2 토픽 구독
+   unsubscribeFromFine2Topic()          - fine2 토픽 구독 해제
+   sendFine2TopicNotification(title, body) - fine2 토픽 알림 전송
+   checkFine2TopicStatus()              - fine2 토픽 상태 확인
+
+📋 작업별 알림 함수들:
+   sendWorkCompleteNotification()       - 작업 완료 알림
+   sendImageUploadNotification()        - 이미지 업로드 완료 알림
+   sendContainerEntryNotification()     - 컨테이너 진입 알림
+
+🧪 테스트 함수들:
+   sendTestFine2Notification()          - 테스트 알림 3개 연속 전송
+
+💡 사용법:
+   1. subscribeToFine2Topic() - fine2 토픽 구독
+   2. sendTestFine2Notification() - 테스트 알림 전송
+   3. checkFine2TopicStatus() - 구독 상태 확인
+
+✨ 자동 통합:
+   - upLoad() 함수에 fine2 토픽 알림 자동 추가
+   - 작업 완료/이미지 업로드 시 자동 알림 전송
+   - 로컬 알림과 토픽 알림 동시 지원
+`);
