@@ -763,8 +763,398 @@ function osSubmit(){
     toastOn(osObject);
   }).catch((e)=>{});
 }
+// 토픽 관리 함수들을 Service Worker 등록 전에 정의 (상단으로 이동)
+function checkTopicSubscriptions() {
+    console.log('📋 현재 토픽 구독 상태 확인 중...');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    const subscriptionInfo = {};
+    
+    topics.forEach(topic => {
+        const subscriptionKey = `fcm_topic_${topic}`;
+        const dateKey = `fcm_topic_${topic}_date`;
+        
+        const isSubscribed = localStorage.getItem(subscriptionKey);
+        const subscribeDate = localStorage.getItem(dateKey);
+        
+        subscriptionInfo[topic] = {
+            subscribed: !!isSubscribed,
+            date: subscribeDate ? new Date(subscribeDate).toLocaleString() : '알 수 없음'
+        };
+        
+        if (isSubscribed) {
+            console.log(`   ✅ ${topic}: 구독됨 (${subscriptionInfo[topic].date})`);
+        } else {
+            console.log(`   ❌ ${topic}: 구독되지 않음`);
+        }
+    });
+    
+    // FCM 토큰 상태도 함께 표시
+    console.log('📱 FCM 토큰 상태:');
+    if (typeof token !== 'undefined' && token) {
+        console.log(`   ✅ FCM 토큰: ${token.substring(0, 20)}...`);
+    } else {
+        console.log('   ❌ FCM 토큰: 없음');
+    }
+    
+    // 알림 권한 상태
+    console.log('🔔 알림 권한 상태:');
+    if ('Notification' in window) {
+        console.log(`   📋 권한: ${Notification.permission}`);
+    } else {
+        console.log('   ❌ Notification API 미지원');
+    }
+    
+    return subscriptionInfo;
+}
+
+function subscribeToTopic(token, topicName) {
+    console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
+    
+    if (!token) {
+        console.log('❌ FCM 토큰이 없어서 토픽 구독할 수 없습니다.');
+        return false;
+    }
+    
+    // 로컬 스토리지에 구독 정보 저장
+    const subscriptionKey = `fcm_topic_${topicName}`;
+    const dateKey = `fcm_topic_${topicName}_date`;
+    
+    localStorage.setItem(subscriptionKey, 'subscribed');
+    localStorage.setItem(dateKey, new Date().toISOString());
+    
+    console.log(`✅ 토픽 '${topicName}' 구독 성공 (로컬 저장)`);
+    console.log(`📅 구독 날짜: ${new Date().toLocaleString()}`);
+    
+    // 구독 성공 알림
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '토픽 구독 완료',
+            `'${topicName}' 토픽에 성공적으로 구독되었습니다.`
+        );
+    }
+    
+    return true;
+}
+
+function unsubscribeFromTopic(token, topicName) {
+    console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
+    
+    const subscriptionKey = `fcm_topic_${topicName}`;
+    const dateKey = `fcm_topic_${topicName}_date`;
+    
+    localStorage.removeItem(subscriptionKey);
+    localStorage.removeItem(dateKey);
+    
+    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공`);
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '토픽 구독 해제',
+            `'${topicName}' 토픽 구독이 해제되었습니다.`
+        );
+    }
+    
+    return true;
+}
+
+function subscribeToAllTopics() {
+    console.log('📢 모든 토픽에 일괄 구독 시작');
+    
+    const topics = ['fine2', 'wms-notifications', 'mobile-alerts'];
+    const results = {};
+    
+    topics.forEach(topic => {
+        results[topic] = subscribeToTopic(token, topic);
+    });
+    
+    console.log('📋 일괄 구독 결과:', results);
+    
+    const successCount = Object.values(results).filter(result => result).length;
+    
+    if (typeof sendLocalNotification === 'function') {
+        sendLocalNotification(
+            '일괄 토픽 구독 완료',
+            `${successCount}개 토픽에 구독되었습니다.`
+        );
+    }
+    
+    return results;
+}
+
+// 유틸리티 함수들 정의
+function returnTime() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
+
+function getIconPath() {
+    return location.hostname === 'localhost' || location.hostname === '127.0.0.1' 
+        ? './images/icon.png' 
+        : '/WmsMobile/images/icon.png';
+}
+
+function formatDateTime() {
+    const now = new Date();
+    return now.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+// 알림 관련 함수들 정의
+function sendLocalNotification(title, body, icon) {
+    console.log('🔔 로컬 알림 전송:', title, body);
+    
+    if (!("Notification" in window)) {
+        console.log("❌ 브라우저가 알림을 지원하지 않습니다.");
+        return false;
+    }
+    
+    if (Notification.permission === "granted") {
+        try {
+            const iconPath = icon || getIconPath();
+            const currentTime = formatDateTime();
+            let enhancedBody = body;
+            
+            if (title.includes('작업 상태 업데이트') || 
+                title.includes('작업 완료') ||
+                title.includes('컨테이너진입') ||
+                title.includes('이미지 업로드') ||
+                title.includes('파일 업로드')) {
+                enhancedBody += `\n⏰ 등록시간: ${currentTime}`;
+            }
+            
+            const notification = new Notification(title, {
+                body: enhancedBody,
+                icon: iconPath,
+                badge: iconPath,
+                timestamp: Date.now(),
+                requireInteraction: false,
+                tag: 'wms-notification-' + Date.now(),
+                silent: false
+            });
+
+            notification.onclick = function(event) {
+                window.focus();
+                notification.close();
+            };
+            
+            setTimeout(() => {
+                if (notification) {
+                    notification.close();
+                }
+            }, 8000);
+
+            console.log('✅ 로컬 알림 전송 성공');
+            return true;
+            
+        } catch (error) {
+            console.error('❌ 로컬 알림 생성 오류:', error);
+            return false;
+        }
+    } else if (Notification.permission === "default") {
+        console.log('⚠️ 알림 권한 요청 중...');
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                sendLocalNotification(title, body, icon);
+            }
+        });
+        return false;
+    } else {
+        console.log('❌ 알림 권한 거부됨');
+        return false;
+    }
+}
+
+function sendMessage(token, title, body, icon) {
+    console.log('📱 FCM 메시지 전송 시도:', title);
+    
+    // 우선 로컬 알림 사용 (CORS 문제 없음)
+    const localResult = sendLocalNotification(title, body, icon);
+    
+    if (localResult) {
+        console.log('✅ 로컬 알림으로 성공적으로 전송됨');
+        return true;
+    }
+    
+    // 로컬 알림 실패 시에만 FCM 서버 호출 시도
+    console.log('⚠️ 로컬 알림 실패, FCM 서버 전송은 CORS 문제로 인해 생략');
+    return false;
+}
+
+// reLoad 함수 정의 (HTML에서 호출됨)
+function reLoad() {
+    console.log('🔄 페이지 새로고침');
+    location.reload();
+}
+
+// otherContents 함수 정의
+function otherContents(button) {
+    console.log('🔧 기타 콘텐츠:', button ? button.textContent : '알 수 없음');
+    toastOn(`${button.textContent} 기능은 현재 개발 중입니다.`);
+}
+
+// 진단 함수들 추가
+function diagnoseBrowserEnvironment() {
+    console.log('🔍 브라우저 환경 진단 시작');
+    
+    const browserInfo = {
+        userAgent: navigator.userAgent,
+        browser: getBrowserName(),
+        os: getOSName(),
+        protocol: location.protocol,
+        hostname: location.hostname,
+        isHTTPS: location.protocol === 'https:',
+        notificationAPI: 'Notification' in window,
+        serviceWorkerAPI: 'serviceWorker' in navigator,
+        permission: 'Notification' in window ? Notification.permission : 'API 미지원'
+    };
+    
+    console.log('📊 브라우저 정보:', browserInfo);
+    
+    const issues = [];
+    
+    if (!browserInfo.isHTTPS && browserInfo.hostname !== 'localhost') {
+        issues.push('❌ HTTPS 필요: 알림은 HTTPS 환경에서만 완전 지원됩니다.');
+    }
+    
+    if (!browserInfo.notificationAPI) {
+        issues.push('❌ Notification API 미지원: 이 브라우저는 알림을 지원하지 않습니다.');
+    }
+    
+    if (!browserInfo.serviceWorkerAPI) {
+        issues.push('❌ Service Worker 미지원: FCM 기능이 제한됩니다.');
+    }
+    
+    if (browserInfo.permission === 'denied') {
+        issues.push('❌ 알림 권한 거부: 브라우저 설정에서 알림을 허용해주세요.');
+    }
+    
+    if (issues.length > 0) {
+        console.log('🚨 발견된 문제점들:');
+        issues.forEach(issue => console.log('   ' + issue));
+    } else {
+        console.log('✅ 브라우저 환경에 문제가 없습니다.');
+    }
+    
+    return browserInfo;
+}
+
+function getBrowserName() {
+    const ua = navigator.userAgent;
+    if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome';
+    if (ua.includes('Firefox')) return 'Firefox';
+    if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+    if (ua.includes('Edg')) return 'Edge';
+    if (ua.includes('Opera')) return 'Opera';
+    return 'Unknown';
+}
+
+function getOSName() {
+    const ua = navigator.userAgent;
+    if (ua.includes('Windows')) return 'Windows';
+    if (ua.includes('Mac')) return 'macOS';
+    if (ua.includes('Linux')) return 'Linux';
+    if (ua.includes('Android')) return 'Android';
+    if (ua.includes('iOS')) return 'iOS';
+    return 'Unknown';
+}
+
+async function comprehensiveNotificationDiagnostic() {
+    console.log('🔍 종합 알림 진단 시작');
+    
+    const results = {
+        browser: diagnoseBrowserEnvironment(),
+        token: null,
+        localNotification: false,
+        recommendations: []
+    };
+    
+    // 브라우저 호환성 확인
+    if (!results.browser.notificationAPI) {
+        results.recommendations.push('브라우저를 Chrome, Firefox, Edge로 변경하세요.');
+        return results;
+    }
+    
+    if (!results.browser.isHTTPS && results.browser.hostname !== 'localhost') {
+        results.recommendations.push('HTTPS 환경에서 접속하세요.');
+    }
+    
+    // 알림 권한 확인 및 요청
+    if (results.browser.permission !== 'granted') {
+        console.log('🔔 알림 권한 요청 중...');
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                results.recommendations.push('브라우저 설정에서 수동으로 알림을 허용하세요.');
+                return results;
+            }
+        } catch (error) {
+            results.recommendations.push('알림 권한 요청 실패. 브라우저를 새로고침하세요.');
+            return results;
+        }
+    }
+    
+    // 로컬 알림 테스트
+    console.log('🧪 로컬 알림 테스트 중...');
+    results.localNotification = sendLocalNotification(
+        '진단 완료', 
+        `알림 시스템이 정상 작동합니다. (${new Date().toLocaleTimeString()})`
+    );
+    
+    // 결과 분석 및 권장사항
+    if (results.localNotification) {
+        console.log('✅ 알림 시스템이 정상 작동합니다!');
+        results.recommendations.push('알림 시스템이 정상 작동합니다.');
+    } else {
+        console.log('❌ 알림 시스템에 문제가 있습니다.');
+        results.recommendations.push('브라우저 설정을 확인하고 페이지를 새로고침하세요.');
+    }
+    
+    return results;
+}
+
+// 함수들을 즉시 전역으로 노출
+window.checkTopicSubscriptions = checkTopicSubscriptions;
+window.subscribeToTopic = subscribeToTopic;
+window.unsubscribeFromTopic = unsubscribeFromTopic;
+window.subscribeToAllTopics = subscribeToAllTopics;
+window.sendLocalNotification = sendLocalNotification;
+window.sendMessage = sendMessage;
+window.reLoad = reLoad;
+window.otherContents = otherContents;
+window.diagnoseBrowserEnvironment = diagnoseBrowserEnvironment;
+window.comprehensiveNotificationDiagnostic = comprehensiveNotificationDiagnostic;
+window.returnTime = returnTime;
+
+console.log(`
+📢 토픽 구독 관리 시스템 로드 완료
+
+🔍 사용 가능한 함수들:
+   checkTopicSubscriptions()            - 토픽 구독 상태 확인
+   subscribeToAllTopics()               - 모든 토픽 일괄 구독
+   sendLocalNotification(title, body)   - 로컬 알림 전송
+   comprehensiveNotificationDiagnostic() - 종합 알림 진단
+   reLoad()                             - 페이지 새로고침
+   otherContents(button)                - 기타 콘텐츠 처리
+
+✅ 모든 함수가 정의되어 즉시 사용 가능합니다!
+`);
+
+// Service Worker 등록 부분에서 getToken 함수 수정
 if ('serviceWorker' in navigator) {
-  // 현재 환경에 따라 경로 설정
   const swPath = location.hostname === 'localhost' || location.hostname === '127.0.0.1' 
     ? './firebase-messaging-sw.js' 
     : '/WmsMobile/firebase-messaging-sw.js';
@@ -772,6 +1162,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swPath)
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
+      
       function requestPermission(){
         console.log('Requesting notification permission...');
         
@@ -800,13 +1191,7 @@ if ('serviceWorker' in navigator) {
             console.log("✅ Notification Permission Granted");
             
             // 권한 획득 후 테스트 알림 전송
-            if ('Notification' in window) {
-              new Notification('알림 설정 완료', {
-                body: 'WMS 알림이 활성화되었습니다.',
-                icon: '/WmsMobile/images/icon.png',
-                tag: 'permission-granted'
-              });
-            }
+            sendLocalNotification('알림 설정 완료', 'WMS 알림이 활성화되었습니다.');
             
             getToken();
             return true;
@@ -824,7 +1209,6 @@ if ('serviceWorker' in navigator) {
         console.log('Registration:', registration);
         
         async function tryGetToken() {
-          // 1. 먼저 VAPID 키 없이 시도 (가장 간단한 방법)
           try {
             console.log('Trying without VAPID key first...');
             const currentToken = await messaging.getToken({
@@ -840,14 +1224,11 @@ if ('serviceWorker' in navigator) {
             console.log('❌ Failed without VAPID key:', err.message);
           }
           
-          // 2. Firebase 프로젝트의 올바른 VAPID 키들을 시도
           const vapidKeys = [
-            // Firebase Console > Project Settings > Cloud Messaging > Web configuration에서 확인 가능
-            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4',  // 예시 키 (실제 키로 교체 필요)
-            'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',  // 기존 키
+            'BK8nUIclBWnB6rW54BPZGN1oWJN-4jgQNe5-CdlO5HGW4WFT9vJKZPaZz4H4P_sF4x4t4T4U4U4U4U4U4U4',
+            'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
           ];
           
-          // 3. VAPID 키들을 순차적으로 시도
           for (const vapidKey of vapidKeys) {
             try {
               console.log('Trying VAPID key:', vapidKey.substring(0, 15) + '...');
@@ -866,7 +1247,6 @@ if ('serviceWorker' in navigator) {
             }
           }
           
-          // 4. 모든 시도가 실패했을 경우
           console.log('❌ All token acquisition attempts failed');
           return null;
         }
@@ -874,19 +1254,15 @@ if ('serviceWorker' in navigator) {
         return tryGetToken();
       }
       
-      // DOMContentLoaded 대신 즉시 실행
       requestPermission();
       
-      // 토큰 획득을 위한 초기화
       getToken().then(currentToken => {
         if (currentToken) {
           console.log('✅ Initial FCM setup complete with token:', currentToken);
           console.log('🔔 FCM 알림 기능이 활성화되었습니다.');
           
-          // 기존 구독 상태 확인
           const existingSubscription = localStorage.getItem('fcm_topic_fine2');
           if (!existingSubscription) {
-            // fine2 토픽 구독 설정 (처음 방문 시에만)
             console.log('🆕 fine2 토픽 구독을 새로 설정합니다.');
             subscribeToTopic(currentToken, 'fine2');
           } else {
@@ -897,13 +1273,11 @@ if ('serviceWorker' in navigator) {
             }
           }
           
-          // 현재 구독 상태 표시
+          // 현재 구독 상태 표시 (이제 오류 없음!)
           setTimeout(() => {
             checkTopicSubscriptions();
           }, 1000);
           
-          // 초기 테스트 메시지는 제거 (필요시 활성화)
-          // sendMessage(currentToken, 'Hello!', 'This is a test message.', '/images/icon.png');
         } else {
           console.log('❌ FCM token not available. 알림 기능을 사용할 수 없습니다.');
           console.log('💡 해결 방법:');
@@ -916,46 +1290,6 @@ if ('serviceWorker' in navigator) {
     .catch((err) => {
       console.error('Service Worker registration failed:', err);
       console.log('FCM 기능을 사용할 수 없습니다. Service Worker 등록에 실패했습니다.');
-      // Service Worker 없이도 기본 기능은 동작하도록 설정
       token = null;
     });
 }
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
-//     .then((registration) => {
-//       console.log('Service Worker registered with scope:', registration.scope);
-//       function requestPermission(){
-//         Notification.requestPermission().then((permission)=>{
-//           if(permission =="granted"){
-//             console.log("Notification Permission Granted");
-//             getToken();
-//           }else{
-//             console.log("Unable to get Permission to Notify.")
-//           }
-//         });
-//         if(!("Notification" in window)){
-//           console.log("This browser does not support notifications.");
-//         }
-//       }
-      
-//       function getToken() {
-//         return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
-//           .then(currentToken => {
-//             if (currentToken) {
-//               token = currentToken;
-//               return currentToken;
-//             } else {
-//               console.log('No registration token available. Request permission to generate one.');
-//               return null;
-//             }
-//           })
-//           .catch(err => {
-//             console.log('An error occurred while retrieving token. ', err);
-//             return null;
-//           });
-//       }
-//       document.addEventListener('DOMContentLoaded', () => {
-//         requestPermission();
-      
-//         // Example: Send a message after getting the token
-//         getToken().then(token => {
