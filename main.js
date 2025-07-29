@@ -971,27 +971,94 @@ if ('serviceWorker' in navigator) {
 // }
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
+// fine2 토픽 전용 메시지 수신 처리로 개선
 if (typeof messaging !== 'undefined') {
   messaging.onMessage((payload) => {
-    console.log('Message received. ', payload);
-    // Customize notification here
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-         icon: payload.notification.icon || '/WmsMobile/images/default-icon.png'
-    };
-    console.log(notificationTitle,notificationOptions);
+    console.log('📨 FCM 메시지 수신:', payload);
     
-    // 브라우저 알림 표시
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notificationTitle, notificationOptions);
+    // 토픽 정보 확인
+    const topic = payload.data?.topic || payload.from || 'unknown';
+    const notificationTitle = payload.notification?.title || '알림';
+    const notificationBody = payload.notification?.body || '메시지 내용';
+    const notificationIcon = payload.notification?.icon || '/WmsMobile/images/default-icon.png';
+    
+    console.log('📋 수신 정보:', {
+      topic: topic,
+      title: notificationTitle,
+      body: notificationBody,
+      timestamp: new Date().toLocaleString()
+    });
+    
+    // fine2 토픽 메시지 특별 처리
+    if (topic.includes('fine2') || payload.data?.source === 'fine2') {
+      console.log('🎯 fine2 토픽 메시지 감지!');
+      
+      // fine2 토픽 전용 알림 표시
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const fine2Notification = new Notification(`[fine2] ${notificationTitle}`, {
+          body: notificationBody,
+          icon: notificationIcon,
+          badge: '/WmsMobile/images/icon.png',
+          tag: 'fine2-topic-notification',
+          requireInteraction: true,
+          timestamp: Date.now(),
+          data: {
+            topic: 'fine2',
+            originalPayload: payload
+          }
+        });
+        
+        // fine2 알림 클릭 이벤트
+        fine2Notification.onclick = function() {
+          console.log('🖱️ fine2 토픽 알림 클릭됨');
+          window.focus();
+          // 필요시 특정 페이지로 이동
+          // location.href = 'specific-page.html';
+          fine2Notification.close();
+        };
+        
+        // 10초 후 자동 닫기
+        setTimeout(() => {
+          fine2Notification.close();
+        }, 10000);
+      }
+      
+      // fine2 토픽 수신 기록 저장
+      const fine2Record = {
+        title: notificationTitle,
+        body: notificationBody,
+        timestamp: new Date().toISOString(),
+        topic: 'fine2',
+        type: 'received'
+      };
+      
+      const existingRecords = JSON.parse(localStorage.getItem('fine2_received_history') || '[]');
+      existingRecords.unshift(fine2Record);
+      
+      // 최근 30개만 유지
+      if (existingRecords.length > 30) {
+        existingRecords.splice(30);
+      }
+      
+      localStorage.setItem('fine2_received_history', JSON.stringify(existingRecords));
+      console.log('📝 fine2 수신 기록 저장 완료');
+      
+    } else {
+      console.log('📢 일반 FCM 메시지 처리');
+      
+      // 일반 메시지 처리
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(notificationTitle, {
+          body: notificationBody,
+          icon: notificationIcon
+        });
+      }
     }
     
-    // 추가 알림 (선택사항)
-    alert(payload.notification.body);
+    // 기존 alert은 제거하거나 선택적으로 사용
+    // alert(notificationBody);
   });
 }
-
 // Call requestPermission on page load
 
 function sendMessage(token, title, body, icon) {
@@ -1029,7 +1096,7 @@ function sendMessage(token, title, body, icon) {
   const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
 
   const messagePayload = {
-    to: token,
+    to: `/topics/fine2`,
     notification: {
       title: title,
       body: body,

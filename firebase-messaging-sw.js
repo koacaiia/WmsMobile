@@ -122,41 +122,27 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // 알림 클릭 이벤트 처리
-self.addEventListener('notificationclick', (event) => {
-    console.log('[firebase-messaging-sw.js] 🖱️ 알림 클릭됨:', event);
+// firebase-messaging-sw.js에 추가해야 할 코드
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'BACKGROUND_MESSAGE') {
+    const payload = event.data.payload;
     
-    event.notification.close();
-    
-    if (event.action === 'open' || !event.action) {
-        event.waitUntil(
-            clients.matchAll({ 
-                type: 'window',
-                includeUncontrolled: true 
-            }).then((clientList) => {
-                console.log('현재 열린 클라이언트:', clientList.length);
-                
-                // 이미 열린 WMS 탭이 있으면 포커스
-                for (let i = 0; i < clientList.length; i++) {
-                    const client = clientList[i];
-                    if (client.url.includes('/WmsMobile/') && 'focus' in client) {
-                        console.log('기존 탭에 포커스');
-                        return client.focus();
-                    }
-                }
-                
-                // 새 탭 열기
-                if (clients.openWindow) {
-                    console.log('새 탭 열기');
-                    const targetUrl = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1'
-                        ? '/WmsMobile/'
-                        : '/WmsMobile/';
-                    return clients.openWindow(targetUrl);
-                }
-            })
-        );
+    // fine2 토픽 백그라운드 메시지 처리
+    if (payload.data?.topic === 'fine2' || payload.from?.includes('fine2')) {
+      self.registration.showNotification(`[fine2] ${payload.notification.title}`, {
+        body: payload.notification.body,
+        icon: '/WmsMobile/images/icon.png',
+        badge: '/WmsMobile/images/icon.png',
+        tag: 'fine2-background',
+        requireInteraction: true,
+        actions: [
+          { action: 'view', title: '확인' },
+          { action: 'close', title: '닫기' }
+        ]
+      });
     }
+  }
 });
-
 // 알림 닫기 이벤트 처리
 self.addEventListener('notificationclose', (event) => {
     console.log('[firebase-messaging-sw.js] 🔕 알림 닫힘:', event?.notification?.data);
