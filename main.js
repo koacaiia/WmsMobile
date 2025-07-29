@@ -31,11 +31,6 @@ else{
   firebase.app();
   console.log('Firebase app already initialized');
 }
-// const doc =document.documentElement;
-// function fullScreen(){
-//   doc.requestFullscreen();
-// }
-// fullScreen();
 
 const database_f = firebase.database();
 const messaging = firebase.messaging();
@@ -57,17 +52,6 @@ console.log('   2. 프로젝트:', firebaseConfig.projectId, '선택');
 console.log('   3. Project Settings > Cloud Messaging > Web configuration');
 console.log('   4. Web Push certificates 섹션에서 키 확인/생성');
 const deptName = "WareHouseDept2";
-// messaging.onBackgroundMessage(function(payload) {
-//   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-//   // Customize notification here
-//   const notificationTitle = payload.notification.title;
-//   const notificationOptions = {
-//       body: payload.notification.body,
-//       icon: '/icon.png'
-//   };
-
-//   self.registration.showNotification(notificationTitle, notificationOptions);
-//   });
 let ref;
 let refFile;
 let ioValue;
@@ -373,22 +357,11 @@ function popUp(){
       }).catch((e)=>{});
   }
   
-//   thList.forEach((e)=>{
-//     const th = document.createElement("th");
-//     th.innerHTML=e;
-//     tr.appendChild(th);
-//  });
  for(let i=0;i<thList.length;i++){
   const th = document.createElement("th");
   th.innerHTML=thList[i];
   thR.appendChild(th);
  }
-//  for(let i=4;i<thList.length;i++){
-//   const th = document.createElement("th");
-//   th.innerHTML=thList[i];
-//   thR1.appendChild(th);
-//  }
-  // thead.appendChild(tr);
   const resizeImage = (settings) => {
     const file = settings.file;
     const maxSize = settings.maxSize;
@@ -485,7 +458,7 @@ function popUp(){
         console.log(err);
       });
     }
-    // document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
+
   };
   fileInput.addEventListener("change",handleImgInput);
   fileTr.replaceChildren();
@@ -529,13 +502,6 @@ function popUp(){
 };
 function popClose(){
   location.reload();;
-    // document.querySelector("#mainTitle").style="display:grid";
-    // document.querySelector("#mainPop").style="display:none";
-    // document.querySelector("#mainContent").style="display:grid";
-    // document.querySelectorAll(".clicked").forEach((e)=>{
-    //     e.classList.remove("clicked");
-    // });
-    // document.querySelector("#mainOut").style="display:block";
 }
 const fileTr = document.querySelector("#imgTr");
 function upLoad(){
@@ -705,21 +671,9 @@ function upLoad(){
 }
 
 
-if(mC){
-  
-  // document.querySelector("#titleDate").style="display:none";
-  // toastOn("모바일 환경에서 접속 됩니다.1");
-  
-  // const osRe = document.querySelector("#osRe");
-  // osRe.classList.add("mobile");
-  // osRe.classList.remove("osInput");
-}else{
+if(!mC){
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
-  // td.forEach((e)=>{
-  //   console.log(e);
-  //   e.style.fontSize="small";
-  // });
   }
 function toastOn(msg,t){
   if(t == null){
@@ -920,54 +874,6 @@ if ('serviceWorker' in navigator) {
       token = null;
     });
 }
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
-//     .then((registration) => {
-//       console.log('Service Worker registered with scope:', registration.scope);
-//       function requestPermission(){
-//         Notification.requestPermission().then((permission)=>{
-//           if(permission =="granted"){
-//             console.log("Notification Permission Granted");
-//             getToken();
-//           }else{
-//             console.log("Unable to get Permission to Notify.")
-//           }
-//         });
-//         if(!("Notification" in window)){
-//           console.log("This browser does not support notifications.");
-//         }
-//       }
-      
-//       function getToken() {
-//         return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
-//           .then(currentToken => {
-//             if (currentToken) {
-//               token = currentToken;
-//               return currentToken;
-//             } else {
-//               console.log('No registration token available. Request permission to generate one.');
-//               return null;
-//             }
-//           })
-//           .catch(err => {
-//             console.log('An error occurred while retrieving token. ', err);
-//             return null;
-//           });
-//       }
-//       document.addEventListener('DOMContentLoaded', () => {
-//         requestPermission();
-      
-//         // Example: Send a message after getting the token
-//         getToken().then(token => {
-          // if (token) {
-          //   sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-          // }
-        // });
-      // })
-      // .catch((err) => {
-      //   console.error('Service Worker registration failed:', err);
-      // });
-// }
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
 // fine2 토픽 전용 메시지 수신 처리로 개선
