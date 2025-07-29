@@ -38,89 +38,38 @@ function getIconPath() {
 }
 
 // 백그라운드 메시지 처리
+// firebase-messaging-sw.js에 추가할 코드
 messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] 📨 백그라운드 메시지 수신:', payload);
+  console.log('[SW] 백그라운드 메시지 수신:', payload);
+  
+  // fine2 토픽 감지
+  const fromTopic = payload.from || '';
+  const isFine2 = (
+    fromTopic.includes('fine2') ||
+    fromTopic.includes('/topics/fine2') ||
+    payload.data?.topic === 'fine2'
+  );
+  
+  if (isFine2) {
+    console.log('[SW] fine2 토픽 백그라운드 메시지 감지');
     
-    try {
-        // 현재 시간 생성
-        const currentTime = formatDateTime();
-        const iconPath = getIconPath();
-        
-        // 안전한 알림 제목과 내용 설정
-        const notificationTitle = payload?.notification?.title || 
-                                 payload?.data?.title || 
-                                 'WMS 알림';
-        
-        let notificationBody = payload?.notification?.body || 
-                              payload?.data?.body || 
-                              '새로운 메시지가 도착했습니다.';
-        
-        // 작업상태 업데이트 알림인 경우 등록시간 추가
-        if (notificationTitle.includes('작업 상태 업데이트') || 
-            notificationTitle.includes('작업 완료') ||
-            notificationTitle.includes('컨테이너진입') ||
-            notificationTitle.includes('이미지 업로드') ||
-            notificationTitle.includes('파일 업로드') ||
-            (payload?.data?.type === 'status_update')) {
-            notificationBody += `\n⏰ 등록시간: ${currentTime}`;
-        }
-        
-        const notificationIcon = payload?.notification?.icon || 
-                               payload?.data?.icon || 
-                               iconPath;
-        
-        const notificationOptions = {
-            body: notificationBody,
-            icon: notificationIcon,
-            badge: iconPath,
-            data: {
-                ...payload.data,
-                timestamp: currentTime,
-                receivedAt: Date.now(),
-                originalTitle: notificationTitle,
-                originalBody: payload?.notification?.body || payload?.data?.body
-            },
-            requireInteraction: true,
-            tag: 'wms-notification-' + Date.now(),
-            vibrate: [200, 100, 200, 100, 200],
-            silent: false,
-            actions: [
-                {
-                    action: 'open',
-                    title: '📱 열기'
-                },
-                {
-                    action: 'close',
-                    title: '❌ 닫기'
-                }
-            ]
-        };
-
-        console.log('🔔 알림 표시 시도:', {
-            title: notificationTitle,
-            body: notificationBody,
-            icon: notificationIcon,
-            timestamp: currentTime
-        });
-        
-        // 알림 표시
-        return self.registration.showNotification(notificationTitle, notificationOptions);
-        
-    } catch (error) {
-        console.error('❌ 백그라운드 메시지 처리 오류:', error);
-        
-        // 오류 발생 시 기본 알림 표시
-        const fallbackOptions = {
-            body: '메시지를 받았지만 처리 중 오류가 발생했습니다.',
-            icon: getIconPath(),
-            requireInteraction: true,
-            tag: 'error-notification'
-        };
-        
-        return self.registration.showNotification('WMS 알림 오류', fallbackOptions);
-    }
+    const notificationTitle = payload.notification?.title || 'fine2 알림';
+    const notificationBody = payload.notification?.body || '메시지 내용';
+    
+    // 백그라운드에서 알림 표시
+    self.registration.showNotification(`[fine2 백그라운드] ${notificationTitle}`, {
+      body: `📢 토픽: ${notificationBody}`,
+      icon: '/WmsMobile/images/icon.png',
+      badge: '/WmsMobile/images/icon.png',
+      tag: 'fine2-background',
+      requireInteraction: true,
+      data: {
+        topic: 'fine2',
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
 });
-
 // 알림 클릭 이벤트 처리
 // firebase-messaging-sw.js에 추가해야 할 코드
 self.addEventListener('message', event => {

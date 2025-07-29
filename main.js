@@ -877,48 +877,54 @@ if ('serviceWorker' in navigator) {
 
 // FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
 // fine2 토픽 전용 메시지 수신 처리로 개선
+// messaging.onMessage 수신 처리 완전 수정
 if (typeof messaging !== 'undefined') {
   messaging.onMessage((payload) => {
-    console.log('📨 FCM 메시지 수신:', payload);
+    console.log('📨 FCM 메시지 수신 (원본):', payload);
     
-    // 토픽 정보 확인
-    const topic = payload.data?.topic || payload.from || 'unknown';
+    // 토픽 정보 다각도로 확인
+    const fromTopic = payload.from || '';
+    const dataTopic = payload.data?.topic || '';
+    const dataSource = payload.data?.source || '';
     const notificationTitle = payload.notification?.title || '알림';
     const notificationBody = payload.notification?.body || '메시지 내용';
     const notificationIcon = payload.notification?.icon || '/WmsMobile/images/default-icon.png';
     
-    console.log('📋 수신 정보:', {
-      topic: topic,
+    console.log('🔍 토픽 감지 정보:', {
+      from: fromTopic,
+      dataTopic: dataTopic,
+      dataSource: dataSource,
       title: notificationTitle,
-      body: notificationBody,
-      timestamp: new Date().toLocaleString()
+      body: notificationBody
     });
     
-    // fine2 토픽 메시지 특별 처리
-    if (topic.includes('fine2') || payload.data?.source === 'fine2') {
-      console.log('🎯 fine2 토픽 메시지 감지!');
+    // fine2 토픽 메시지 감지 (모든 경우 확인)
+    const isFine2Message = (
+      fromTopic.includes('fine2') ||           // FCM의 from 필드 확인
+      fromTopic.includes('/topics/fine2') ||   // 전체 토픽 경로 확인
+      dataTopic === 'fine2' ||                 // data.topic 확인
+      dataSource === 'fine2'                   // data.source 확인
+    );
+    
+    console.log('🎯 fine2 토픽 메시지 여부:', isFine2Message);
+    
+    if (isFine2Message) {
+      console.log('✅ fine2 토픽 메시지 감지됨!');
       
       // fine2 토픽 전용 알림 표시
       if ('Notification' in window && Notification.permission === 'granted') {
-        const fine2Notification = new Notification(`[fine2] ${notificationTitle}`, {
-          body: notificationBody,
+        const fine2Notification = new Notification(`[fine2 수신] ${notificationTitle}`, {
+          body: `📢 토픽 알림: ${notificationBody}`,
           icon: notificationIcon,
           badge: '/WmsMobile/images/icon.png',
-          tag: 'fine2-topic-notification',
+          tag: 'fine2-topic-received',
           requireInteraction: true,
-          timestamp: Date.now(),
-          data: {
-            topic: 'fine2',
-            originalPayload: payload
-          }
+          timestamp: Date.now()
         });
         
-        // fine2 알림 클릭 이벤트
         fine2Notification.onclick = function() {
           console.log('🖱️ fine2 토픽 알림 클릭됨');
           window.focus();
-          // 필요시 특정 페이지로 이동
-          // location.href = 'specific-page.html';
           fine2Notification.close();
         };
         
@@ -926,6 +932,8 @@ if (typeof messaging !== 'undefined') {
         setTimeout(() => {
           fine2Notification.close();
         }, 10000);
+        
+        console.log('✅ fine2 토픽 브라우저 알림 표시 완료');
       }
       
       // fine2 토픽 수신 기록 저장
@@ -934,7 +942,9 @@ if (typeof messaging !== 'undefined') {
         body: notificationBody,
         timestamp: new Date().toISOString(),
         topic: 'fine2',
-        type: 'received'
+        type: 'received',
+        from: fromTopic,
+        rawPayload: payload
       };
       
       const existingRecords = JSON.parse(localStorage.getItem('fine2_received_history') || '[]');
@@ -946,7 +956,13 @@ if (typeof messaging !== 'undefined') {
       }
       
       localStorage.setItem('fine2_received_history', JSON.stringify(existingRecords));
-      console.log('📝 fine2 수신 기록 저장 완료');
+      console.log('📝 fine2 수신 기록 저장 완료:', fine2Record);
+      
+      // 콘솔에 명확히 표시
+      console.log('🎉 fine2 토픽 메시지 처리 완료!');
+      console.log('   제목:', notificationTitle);
+      console.log('   내용:', notificationBody);
+      console.log('   시간:', new Date().toLocaleString());
       
     } else {
       console.log('📢 일반 FCM 메시지 처리');
@@ -959,12 +975,12 @@ if (typeof messaging !== 'undefined') {
         });
       }
     }
-    
-    // 기존 alert은 제거하거나 선택적으로 사용
-    // alert(notificationBody);
   });
-}
-// Call requestPermission on page load
+  
+  console.log('✅ messaging.onMessage 리스너 등록 완료');
+} else {
+  console.log('❌ Firebase Messaging이 초기화되지 않음');
+}// Call requestPermission on page load
 
 function sendMessage(token, title, body, icon) {
   // 로컬 브라우저 알림을 우선적으로 사용 (CORS 문제 회피)
