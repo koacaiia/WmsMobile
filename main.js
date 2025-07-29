@@ -1233,124 +1233,124 @@ console.log('📱 모바일 환경 감지:', {
 });
 
 // 모바일용 토스트 알림 시스템
-function createMobileToast(title, message, duration = 5000) {
-    console.log('📱 모바일 토스트 생성:', title, message);
+// function createMobileToast(title, message, duration = 5000) {
+//     console.log('📱 모바일 토스트 생성:', title, message);
     
-    // 기존 토스트 제거
-    const existingToast = document.getElementById('mobile-toast');
-    if (existingToast) {
-        existingToast.remove();
-    }
+//     // 기존 토스트 제거
+//     const existingToast = document.getElementById('mobile-toast');
+//     if (existingToast) {
+//         existingToast.remove();
+//     }
     
-    // 새 토스트 생성
-    const toast = document.createElement('div');
-    toast.id = 'mobile-toast';
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 10px;
-        right: 10px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 15px 20px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        z-index: 99999;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        text-align: left;
-        border: 2px solid rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        animation: slideInDown 0.5s ease-out;
-    `;
+//     // 새 토스트 생성
+//     const toast = document.createElement('div');
+//     toast.id = 'mobile-toast';
+//     toast.style.cssText = `
+//         position: fixed;
+//         top: 20px;
+//         left: 10px;
+//         right: 10px;
+//         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//         color: white;
+//         padding: 15px 20px;
+//         border-radius: 12px;
+//         box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+//         z-index: 99999;
+//         font-family: Arial, sans-serif;
+//         font-size: 14px;
+//         text-align: left;
+//         border: 2px solid rgba(255,255,255,0.1);
+//         backdrop-filter: blur(10px);
+//         animation: slideInDown 0.5s ease-out;
+//     `;
     
-    // 애니메이션 CSS 추가
-    if (!document.getElementById('toast-animation-style')) {
-        const style = document.createElement('style');
-        style.id = 'toast-animation-style';
-        style.textContent = `
-            @keyframes slideInDown {
-                from {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-            @keyframes slideOutUp {
-                from {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-                to {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
+//     // 애니메이션 CSS 추가
+//     if (!document.getElementById('toast-animation-style')) {
+//         const style = document.createElement('style');
+//         style.id = 'toast-animation-style';
+//         style.textContent = `
+//             @keyframes slideInDown {
+//                 from {
+//                     transform: translateY(-100%);
+//                     opacity: 0;
+//                 }
+//                 to {
+//                     transform: translateY(0);
+//                     opacity: 1;
+//                 }
+//             }
+//             @keyframes slideOutUp {
+//                 from {
+//                     transform: translateY(0);
+//                     opacity: 1;
+//                 }
+//                 to {
+//                     transform: translateY(-100%);
+//                     opacity: 0;
+//                 }
+//             }
+//         `;
+//         document.head.appendChild(style);
+//     }
     
-    // 시간 정보 추가
-    const currentTime = new Date().toLocaleTimeString('ko-KR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+//     // 시간 정보 추가
+//     const currentTime = new Date().toLocaleTimeString('ko-KR', {
+//         hour: '2-digit',
+//         minute: '2-digit',
+//         second: '2-digit'
+//     });
     
-    toast.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="flex: 1;">
-                <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #fff;">
-                    📱 ${title}
-                </div>
-                <div style="line-height: 1.4; color: rgba(255,255,255,0.9);">
-                    ${message}
-                </div>
-                <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 8px;">
-                    ⏰ ${currentTime}
-                </div>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" 
-                    style="background: rgba(255,255,255,0.2); border: none; color: white; 
-                           border-radius: 50%; width: 24px; height: 24px; cursor: pointer;
-                           font-size: 16px; line-height: 1; margin-left: 10px;">
-                ×
-            </button>
-        </div>
-    `;
+//     toast.innerHTML = `
+//         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+//             <div style="flex: 1;">
+//                 <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #fff;">
+//                     📱 ${title}
+//                 </div>
+//                 <div style="line-height: 1.4; color: rgba(255,255,255,0.9);">
+//                     ${message}
+//                 </div>
+//                 <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 8px;">
+//                     ⏰ ${currentTime}
+//                 </div>
+//             </div>
+//             <button onclick="this.parentElement.parentElement.remove()" 
+//                     style="background: rgba(255,255,255,0.2); border: none; color: white; 
+//                            border-radius: 50%; width: 24px; height: 24px; cursor: pointer;
+//                            font-size: 16px; line-height: 1; margin-left: 10px;">
+//                 ×
+//             </button>
+//         </div>
+//     `;
     
-    document.body.appendChild(toast);
+//     document.body.appendChild(toast);
     
-    // 진동 효과 (Android에서 지원)
-    if (navigator.vibrate && isAndroid) {
-        navigator.vibrate([200, 100, 200]);
-    }
+//     // 진동 효과 (Android에서 지원)
+//     if (navigator.vibrate && isAndroid) {
+//         navigator.vibrate([200, 100, 200]);
+//     }
     
-    // 자동 제거
-    setTimeout(() => {
-        if (toast && toast.parentNode) {
-            toast.style.animation = 'slideOutUp 0.5s ease-in';
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, 500);
-        }
-    }, duration);
+//     // 자동 제거
+//     setTimeout(() => {
+//         if (toast && toast.parentNode) {
+//             toast.style.animation = 'slideOutUp 0.5s ease-in';
+//             setTimeout(() => {
+//                 if (toast.parentNode) {
+//                     toast.remove();
+//                 }
+//             }, 500);
+//         }
+//     }, duration);
     
-    // 클릭 시 즉시 제거
-    toast.onclick = () => {
-        if (toast && toast.parentNode) {
-            toast.remove();
-        }
-    };
+//     // 클릭 시 즉시 제거
+//     toast.onclick = () => {
+//         if (toast && toast.parentNode) {
+//             toast.remove();
+//         }
+//     };
     
-    console.log('✅ 모바일 토스트 표시 완료');
-    return toast;
-}
+//     console.log('✅ 모바일 토스트 표시 완료');
+//     return toast;
+// }
 
 // 모바일용 전체화면 알림
 function createFullScreenMobileNotification(title, message) {
@@ -1677,14 +1677,14 @@ function requestMobileNotificationPermission() {
 if (isMobile) {
     console.log('📱 모바일 환경 감지됨 - 모바일 알림 시스템 초기화');
     
-    // 페이지 로드 시 모바일 환경 안내
-    setTimeout(() => {
-        createMobileToast(
-            'WMS 모바일 모드', 
-            '모바일 환경에 최적화된 알림 시스템이 활성화되었습니다.',
-            3000
-        );
-    }, 1000);
+    // // 페이지 로드 시 모바일 환경 안내
+    // setTimeout(() => {
+    //     createMobileToast(
+    //         'WMS 모바일 모드', 
+    //         '모바일 환경에 최적화된 알림 시스템이 활성화되었습니다.',
+    //         3000
+    //     );
+    // }, 1000);
     
     // 2초 후 권한 요청
     setTimeout(() => {
