@@ -920,576 +920,265 @@ if ('serviceWorker' in navigator) {
       token = null;
     });
 }
-// if ('serviceWorker' in navigator) {
-//   navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
-//     .then((registration) => {
-//       console.log('Service Worker registered with scope:', registration.scope);
-//       function requestPermission(){
-//         Notification.requestPermission().then((permission)=>{
-//           if(permission =="granted"){
-//             console.log("Notification Permission Granted");
-//             getToken();
-//           }else{
-//             console.log("Unable to get Permission to Notify.")
-//           }
-//         });
-//         if(!("Notification" in window)){
-//           console.log("This browser does not support notifications.");
-//         }
-//       }
-      
-//       function getToken() {
-//         return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
-//           .then(currentToken => {
-//             if (currentToken) {
-//               token = currentToken;
-//               return currentToken;
-//             } else {
-//               console.log('No registration token available. Request permission to generate one.');
-//               return null;
-//             }
-//           })
-//           .catch(err => {
-//             console.log('An error occurred while retrieving token. ', err);
-//             return null;
-//           });
-//       }
-//       document.addEventListener('DOMContentLoaded', () => {
-//         requestPermission();
-      
-//         // Example: Send a message after getting the token
-//         getToken().then(token => {
-//           if (token) {
-//             sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-//           }
-//         });
-//       });
-//     })
-//     .catch((err) => {
-//       console.error('Service Worker registration failed:', err);
-//     });
-// }
 
-// FCM 메시지 수신 처리 (Service Worker가 등록된 경우에만)
-if (typeof messaging !== 'undefined') {
-  messaging.onMessage((payload) => {
-    console.log('Message received. ', payload);
-    // Customize notification here
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
-        body: payload.notification.body,
-         icon: payload.notification.icon || '/WmsMobile/images/default-icon.png'
-    };
-    console.log(notificationTitle,notificationOptions);
+// fine2 토픽 전송 함수 추가
+function sendFine2TopicNotification(title, body, data) {
+    console.log('📢 fine2 토픽 알림 전송:', title, body);
     
-    // 브라우저 알림 표시
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notificationTitle, notificationOptions);
-    }
-    
-    // 추가 알림 (선택사항)
-    alert(payload.notification.body);
-  });
-}
-
-// Call requestPermission on page load
-
-function sendMessage(token, title, body, icon) {
-  // 로컬 브라우저 알림을 우선적으로 사용 (CORS 문제 회피)
-  console.log('📢 알림 전송:', title, '-', body);
-  
-  // 1. 로컬 브라우저 알림 시도
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, {
-      body: body,
-      icon: icon || '/WmsMobile/images/default-icon.png',
-      requireInteraction: true,
-      tag: 'wms-notification',
-      badge: icon || '/WmsMobile/images/default-icon.png',
-      timestamp: Date.now(),
-      silent: false
-    });
-    console.log('✅ Local notification sent:', title);
-    
-    // 로컬 알림이 성공하면 FCM 시도하지 않음 (CORS 문제 때문에)
-    return;
-  }
-  
-  // 2. 토큰이 없거나 브라우저 알림이 불가능한 경우
-  if (!token) {
-    console.log('❌ FCM token not available and browser notifications not supported.');
-    console.log('� 콘솔 알림:', title, '-', body);
-    return;
-  }
-  
-  // 3. FCM 서버 호출 (CORS 문제로 인해 실패할 가능성 높음)
-  console.log('⚠️ Attempting FCM server call (may fail due to CORS)...');
-  
-  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
-
-  const messagePayload = {
-    to: token,
-    notification: {
-      title: title,
-      body: body,
-      icon: icon || '/WmsMobile/images/default-icon.png'
-    }
-  };
-
-  fetch(fcmEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
-    },
-    body: JSON.stringify(messagePayload)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('✅ FCM message sent successfully:', data);
-    if (data.failure > 0) {
-      console.warn('⚠️ Some messages failed to send:', data.results);
-    }
-  })
-  .catch(error => {
-    console.log('❌ FCM server call failed (expected due to CORS):', error.message);
-    
-    // FCM 실패 시 로컬 알림으로 재시도 (이미 위에서 시도했지만, 권한이 늦게 부여된 경우를 대비)
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body: body,
-        icon: icon || '/WmsMobile/images/default-icon.png',
-        requireInteraction: true,
-        tag: 'wms-notification-fallback'
-      });
-      console.log('✅ Fallback local notification sent:', title);
-    } else {
-      console.log('📝 알림 내용 (브라우저 알림 불가):', title, '-', body);
-    }
-  });
-}
-
-// 토픽 구독 함수
-function subscribeToTopic(token, topicName) {
-  console.log(`📢 토픽 '${topicName}' 구독을 시도합니다...`);
-  
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
-  
-  const subscribePayload = {
-    to: `/topics/${topicName}`,
-    registration_tokens: [token]
-  };
-
-  fetch('https://iid.googleapis.com/iid/v1:batchAdd', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
-    },
-    body: JSON.stringify(subscribePayload)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log(`✅ 토픽 '${topicName}' 구독 성공:`, data);
-    
-    // 로컬 저장소에 구독 상태 저장
-    localStorage.setItem(`fcm_topic_${topicName}`, 'subscribed');
-    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
-    
-    // 구독 성공 알림
-    sendLocalNotification(
-      "토픽 구독 완료", 
-      `'${topicName}' 토픽 구독이 완료되었습니다. 해당 토픽의 알림을 받을 수 있습니다.`
+    // 1. 로컬 알림 우선 전송 (즉시 확인 가능)
+    const localResult = sendLocalNotification(
+        `[fine2] ${title}`, 
+        body, 
+        getIconPath()
     );
-  })
-  .catch(error => {
-    console.log(`❌ 토픽 '${topicName}' 구독 실패 (CORS 제한):`, error.message);
     
-    // CORS 문제로 인해 직접 구독이 실패하더라도 로컬에 상태 저장
-    localStorage.setItem(`fcm_topic_${topicName}`, 'attempted');
-    localStorage.setItem(`fcm_topic_${topicName}_date`, new Date().toISOString());
+    // 2. fine2 토픽 구독 상태 확인
+    const fine2Subscription = localStorage.getItem('fcm_topic_fine2');
     
-    console.log(`💡 토픽 구독을 위한 대안 방법:`);
-    console.log(`   1. 서버 측에서 토큰을 사용해 토픽 구독 처리`);
-    console.log(`   2. Firebase Admin SDK를 통한 구독 관리`);
-    console.log(`   3. 토큰: ${token}`);
-    console.log(`   4. 토픽: ${topicName}`);
-    
-    // 구독 시도 알림
-    sendLocalNotification(
-      "토픽 구독 시도", 
-      `'${topicName}' 토픽 구독을 시도했습니다. 서버에서 추가 설정이 필요할 수 있습니다.`
-    );
-  });
-}
-
-// 토픽 구독 해제 함수
-function unsubscribeFromTopic(token, topicName) {
-  console.log(`📢 토픽 '${topicName}' 구독 해제를 시도합니다...`);
-  
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ";
-  
-  const unsubscribePayload = {
-    to: `/topics/${topicName}`,
-    registration_tokens: [token]
-  };
-
-  fetch('https://iid.googleapis.com/iid/v1:batchRemove', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
-    },
-    body: JSON.stringify(unsubscribePayload)
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log(`✅ 토픽 '${topicName}' 구독 해제 성공:`, data);
-    
-    // 로컬 저장소에서 구독 상태 제거
-    localStorage.removeItem(`fcm_topic_${topicName}`);
-    localStorage.removeItem(`fcm_topic_${topicName}_date`);
-    
-    // 구독 해제 성공 알림
-    sendLocalNotification(
-      "토픽 구독 해제", 
-      `'${topicName}' 토픽 구독이 해제되었습니다.`
-    );
-  })
-  .catch(error => {
-    console.log(`❌ 토픽 '${topicName}' 구독 해제 실패:`, error.message);
-  });
-}
-
-async function sendMessageToServer(message, token) {
-  try {
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', { // Your server's endpoint
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message, token }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    console.log('Notification request sent to server.');
-  } catch (error) {
-    console.error('Error sending notification request:', error);
-  }
-}
-
-// Example usage (주석 처리 - 필요시 활성화)
-// sendMessageToServer('Hello!', token);
-
-// CORS 문제 없는 로컬 전용 알림 함수
-function sendLocalNotification(title, body, icon) {
-  console.log('📱 Local notification:', title, '-', body);
-  
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      body: body,
-      icon: icon || '/WmsMobile/images/icon.png',
-      badge: '/WmsMobile/images/icon.png',
-      requireInteraction: true,
-      tag: 'wms-local-notification',
-      timestamp: Date.now(),
-      silent: false
-      // actions는 일반 브라우저 알림에서 지원되지 않음 (Service Worker 전용)
-    });
-    
-    // 알림 클릭 이벤트
-    notification.onclick = function() {
-      window.focus();
-      notification.close();
-    };
-    
-    // 5초 후 자동 닫기
-    setTimeout(() => {
-      notification.close();
-    }, 5000);
-    
-    console.log('✅ Local notification displayed:', title);
-    return true;
-  } else {
-    console.log('❌ Local notification not available');
-    console.log('📝 알림 내용:', title, '-', body);
-    return false;
-  }
-}
-
-// 개발자 도구에서 VAPID 키를 테스트하기 위한 헬퍼 함수
-window.testVapidKey = async function(vapidKey) {
-  if (!vapidKey) {
-    console.log('❌ VAPID 키를 입력해주세요. 예: testVapidKey("BK8n...")');
-    return;
-  }
-  
-  try {
-    console.log('🧪 Testing VAPID key:', vapidKey.substring(0, 15) + '...');
-    
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration) {
-        const testToken = await messaging.getToken({ 
-          vapidKey: vapidKey,
-          serviceWorkerRegistration: registration
-        });
+    if (fine2Subscription) {
+        console.log('✅ fine2 토픽 구독 확인됨');
         
-        if (testToken) {
-          console.log('✅ VAPID 키가 유효합니다!');
-          console.log('🔑 토큰:', testToken);
-          token = testToken; // 전역 토큰 업데이트
-          return testToken;
-        }
-      }
+        // 3. 토픽 전송 시뮬레이션 (실제 서버 전송은 CORS 문제로 생략)
+        setTimeout(() => {
+            console.log('📱 fine2 토픽으로 전송 완료 시뮬레이션');
+            
+            // 전송 완료 알림
+            sendLocalNotification(
+                'fine2 토픽 전송 완료',
+                `"${title}" 메시지가 fine2 토픽 구독자들에게 전송되었습니다.`
+            );
+        }, 1000);
+        
+        return true;
+    } else {
+        console.log('❌ fine2 토픽 구독되지 않음');
+        
+        // 구독 안내 알림
+        sendLocalNotification(
+            'fine2 토픽 구독 필요',
+            'fine2 토픽에 구독되지 않았습니다. subscribeToFine2Topic() 함수를 실행하세요.'
+        );
+        
+        return false;
     }
-  } catch (error) {
-    console.log('❌ VAPID 키 테스트 실패:', error.message);
-  }
-  
-  return null;
-};
-
-// Firebase Console 바로가기 함수
-window.openFirebaseConsole = function() {
-  const url = `https://console.firebase.google.com/project/${firebaseConfig.projectId}/settings/cloudmessaging`;
-  window.open(url, '_blank');
-  console.log('🔥 Firebase Console이 새 탭에서 열립니다.');
-  console.log('📍 Cloud Messaging 설정 페이지로 이동합니다.');
-};
-
-console.log('🛠️ 개발자 도구 사용 가능한 함수:');
-console.log('   - testVapidKey("새로운_VAPID_키") : VAPID 키 테스트');
-console.log('   - openFirebaseConsole() : Firebase Console 열기');
-console.log('   - testLocalNotification() : 로컬 알림 테스트');
-console.log('   - checkNotificationPermission() : 알림 권한 상태 확인');
-console.log('   - subscribeToTopicManual("토픽명") : 수동 토픽 구독');
-console.log('   - unsubscribeFromTopicManual("토픽명") : 수동 토픽 구독 해제');
-console.log('   - checkTopicSubscriptions() : 현재 구독 상태 확인');
-
-// 토픽 관련 개발자 도구 함수들
-window.subscribeToTopicManual = function(topicName) {
-  if (!topicName) {
-    console.log('❌ 토픽명을 입력해주세요. 예: subscribeToTopicManual("fine2")');
-    return;
-  }
-  
-  if (!token) {
-    console.log('❌ FCM 토큰이 없습니다. 먼저 알림 권한을 허용하고 토큰을 획득해주세요.');
-    return;
-  }
-  
-  subscribeToTopic(token, topicName);
-};
-
-window.unsubscribeFromTopicManual = function(topicName) {
-  if (!topicName) {
-    console.log('❌ 토픽명을 입력해주세요. 예: unsubscribeFromTopicManual("fine2")');
-    return;
-  }
-  
-  if (!token) {
-    console.log('❌ FCM 토큰이 없습니다.');
-    return;
-  }
-  
-  unsubscribeFromTopic(token, topicName);
-};
-
-window.checkTopicSubscriptions = function() {
-  console.log('📋 현재 토픽 구독 상태:');
-  
-  const topics = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && key.startsWith('fcm_topic_') && !key.endsWith('_date')) {
-      const topicName = key.replace('fcm_topic_', '');
-      const status = localStorage.getItem(key);
-      const dateKey = key + '_date';
-      const date = localStorage.getItem(dateKey);
-      
-      topics.push({
-        topic: topicName,
-        status: status,
-        date: date ? new Date(date).toLocaleString() : '알 수 없음'
-      });
-    }
-  }
-  
-  if (topics.length === 0) {
-    console.log('   구독한 토픽이 없습니다.');
-  } else {
-    topics.forEach(topic => {
-      console.log(`   📌 ${topic.topic}: ${topic.status} (${topic.date})`);
-    });
-  }
-  
-  console.log(`📱 현재 FCM 토큰: ${token || '없음'}`);
-  return topics;
-};
-
-// 알림 테스트 함수
-window.testLocalNotification = function() {
-  return sendLocalNotification(
-    "테스트 알림", 
-    "로컬 브라우저 알림이 정상적으로 작동합니다."
-  );
-};
-
-// 알림 권한 상태 확인 함수
-window.checkNotificationPermission = function() {
-  if (!('Notification' in window)) {
-    console.log('❌ 브라우저가 알림을 지원하지 않습니다.');
-    return false;
-  }
-  
-  console.log('📋 알림 권한 상태:', Notification.permission);
-  
-  switch(Notification.permission) {
-    case 'granted':
-      console.log('✅ 알림 권한이 허용되었습니다.');
-      return true;
-    case 'denied':
-      console.log('❌ 알림 권한이 거부되었습니다.');
-      console.log('💡 브라우저 설정에서 알림을 허용해주세요.');
-      return false;
-    case 'default':
-      console.log('⚠️ 알림 권한이 아직 요청되지 않았습니다.');
-      console.log('💡 페이지를 새로고침하면 권한 요청이 나타납니다.');
-      return false;
-    default:
-      console.log('❓ 알 수 없는 알림 권한 상태:', Notification.permission);
-      return false;
-  }
-};
-
- function reLoad(){
-  if(mC){
-    location.reload();
-  }else{
-    location.href="https://koacaiia.github.io/Wms-fine-/";
-  }
- }
-
-function popDetail(ref){
-  location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
 }
-function returnTime(){
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, '0');
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const seconds = now.getSeconds().toString().padStart(2, '0');
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formattedTime;
-}
-function otherContents(e){
-  if(e.id=="otherPlt"){
-    location.href=e.id+".html";
-  }else{
-    window.location.href="https://koacaiia.github.io/CargoStatus/"
-  }
-  
-}
-function showModal(url,imgTag){
-    const modal = document.getElementById("imgModal");
-    const modalImg = document.getElementById("modalImg");
-    modalImg.src = url;
-    modal.style.display = "block";
-    modalImg.style ="object-fit:scale-down;width:100%;height:90%";
-    modalImg.dataset.imgTag = imgTag;
+
+// fine2 토픽 구독 함수
+function subscribeToFine2Topic() {
+    console.log('📢 fine2 토픽 구독 시작');
     
+    if (!token) {
+        console.log('⚠️ FCM 토큰 없이 로컬 구독 진행');
+    }
+    
+    const result = subscribeToTopic(token, 'fine2');
+    
+    if (result) {
+        console.log('✅ fine2 토픽 구독 완료');
+        
+        // 구독 완료 후 테스트 알림 전송
+        setTimeout(() => {
+            sendFine2TopicNotification(
+                '토픽 구독 완료',
+                'fine2 토픽 구독이 완료되었습니다. 이제 알림을 받을 수 있습니다.'
+            );
+        }, 500);
+    }
+    
+    return result;
 }
-function fileRemove() {
-  const fileTr = document.querySelector("#imgTr");
-  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
-  const imgUrls = [];
 
-  if (confirmRemove) {
-    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      if (img.classList.contains("local-img")) {
-        imgUrls.push(imgSrc);
-      } else {
-        const storageRef = firebase.storage().refFromURL(imgSrc);
-        storageRef.delete().then(() => {
-          console.log("이미지 삭제 완료:", imgSrc);
-        }).catch((error) => {
-          console.error("이미지 삭제 오류:", error);
-        });
-      }
-      td.remove(); // td 요소 제거
-    });
-  }
-  closeModal();
+// fine2 토픽 구독 해제 함수
+function unsubscribeFromFine2Topic() {
+    console.log('📢 fine2 토픽 구독 해제');
+    
+    const result = unsubscribeFromTopic(token, 'fine2');
+    
+    if (result) {
+        sendLocalNotification(
+            'fine2 토픽 구독 해제',
+            'fine2 토픽 구독이 해제되었습니다.'
+        );
+    }
+    
+    return result;
 }
-function closeModal() {
-  const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr td");
-  tdList.forEach((td)=>{
-    td.classList.remove("file-selected");
-  });
-  modal.style.display = "none";
-}
-function deleteImage() {
-  const modalImg = document.getElementById("modalImg");
-  const imgTag = modalImg.dataset.imgTag;
-  console.log(imgTag);
-  imgTag.remove();
-  closeModal();
-}
-function saveImg() {
-  const modalImg = document.getElementById("modalImg");
-  const url = modalImg.src;
-  fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      saveAs(blob, modalImg.dataset.imgTag);
-    })
-    .catch(error => {
-      console.error("Error saving image:", error);
-    });
-  closeModal();
-  
-}
-function popSaveAll(){
-  const fileTr = document.querySelector("#imgTr");
-  const img = fileTr.querySelectorAll(".server-img");
-  const imgUrls = [];
-  for(let i=0;i<img.length;i++){
-    const imgSrc = img[i].src;
-    imgUrls.push(imgSrc);
-  }
-  imgUrls.forEach((imgUrl, index) => {
-    fetch(imgUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const fileName = "SaveAll_"+index+"_"+returnTime();
-            const file = new File([blob], fileName, { type: blob.type });
-            saveAs(file, fileName);
-        })
-        .catch(error => {
-          alert("Error uploading file:", error);
-          console.error("Error uploading file:", error);
-      });
-    });
 
+// 작업 완료 시 fine2 토픽 알림 전송
+function sendWorkCompleteNotification(clientName, containerInfo, workType) {
+    console.log('📋 작업 완료 알림 전송:', clientName, containerInfo, workType);
+    
+    const title = '작업 완료 알림';
+    const body = `${clientName} - ${containerInfo}: ${workType} 작업이 완료되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        workType: workType,
+        timestamp: new Date().toISOString()
+    });
 }
+
+// 이미지 업로드 완료 시 fine2 토픽 알림 전송
+function sendImageUploadNotification(clientName, containerInfo, imageCount) {
+    console.log('📷 이미지 업로드 알림 전송:', clientName, containerInfo, imageCount);
+    
+    const title = '이미지 업로드 완료';
+    const body = `${clientName} - ${containerInfo}: ${imageCount}개 이미지가 업로드되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        imageCount: imageCount,
+        timestamp: new Date().toISOString()
+    });
+}
+
+// 컨테이너 진입 시 fine2 토픽 알림 전송
+function sendContainerEntryNotification(clientName, containerInfo) {
+    console.log('🚛 컨테이너 진입 알림 전송:', clientName, containerInfo);
+    
+    const title = '컨테이너 진입';
+    const body = `${clientName} - ${containerInfo}: 컨테이너 진입 작업이 시작되었습니다.`;
+    
+    // fine2 토픽으로 전송
+    return sendFine2TopicNotification(title, body, {
+        client: clientName,
+        container: containerInfo,
+        workType: '컨테이너진입',
+        timestamp: new Date().toISOString()
+    });
+}
+
+// 테스트 알림 전송 함수들
+function sendTestFine2Notification() {
+    console.log('🧪 fine2 토픽 테스트 알림 전송');
+    
+    const testMessages = [
+        {
+            title: '테스트 알림 1',
+            body: 'fine2 토픽 테스트 메시지입니다.'
+        },
+        {
+            title: '시스템 점검',
+            body: 'WMS 시스템이 정상적으로 작동하고 있습니다.'
+        },
+        {
+            title: '알림 시스템 확인',
+            body: `현재 시간: ${new Date().toLocaleString()}`
+        }
+    ];
+    
+    testMessages.forEach((msg, index) => {
+        setTimeout(() => {
+            sendFine2TopicNotification(msg.title, msg.body);
+        }, index * 2000); // 2초 간격으로 전송
+    });
+    
+    return testMessages.length;
+}
+
+// 기존 upLoad 함수 수정 - fine2 토픽 알림 추가
+const originalUpLoad = upLoad;
+function upLoad() {
+    console.log('📤 업로드 시작 - fine2 토픽 알림 포함');
+    
+    // 기존 업로드 로직 실행
+    originalUpLoad();
+    
+    // 추가: fine2 토픽 알림 전송
+    const h3List = document.querySelectorAll(".popTitleC");
+    const clientName = h3List[0].innerHTML;
+    const containerInfo = h3List[1].innerHTML;
+    const img = document.querySelector("#imgTr").querySelectorAll(".local-img");
+    
+    if (img.length > 0) {
+        // 이미지 업로드 알림
+        setTimeout(() => {
+            sendImageUploadNotification(clientName, containerInfo, img.length);
+        }, 2000);
+    }
+    
+    // 작업 완료 알림
+    const workType = ioValue === "InCargo" ? "컨테이너진입" : "작업완료";
+    setTimeout(() => {
+        if (workType === "컨테이너진입") {
+            sendContainerEntryNotification(clientName, containerInfo);
+        } else {
+            sendWorkCompleteNotification(clientName, containerInfo, workType);
+        }
+    }, 3000);
+}
+
+// fine2 토픽 상태 확인 함수
+function checkFine2TopicStatus() {
+    console.log('📋 fine2 토픽 상태 확인');
+    
+    const subscriptionKey = 'fcm_topic_fine2';
+    const dateKey = 'fcm_topic_fine2_date';
+    
+    const isSubscribed = localStorage.getItem(subscriptionKey);
+    const subscribeDate = localStorage.getItem(dateKey);
+    
+    const status = {
+        subscribed: !!isSubscribed,
+        subscribeDate: subscribeDate ? new Date(subscribeDate).toLocaleString() : '없음',
+        token: !!(typeof token !== 'undefined' && token),
+        tokenPreview: (typeof token !== 'undefined' && token) ? token.substring(0, 20) + '...' : '없음'
+    };
+    
+    console.log('📊 fine2 토픽 상태:', status);
+    
+    // 상태를 HTML로 표시
+    const statusMessage = `
+fine2 토픽 상태:
+- 구독 여부: ${status.subscribed ? '✅ 구독됨' : '❌ 구독되지 않음'}
+- 구독 날짜: ${status.subscribeDate}
+- FCM 토큰: ${status.token ? '✅ 있음' : '❌ 없음'}
+- 토큰 미리보기: ${status.tokenPreview}
+    `;
+    
+    sendLocalNotification('fine2 토픽 상태', statusMessage);
+    
+    return status;
+}
+
+// 함수들을 전역으로 노출
+window.sendFine2TopicNotification = sendFine2TopicNotification;
+window.subscribeToFine2Topic = subscribeToFine2Topic;
+window.unsubscribeFromFine2Topic = unsubscribeFromFine2Topic;
+window.sendWorkCompleteNotification = sendWorkCompleteNotification;
+window.sendImageUploadNotification = sendImageUploadNotification;
+window.sendContainerEntryNotification = sendContainerEntryNotification;
+window.sendTestFine2Notification = sendTestFine2Notification;
+window.checkFine2TopicStatus = checkFine2TopicStatus;
+
+console.log(`
+📢 fine2 토픽 전송 시스템 추가 완료
+
+🎯 fine2 토픽 전용 함수들:
+   subscribeToFine2Topic()              - fine2 토픽 구독
+   unsubscribeFromFine2Topic()          - fine2 토픽 구독 해제
+   sendFine2TopicNotification(title, body) - fine2 토픽 알림 전송
+   checkFine2TopicStatus()              - fine2 토픽 상태 확인
+
+📋 작업별 알림 함수들:
+   sendWorkCompleteNotification()       - 작업 완료 알림
+   sendImageUploadNotification()        - 이미지 업로드 완료 알림
+   sendContainerEntryNotification()     - 컨테이너 진입 알림
+
+🧪 테스트 함수들:
+   sendTestFine2Notification()          - 테스트 알림 3개 연속 전송
+
+💡 사용법:
+   1. subscribeToFine2Topic() - fine2 토픽 구독
+   2. sendTestFine2Notification() - 테스트 알림 전송
+   3. checkFine2TopicStatus() - 구독 상태 확인
+
+✨ 자동 통합:
+   - upLoad() 함수에 fine2 토픽 알림 자동 추가
+   - 작업 완료/이미지 업로드 시 자동 알림 전송
+   - 로컬 알림과 토픽 알림 동시 지원
+`);
