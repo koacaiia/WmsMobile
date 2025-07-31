@@ -688,10 +688,10 @@ function upLoad(){
       showProgressBar();
       
       // 테스트를 위해 임시로 프로그레스 업데이트
-      setTimeout(() => updateProgress(1, 3), 500);
-      setTimeout(() => updateProgress(2, 3), 1500);
-      setTimeout(() => updateProgress(3, 3), 2500);
-      setTimeout(() => hideProgressBar(), 3000);
+      // setTimeout(() => updateProgress(1, 3), 500);
+      // setTimeout(() => updateProgress(2, 3), 1500);
+      // setTimeout(() => updateProgress(3, 3), 2500);
+      // setTimeout(() => hideProgressBar(), 3000);
       
       for(let i=0;i<img.length;i++){
         const imgSrc = img[i].src;
@@ -1203,6 +1203,8 @@ function refreshImageList() {
   // Firebase Storage에서 이미지 목록 다시 로드
   storage_f.ref(refFile).listAll()
     .then((res) => {
+      console.log(`📁 서버에서 ${res.items.length}개 이미지 발견`);
+      
       res.items.forEach((itemRef) => {
         itemRef.getDownloadURL().then((url) => {
           const td = document.createElement("td");
@@ -1243,6 +1245,7 @@ function refreshImageList() {
       }
     });
 }
+
 function reLoad(){
   if(mC){
     location.reload();
@@ -1250,4 +1253,3 @@ function reLoad(){
     location.href="https://koacaiia.github.io/Wms-fine-/";
   }
  }
-// ...existing code...
