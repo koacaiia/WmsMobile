@@ -759,13 +759,19 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
       // 모든 업로드 완료
       console.log(`✅ 순차 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
       
-      // 프로그레스바 숨기기
+      // 프로그레스바 완료 후 숨기기
+      updateProgress(total, total);
       hideProgressBar();
       
-      try {
-        toastOn(`${successCount} 파일 업로드 완료`);
-      } catch (toastError) {
-        console.log(`✅ ${successCount} 파일 업로드 완료`);
+      // 성공/실패에 따른 토스트 메시지
+      if (failureCount === 0) {
+        setTimeout(() => {
+          toastOn(`✅ ${successCount}개 파일 업로드 완료!`, 3000);
+        }, 2500);
+      } else {
+        setTimeout(() => {
+          toastOn(`⚠️ ${successCount}개 성공, ${failureCount}개 실패`, 4000);
+        }, 2500);
       }
       
       // 이미지 목록 새로고침
@@ -903,42 +909,218 @@ function generateFileName(selectTr, index) {
   }
 }
 
-// toastOn 함수 정의 추가 (파일 상단에 추가)
+// 토스트 형식 프로그레스바 표시 함수
+function showProgressBar() {
+  // 기존 토스트나 프로그레스바가 있으면 제거
+  const existingToast = document.getElementById('toast');
+  const existingProgress = document.getElementById('uploadProgress');
+  
+  if (existingToast) {
+    existingToast.remove();
+  }
+  if (existingProgress) {
+    existingProgress.style.display = 'none';
+  }
+
+  // 토스트 형식 프로그레스바 생성
+  const progressToast = document.createElement('div');
+  progressToast.id = 'progressToast';
+  progressToast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(51, 51, 51, 0.95);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    z-index: 10001;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 90%;
+    min-width: 280px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+  `;
+
+  // 프로그레스바 텍스트
+  const progressText = document.createElement('div');
+  progressText.id = 'progressToastText';
+  progressText.style.cssText = `
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 13px;
+  `;
+  progressText.textContent = '이미지 업로드 중... 0%';
+
+  // 프로그레스바 컨테이너
+  const progressContainer = document.createElement('div');
+  progressContainer.style.cssText = `
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 8px;
+    margin-bottom: 8px;
+  `;
+
+  // 프로그레스바
+  const progressBar = document.createElement('div');
+  progressBar.id = 'progressToastBar';
+  progressBar.style.cssText = `
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+  `;
+
+  // 세부 정보 텍스트
+  const detailText = document.createElement('div');
+  detailText.id = 'progressToastDetail';
+  detailText.style.cssText = `
+    font-size: 11px;
+    opacity: 0.8;
+    margin-top: 4px;
+  `;
+  detailText.textContent = '준비 중...';
+
+  // 요소들 조립
+  progressContainer.appendChild(progressBar);
+  progressToast.appendChild(progressText);
+  progressToast.appendChild(progressContainer);
+  progressToast.appendChild(detailText);
+  
+  document.body.appendChild(progressToast);
+
+  // 애니메이션으로 나타나기
+  setTimeout(() => {
+    progressToast.style.opacity = '1';
+  }, 100);
+}
+
+// 토스트 형식 프로그레스바 업데이트 함수
+function updateProgress(current, total) {
+  const progressBar = document.getElementById('progressToastBar');
+  const progressText = document.getElementById('progressToastText');
+  const detailText = document.getElementById('progressToastDetail');
+  
+  if (progressBar && progressText && detailText) {
+    const percentage = Math.round((current / total) * 100);
+    
+    // 프로그레스바 업데이트
+    progressBar.style.width = percentage + '%';
+    
+    // 텍스트 업데이트
+    progressText.textContent = `이미지 업로드 중... ${percentage}%`;
+    detailText.textContent = `${current}/${total} 파일 처리됨`;
+    
+    // 색상 변화 (선택사항)
+    if (percentage === 100) {
+      progressBar.style.background = 'linear-gradient(90deg, #2196F3, #1976D2)';
+      progressText.textContent = '업로드 완료! 🎉';
+      detailText.textContent = `총 ${total}개 파일 처리 완료`;
+    }
+  }
+}
+
+// 토스트 형식 프로그레스바 숨기기 함수
+function hideProgressBar() {
+  const progressToast = document.getElementById('progressToast');
+  
+  if (progressToast) {
+    // 완료 메시지를 잠시 보여준 후 사라지기
+    setTimeout(() => {
+      progressToast.style.opacity = '0';
+      
+      // 애니메이션 완료 후 제거
+      setTimeout(() => {
+        if (progressToast.parentNode) {
+          progressToast.remove();
+        }
+      }, 300);
+    }, 2000); // 2초 후 사라지기 시작
+  }
+}
+
+// 토스트 형식 프로그레스바에 에러 표시 함수 (추가 기능)
+function showProgressError(message) {
+  const progressToast = document.getElementById('progressToast');
+  
+  if (progressToast) {
+    const progressBar = document.getElementById('progressToastBar');
+    const progressText = document.getElementById('progressToastText');
+    const detailText = document.getElementById('progressToastDetail');
+    
+    // 에러 스타일로 변경
+    progressBar.style.background = 'linear-gradient(90deg, #f44336, #d32f2f)';
+    progressText.textContent = '업로드 오류 발생 ❌';
+    detailText.textContent = message || '업로드 중 문제가 발생했습니다';
+    
+    // 5초 후 사라지기
+    setTimeout(() => {
+      progressToast.style.opacity = '0';
+      setTimeout(() => {
+        if (progressToast.parentNode) {
+          progressToast.remove();
+        }
+      }, 300);
+    }, 5000);
+  }
+}
+
+// 기존 toastOn 함수 업데이트 (프로그레스바와 충돌 방지)
 function toastOn(message, duration = 3000) {
   try {
-    // 토스트 메시지를 표시할 요소가 있는지 확인
-    let toast = document.getElementById('toast');
-    
-    if (!toast) {
-      // 토스트 요소가 없으면 생성
-      toast = document.createElement('div');
-      toast.id = 'toast';
-      toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #333;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 4px;
-        z-index: 10000;
-        font-size: 14px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        max-width: 90%;
-        text-align: center;
-        word-wrap: break-word;
-      `;
-      document.body.appendChild(toast);
+    // 기존 일반 토스트가 있으면 제거
+    const existingToast = document.getElementById('toast');
+    if (existingToast) {
+      existingToast.remove();
     }
     
+    // 프로그레스바 토스트가 있으면 일반 토스트는 아래쪽에 표시
+    const progressToast = document.getElementById('progressToast');
+    const topPosition = progressToast ? '80px' : '20px';
+    
+    // 토스트 요소 생성
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `
+      position: fixed;
+      top: ${topPosition};
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(51, 51, 51, 0.9);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 6px;
+      z-index: 10000;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      max-width: 90%;
+      text-align: center;
+      word-wrap: break-word;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    `;
+    
     toast.textContent = message;
-    toast.style.opacity = '1';
+    document.body.appendChild(toast);
+    
+    // 애니메이션으로 나타나기
+    setTimeout(() => {
+      toast.style.opacity = '1';
+    }, 100);
     
     // 지정된 시간 후 토스트 숨기기
     setTimeout(() => {
       toast.style.opacity = '0';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 300);
     }, duration);
     
     console.log('📱 Toast:', message);
@@ -961,39 +1143,6 @@ function returnTime() {
   } catch (error) {
     console.error('❌ returnTime 함수 오류:', error);
     return new Date().toLocaleTimeString();
-  }
-}
-
-// 프로그레스바 관련 함수들 추가
-function showProgressBar() {
-  const progressDiv = document.getElementById('uploadProgress');
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
-  
-  if (progressDiv) {
-    progressDiv.style.display = 'block';
-    progressBar.style.width = '0%';
-    progressText.textContent = '0%';
-  }
-}
-
-function updateProgress(current, total) {
-  const progressBar = document.getElementById('progressBar');
-  const progressText = document.getElementById('progressText');
-  
-  if (progressBar && progressText) {
-    const percentage = Math.round((current / total) * 100);
-    progressBar.style.width = percentage + '%';
-    progressText.textContent = `${current}/${total} (${percentage}%)`;
-  }
-}
-
-function hideProgressBar() {
-  const progressDiv = document.getElementById('uploadProgress');
-  if (progressDiv) {
-    setTimeout(() => {
-      progressDiv.style.display = 'none';
-    }, 2000); // 2초 후 숨기기
   }
 }
 
