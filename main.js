@@ -1243,5 +1243,11 @@ function refreshImageList() {
       }
     });
 }
-
+function reLoad(){
+  if(mC){
+    location.reload();
+  }else{
+    location.href="https://koacaiia.github.io/Wms-fine-/";
+  }
+ }
 // ...existing code...
