@@ -1354,3 +1354,11 @@ function dateNext(){
   dateSelect.value=dateT(d);
   dateChanged();
 }
+function otherContents(e){
+  if(e.id=="otherPlt"){
+    location.href=e.id+".html";
+  }else{
+    window.location.href="https://koacaiia.github.io/CargoStatus/"
+  }
+
+}
