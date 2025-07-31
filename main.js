@@ -625,23 +625,36 @@ function popClose(){
 }
 const fileTr = document.querySelector("#imgTr");
 function upLoad(){
-    let imgUrls = [];
-    const img = fileTr.querySelectorAll(".local-img");
-    const h3List = document.querySelectorAll(".popTitleC");
-    const stockList ={"client":h3List[0].innerHTML};
-    stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
-    
-    if(img.length==0){
+  // toastOn 함수 안전 호출
+  try {
+    toastOn("upClicked", 1000);
+  } catch (toastError) {
+    console.log("📱 Upload clicked");
+  }
+  
+  let imgUrls = [];
+  const img = fileTr.querySelectorAll(".local-img");
+  const h3List = document.querySelectorAll(".popTitleC");
+  const stockList ={"client":h3List[0].innerHTML};
+  stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
+  
+  if(img.length==0){
+    try {
+      // toastOn 함수 안전 호출
       try {
-        if (typeof toastOn === 'function') {
-          toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
-        }
-        
-        // FCM 알림 전송 - 사진 없이 작업 완료 (안전하게)
-        const h3List = document.querySelectorAll(".popTitleC");
-        const clientName = h3List[0].innerHTML;
-        const containerInfo = h3List[1].innerHTML;
-        
+        toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
+      } catch (toastError) {
+        console.log("📱 사진 전송 없이 작업 완료 등록만 진행 합니다.");
+      }
+      
+      // FCM 알림 전송 - 사진 없이 작업 완료 (안전하게)
+      const clientName = h3List[0].innerHTML;
+      const containerInfo = h3List[1].innerHTML;
+      
+      // 모바일 환경에서는 간단한 확인 메시지
+      if (mC) {
+        console.log('📱 Mobile - 작업 완료:', `${clientName} - ${containerInfo}`);
+      } else {
         // 로컬 알림 우선 사용 (CORS 문제 회피)
         if (typeof sendLocalNotification === 'function') {
           const notificationSent = sendLocalNotification(
@@ -668,201 +681,266 @@ function upLoad(){
             }
           }
         }
-      } catch (notificationError) {
-        console.error('❌ 작업 완료 알림 전송 오류:', notificationError);
       }
-    } else {
-      // 이미지 업로드 처리 (Promise 오류 처리)
-      try {
-        for(let i=0;i<img.length;i++){
-          const imgSrc = img[i].src;
-          imgUrls.push(imgSrc);
-        }
-        const storageRef = storage_f.ref(refFile);
-        
-        // 각 이미지 업로드를 Promise로 처리
-        const uploadPromises = imgUrls.map((imgUrl, index) => {
-          return fetch(imgUrl)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.blob();
-            })
-            .then(blob => {
-              const selectTr = document.querySelector(".clicked");
-              if (!selectTr) {
-                throw new Error('선택된 행이 없습니다.');
-              }
-              
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
-              const file = new File([blob], fileName, { type: blob.type });
-              const fileRef = storageRef.child(fileName.replace("/","_"));
-              
-              return fileRef.put(file);
-            })
-            .then((snapshot) => {
-              console.log(`✅ 파일 ${index + 1} 업로드 완료`);
-              return snapshot;
-            })
-            .catch(error => {
-              console.error(`❌ 파일 ${index + 1} 업로드 오류:`, error);
-              return null; // 실패한 파일은 null 반환
-            });
-        });
-        
-        // 모든 업로드 완료 대기 (실패한 것들도 포함)
-        Promise.allSettled(uploadPromises)
-          .then((results) => {
-            const successCount = results.filter(result => result.status === 'fulfilled' && result.value !== null).length;
-            const failureCount = results.filter(result => result.status === 'rejected' || result.value === null).length;
-            
-            console.log(`✅ 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
-            
-            try {
-              // FCM 알림 전송 - 모든 이미지 업로드 완료
-              const clientName = h3List[0].innerHTML;
-              const containerInfo = h3List[1].innerHTML;
-              
-              if (typeof sendLocalNotification === 'function') {
-                sendLocalNotification(
-                  "이미지 업로드 완료", 
-                  `${clientName} - ${containerInfo}: ${successCount}개 이미지 Firebase 업로드 완료`
-                );
-              }
-              
-              if (typeof toastOn === 'function') {
-                toastOn(successCount + " 파일 업로드 완료");
-              }
-              
-            } catch (notificationError) {
-              console.error('❌ 업로드 완료 알림 전송 오류:', notificationError);
-            }
-            
-            // 이미지 목록 새로고침 (안전하게)
-            try {
-              refreshImageList();
-            } catch (refreshError) {
-              console.error('❌ 이미지 목록 새로고침 오류:', refreshError);
-            }
-          })
-          .catch((error) => {
-            console.error("❌ 이미지 업로드 Promise.allSettled 오류:", error);
-            try {
-              if (typeof toastOn === 'function') {
-                toastOn("이미지 업로드 중 오류가 발생했습니다.", 5000);
-              }
-            } catch (toastError) {
-              console.error('❌ 오류 토스트 메시지 실패:', toastError);
-            }
-          });
-          
-      } catch (uploadError) {
-        console.error('❌ 이미지 업로드 준비 오류:', uploadError);
-        try {
-          if (typeof toastOn === 'function') {
-            toastOn("이미지 업로드 준비 중 오류가 발생했습니다.", 5000);
-          }
-        } catch (toastError) {
-          console.error('❌ 오류 토스트 메시지 실패:', toastError);
-        }
+    } catch (notificationError) {
+      console.error('❌ 작업 완료 알림 전송 오류:', notificationError);
+    }
+  } else {
+    // 이미지 업로드 처리 (Promise 오류 처리)
+    try {
+      for(let i=0;i<img.length;i++){
+        const imgSrc = img[i].src;
+        imgUrls.push(imgSrc);
       }
-    }
-    
-    // 작업 상태 업데이트 (Promise 오류 처리)
-    let w;
-    if(ioValue=="InCargo"){
-      w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-    }else{
-      w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-    }
-    
-    database_f.ref(ref).update(w)
-      .then(() => {
-        console.log("✅ 작업 상태 업데이트 완료");
-        
-        try {
-          // FCM 알림 전송 - 작업 상태 업데이트 완료
-          const clientName = h3List[0].innerHTML;
-          const containerInfo = h3List[1].innerHTML;
-          const workStatus = ioValue=="InCargo" ? "컨테이너진입" : "작업완료";
-          
-          if (typeof sendLocalNotification === 'function') {
-            sendLocalNotification(
-              "작업 상태 업데이트", 
-              `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`
-            );
-          }
-        } catch (notificationError) {
-          console.error('❌ 상태 업데이트 알림 전송 오류:', notificationError);
-        }
-      })
-      .catch((error) => {
-        console.error("❌ 작업 상태 업데이트 오류:", error);
-        try {
-          if (typeof toastOn === 'function') {
-            toastOn("작업 상태 업데이트 실패", 5000);
-          }
-        } catch (toastError) {
-          console.error('❌ 오류 토스트 메시지 실패:', toastError);
-        }
-      });
-}
-
-// 이미지 목록 새로고침 함수 (Promise 오류 처리)
-function refreshImageList() {
-  const fileTr = document.querySelector("#imgTr");
-  fileTr.replaceChildren();
-  
-  let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
-  imgRef = imgRef.split(",");
-  const io=imgRef[4];
-  const dateArr = imgRef[2];
-  imgRef[3]=dateArr;
-  imgRef[2]=io;
-  imgRef.splice(4,1);
-  imgRef=imgRef.toString().replaceAll(",","/")+"/";
-  
-  storage_f.ref(imgRef).listAll()
-    .then((res)=>{
-      const imagePromises = res.items.map((itemRef) => {
-        return itemRef.getDownloadURL()
-          .then((url)=>{
-            try {
-              const td = document.createElement("td");
-              const img = document.createElement("img");
-              img.src=url;
-              img.className="server-img";
-              img.addEventListener("click", (e) => {
-                try {
-                  img.parentNode.classList.toggle("file-selected");
-                } catch (clickError) {
-                  console.error('❌ 이미지 클릭 처리 오류:', clickError);
-                }
-              });
-              img.style.display="block";
-              td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
-              img.style.width="100%";
-              img.style.height="100%";
-              img.style.objectFit = "scale-down";
-              td.appendChild(img);
-              fileTr.appendChild(td);
-            } catch (domError) {
-              console.error('❌ 이미지 DOM 처리 오류:', domError);
-            }
-          })
-          .catch((urlError) => {
-            console.error('❌ 이미지 URL 가져오기 오류:', urlError);
-          });
-      });
+      const storageRef = storage_f.ref(refFile);
       
-      return Promise.allSettled(imagePromises);
-    })
-    .then((results) => {
-      const successCount = results.filter(result => result.status === 'fulfilled').length;
-      console.log(`✅ 이미지 목록 새로고침 완료: ${successCount}개 이미지 로드됨`);
+      // 모바일 환경에서는 순차 업로드, 데스크톱에서는 병렬 업로드
+      if (mC) {
+        uploadImagesSequentially(imgUrls, storageRef, h3List);
+      } else {
+        uploadImagesParallel(imgUrls, storageRef, h3List);
+      }
+        
+    } catch (uploadError) {
+      console.error('❌ 이미지 업로드 준비 오류:', uploadError);
+      try {
+        toastOn("이미지 업로드 준비 중 오류가 발생했습니다.", 5000);
+      } catch (toastError) {
+        console.log("❌ 이미지 업로드 준비 중 오류가 발생했습니다.");
+      }
+    }
+  }
+  
+  // 작업 상태 업데이트 (Promise 오류 처리)
+  let w;
+  if(ioValue=="InCargo"){
+    w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
+  }else{
+    w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
+  }
+  
+  database_f.ref(ref).update(w)
+    .then(() => {
+      console.log("✅ 작업 상태 업데이트 완료");
+      
+      try {
+        // FCM 알림 전송 - 작업 상태 업데이트 완료
+        const clientName = h3List[0].innerHTML;
+        const containerInfo = h3List[1].innerHTML;
+        const workStatus = ioValue=="InCargo" ? "컨테이너진입" : "작업완료";
+        
+        if (mC) {
+          console.log('📱 Mobile - 상태 업데이트:', `${clientName} - ${containerInfo}: ${workStatus}`);
+        } else if (typeof sendLocalNotification === 'function') {
+          sendLocalNotification(
+            "작업 상태 업데이트", 
+            `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`
+          );
+        }
+      } catch (notificationError) {
+        console.error('❌ 상태 업데이트 알림 전송 오류:', notificationError);
+      }
     })
     .catch((error) => {
-      console.error('❌ 이미지 목록 조회 오류:', error);
+      console.error("❌ 작업 상태 업데이트 오류:", error);
+      try {
+        toastOn("작업 상태 업데이트 실패", 5000);
+      } catch (toastError) {
+        console.log("❌ 작업 상태 업데이트 실패");
+      }
     });
+}
+
+// 모바일용 순차 업로드 함수
+function uploadImagesSequentially(imgUrls, storageRef, h3List) {
+  let successCount = 0;
+  let failureCount = 0;
+  
+  const uploadNext = (index) => {
+    if (index >= imgUrls.length) {
+      // 모든 업로드 완료
+      console.log(`✅ 순차 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
+      
+      try {
+        toastOn(`${successCount} 파일 업로드 완료`);
+      } catch (toastError) {
+        console.log(`✅ ${successCount} 파일 업로드 완료`);
+      }
+      
+      // 이미지 목록 새로고침
+      setTimeout(() => {
+        try {
+          refreshImageList();
+        } catch (refreshError) {
+          console.error('❌ 이미지 목록 새로고침 오류:', refreshError);
+        }
+      }, 1000);
+      
+      return;
+    }
+    
+    const imgUrl = imgUrls[index];
+    console.log(`🔄 Uploading image ${index + 1}/${imgUrls.length}`);
+    
+    fetch(imgUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const selectTr = document.querySelector(".clicked");
+        if (!selectTr) {
+          throw new Error('선택된 행이 없습니다.');
+        }
+        
+        const fileName = generateFileName(selectTr, index);
+        const file = new File([blob], fileName, { type: blob.type });
+        const fileRef = storageRef.child(fileName.replace("/","_"));
+        
+        return fileRef.put(file);
+      })
+      .then((snapshot) => {
+        console.log(`✅ 파일 ${index + 1} 업로드 완료`);
+        successCount++;
+        
+        // 다음 파일 업로드 (약간의 지연 추가)
+        setTimeout(() => uploadNext(index + 1), 500);
+      })
+      .catch(error => {
+        console.error(`❌ 파일 ${index + 1} 업로드 오류:`, error);
+        failureCount++;
+        
+        // 실패해도 다음 파일 계속 업로드
+        setTimeout(() => uploadNext(index + 1), 500);
+      });
+  };
+  
+  // 첫 번째 파일부터 시작
+  uploadNext(0);
+}
+
+// 데스크톱용 병렬 업로드 함수
+function uploadImagesParallel(imgUrls, storageRef, h3List) {
+  // ...existing code...
+  const uploadPromises = imgUrls.map((imgUrl, index) => {
+    return fetch(imgUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const selectTr = document.querySelector(".clicked");
+        if (!selectTr) {
+          throw new Error('선택된 행이 없습니다.');
+        }
+        
+        const fileName = generateFileName(selectTr, index);
+        const file = new File([blob], fileName, { type: blob.type });
+        const fileRef = storageRef.child(fileName.replace("/","_"));
+        
+        return fileRef.put(file);
+      })
+      .then((snapshot) => {
+        console.log(`✅ 파일 ${index + 1} 업로드 완료`);
+        return snapshot;
+      })
+      .catch(error => {
+        console.error(`❌ 파일 ${index + 1} 업로드 오류:`, error);
+        return null;
+      });
+  });
+  
+  Promise.allSettled(uploadPromises)
+    .then((results) => {
+      const successCount = results.filter(result => result.status === 'fulfilled' && result.value !== null).length;
+      const failureCount = results.filter(result => result.status === 'rejected' || result.value === null).length;
+      
+      console.log(`✅ 병렬 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
+      
+      try {
+        toastOn(successCount + " 파일 업로드 완료");
+      } catch (toastError) {
+        console.log(`✅ ${successCount} 파일 업로드 완료`);
+      }
+      
+      refreshImageList();
+    })
+    .catch((error) => {
+      console.error("❌ 이미지 업로드 Promise.allSettled 오류:", error);
+    });
+}
+
+// 파일명 생성 함수
+function generateFileName(selectTr, index) {
+  try {
+    return selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+  } catch (error) {
+    console.error('❌ 파일명 생성 오류:', error);
+    return `image_${index}_${returnTime()}`;
+  }
+}
+
+// toastOn 함수 정의 추가 (파일 상단에 추가)
+function toastOn(message, duration = 3000) {
+  try {
+    // 토스트 메시지를 표시할 요소가 있는지 확인
+    let toast = document.getElementById('toast');
+    
+    if (!toast) {
+      // 토스트 요소가 없으면 생성
+      toast = document.createElement('div');
+      toast.id = 'toast';
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 4px;
+        z-index: 10000;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        max-width: 90%;
+        text-align: center;
+        word-wrap: break-word;
+      `;
+      document.body.appendChild(toast);
+    }
+    
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    
+    // 지정된 시간 후 토스트 숨기기
+    setTimeout(() => {
+      toast.style.opacity = '0';
+    }, duration);
+    
+    console.log('📱 Toast:', message);
+    return true;
+  } catch (error) {
+    console.error('❌ Toast 함수 오류:', error);
+    console.log('📱 Toast (fallback):', message);
+    return false;
+  }
+}
+
+// returnTime 함수가 없는 경우를 대비한 정의 (필요시 추가)
+function returnTime() {
+  try {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  } catch (error) {
+    console.error('❌ returnTime 함수 오류:', error);
+    return new Date().toLocaleTimeString();
+  }
 }
