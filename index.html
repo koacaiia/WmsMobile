@@ -41,7 +41,7 @@
                         <th class="osTh">여(Fine)</th>
                         <th class="osTh">여(외부)</th>
                         <th>
-                            <button id="osBtn" style="width:85%" onclick="osSubmit()">등록,변경_2</button>
+                            <button id="osBtn" style="width:85%" onclick="osSubmit()">등록,변경_3</button>
                         </th>
                     </tr>
                 </thead>    
@@ -128,35 +128,44 @@
         </div>
         
         <div id="mainPopDiv">
-                <div id="imgTableDiv">
-                        <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
-                    <table id="popImgTable" >
-                        <tbody id="popImgTableTbody">
-                            <tr id="imgTr" style="height:30vh">
-    
-                            </tr>
-                        </tbody>
-                    </table>
+            <div id="imgTableDiv">
+                <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
+                
+                <!-- 프로그레스바 추가 -->
+                <div id="uploadProgress" style="display:none; margin: 10px 0;">
+                    <div style="background-color: #f0f0f0; border-radius: 10px; overflow: hidden; height: 20px;">
+                        <div id="progressBar" style="background-color: #4CAF50; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="progressText" style="text-align: center; margin-top: 5px; font-size: 12px;">0%</div>
                 </div>
-                    <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
-                        <div >
-                            <label>닫기(목록으로)
-                                <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
-                            </label>
-                            <label>사진 전체저장
-                                <button id="btnReport" onclick="popSaveAll()"></button>
-                            </label>
-                        </div>
-                        <div >
-                                <label >파일찾기
-                                    <input type="file" id="fileInput" multiple accept="image/*"  >
-                                </label> 
-                                <label for="btnUpLoad" >사진등록
-                                    <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
-                                </label>
-                        </div>
-                </div>
+                
+                <table id="popImgTable" >
+                    <tbody id="popImgTableTbody">
+                        <tr id="imgTr" style="height:30vh">
+
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+                <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
+                    <div >
+                        <label>닫기(목록으로)
+                            <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
+                        </label>
+                        <label>사진 전체저장
+                            <button id="btnReport" onclick="popSaveAll()"></button>
+                        </label>
+                    </div>
+                    <div >
+                            <label >파일찾기
+                                <input type="file" id="fileInput" multiple accept="image/*"  >
+                            </label> 
+                            <label for="btnUpLoad" >사진등록
+                                <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
+                            </label>
+                    </div>
+            </div>
+        </div>
     </div>
 
     <div id="imgModal" class="modal">

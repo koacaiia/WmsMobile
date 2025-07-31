@@ -626,12 +626,7 @@ function popClose(){
 const fileTr = document.querySelector("#imgTr");
 function upLoad(){
   // toastOn 함수 안전 호출
-  try {
-    toastOn("upClicked", 1000);
-  } catch (toastError) {
-    console.log("📱 Upload clicked");
-  }
-  
+ 
   let imgUrls = [];
   const img = fileTr.querySelectorAll(".local-img");
   const h3List = document.querySelectorAll(".popTitleC");
@@ -686,15 +681,17 @@ function upLoad(){
       console.error('❌ 작업 완료 알림 전송 오류:', notificationError);
     }
   } else {
-    // 이미지 업로드 처리 (Promise 오류 처리)
+    // 이미지 업로드 처리 - 프로그레스바 표시
     try {
+      // 프로그레스바 표시
+      showProgressBar();
+      
       for(let i=0;i<img.length;i++){
         const imgSrc = img[i].src;
         imgUrls.push(imgSrc);
       }
       const storageRef = storage_f.ref(refFile);
       
-      // 모바일 환경에서는 순차 업로드, 데스크톱에서는 병렬 업로드
       if (mC) {
         uploadImagesSequentially(imgUrls, storageRef, h3List);
       } else {
@@ -703,6 +700,7 @@ function upLoad(){
         
     } catch (uploadError) {
       console.error('❌ 이미지 업로드 준비 오류:', uploadError);
+      hideProgressBar();
       try {
         toastOn("이미지 업로드 준비 중 오류가 발생했습니다.", 5000);
       } catch (toastError) {
@@ -711,7 +709,7 @@ function upLoad(){
     }
   }
   
-  // 작업 상태 업데이트 (Promise 오류 처리)
+  // 작업 상태 업데이트
   let w;
   if(ioValue=="InCargo"){
     w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
@@ -724,7 +722,6 @@ function upLoad(){
       console.log("✅ 작업 상태 업데이트 완료");
       
       try {
-        // FCM 알림 전송 - 작업 상태 업데이트 완료
         const clientName = h3List[0].innerHTML;
         const containerInfo = h3List[1].innerHTML;
         const workStatus = ioValue=="InCargo" ? "컨테이너진입" : "작업완료";
@@ -751,15 +748,19 @@ function upLoad(){
     });
 }
 
-// 모바일용 순차 업로드 함수
+// 모바일용 순차 업로드 함수 - 프로그레스바 포함
 function uploadImagesSequentially(imgUrls, storageRef, h3List) {
   let successCount = 0;
   let failureCount = 0;
+  const total = imgUrls.length;
   
   const uploadNext = (index) => {
     if (index >= imgUrls.length) {
       // 모든 업로드 완료
       console.log(`✅ 순차 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
+      
+      // 프로그레스바 숨기기
+      hideProgressBar();
       
       try {
         toastOn(`${successCount} 파일 업로드 완료`);
@@ -769,15 +770,14 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
       
       // 이미지 목록 새로고침
       setTimeout(() => {
-        try {
-          refreshImageList();
-        } catch (refreshError) {
-          console.error('❌ 이미지 목록 새로고침 오류:', refreshError);
-        }
+        refreshImageList();
       }, 1000);
       
       return;
     }
+    
+    // 프로그레스바 업데이트
+    updateProgress(index, total);
     
     const imgUrl = imgUrls[index];
     console.log(`🔄 Uploading image ${index + 1}/${imgUrls.length}`);
@@ -805,12 +805,18 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
         console.log(`✅ 파일 ${index + 1} 업로드 완료`);
         successCount++;
         
-        // 다음 파일 업로드 (약간의 지연 추가)
+        // 완료된 파일 프로그레스바 업데이트
+        updateProgress(index + 1, total);
+        
+        // 다음 파일 업로드
         setTimeout(() => uploadNext(index + 1), 500);
       })
       .catch(error => {
         console.error(`❌ 파일 ${index + 1} 업로드 오류:`, error);
         failureCount++;
+        
+        // 실패해도 프로그레스바 업데이트
+        updateProgress(index + 1, total);
         
         // 실패해도 다음 파일 계속 업로드
         setTimeout(() => uploadNext(index + 1), 500);
@@ -821,9 +827,11 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
   uploadNext(0);
 }
 
-// 데스크톱용 병렬 업로드 함수
+// 데스크톱용 병렬 업로드 함수 - 프로그레스바 포함
 function uploadImagesParallel(imgUrls, storageRef, h3List) {
-  // ...existing code...
+  const total = imgUrls.length;
+  let completedCount = 0;
+  
   const uploadPromises = imgUrls.map((imgUrl, index) => {
     return fetch(imgUrl)
       .then(response => {
@@ -846,10 +854,14 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
       })
       .then((snapshot) => {
         console.log(`✅ 파일 ${index + 1} 업로드 완료`);
+        completedCount++;
+        updateProgress(completedCount, total);
         return snapshot;
       })
       .catch(error => {
         console.error(`❌ 파일 ${index + 1} 업로드 오류:`, error);
+        completedCount++;
+        updateProgress(completedCount, total);
         return null;
       });
   });
@@ -861,16 +873,23 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
       
       console.log(`✅ 병렬 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
       
+      // 프로그레스바 숨기기
+      hideProgressBar();
+      
       try {
         toastOn(successCount + " 파일 업로드 완료");
       } catch (toastError) {
         console.log(`✅ ${successCount} 파일 업로드 완료`);
       }
       
-      refreshImageList();
+      // 이미지 목록 새로고침
+      setTimeout(() => {
+        refreshImageList();
+      }, 1000);
     })
     .catch((error) => {
       console.error("❌ 이미지 업로드 Promise.allSettled 오류:", error);
+      hideProgressBar();
     });
 }
 
@@ -943,4 +962,95 @@ function returnTime() {
     console.error('❌ returnTime 함수 오류:', error);
     return new Date().toLocaleTimeString();
   }
+}
+
+// 프로그레스바 관련 함수들 추가
+function showProgressBar() {
+  const progressDiv = document.getElementById('uploadProgress');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  
+  if (progressDiv) {
+    progressDiv.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+  }
+}
+
+function updateProgress(current, total) {
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  
+  if (progressBar && progressText) {
+    const percentage = Math.round((current / total) * 100);
+    progressBar.style.width = percentage + '%';
+    progressText.textContent = `${current}/${total} (${percentage}%)`;
+  }
+}
+
+function hideProgressBar() {
+  const progressDiv = document.getElementById('uploadProgress');
+  if (progressDiv) {
+    setTimeout(() => {
+      progressDiv.style.display = 'none';
+    }, 2000); // 2초 후 숨기기
+  }
+}
+
+// 이미지 목록 새로고침 함수
+function refreshImageList() {
+  const fileTr = document.querySelector("#imgTr");
+  if (!fileTr || !refFile) {
+    console.log('❌ fileTr 또는 refFile이 없습니다.');
+    return;
+  }
+
+  // 기존 서버 이미지들만 제거 (local-img는 유지)
+  const serverImages = fileTr.querySelectorAll("td img.server-img");
+  serverImages.forEach(img => {
+    img.parentNode.remove();
+  });
+
+  console.log('🔄 서버 이미지 목록 새로고침 중...');
+  
+  // Firebase Storage에서 이미지 목록 다시 로드
+  storage_f.ref(refFile).listAll()
+    .then((res) => {
+      console.log(`📁 서버에서 ${res.items.length}개 이미지 발견`);
+      
+      res.items.forEach((itemRef) => {
+        itemRef.getDownloadURL().then((url) => {
+          const td = document.createElement("td");
+          const img = document.createElement("img");
+          img.src = url;
+          img.className = "server-img";
+          img.addEventListener("click", (e) => {
+            const tdList = img.parentNode.parentNode.querySelectorAll("td");
+            tdList.forEach((td) => {
+              td.classList.remove("file-selected");
+            });
+            img.parentNode.classList.toggle("file-selected");
+            console.log(img.parentNode.classList);
+            popDetail(refFile);
+          });
+          img.style.display = "block";
+          td.style = "width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "scale-down";
+          td.appendChild(img);
+          fileTr.appendChild(td);
+        }).catch((error) => {
+          console.error('❌ 이미지 URL 가져오기 오류:', error);
+        });
+      });
+    })
+    .catch((error) => {
+      console.error('❌ 이미지 목록 새로고침 오류:', error);
+      try {
+        toastOn("이미지 목록 새로고침 실패", 3000);
+      } catch (toastError) {
+        console.log("❌ 이미지 목록 새로고침 실패");
+      }
+    });
 }
