@@ -1338,5 +1338,19 @@ function saveImg() {
       console.error("Error saving image:", error);
     });
   closeModal();
+}
 
+function dateNext(){
+  const d = new Date(dateSelect.value);
+  if(d.getDay()===5){
+    d.setDate(d.getDate()+3);
+    toastOn("다음주 월요일 로 지정 됩니다.")
+  }else if(d.getDay()===6){
+    d.setDate(d.getDate()+2);
+    toastOn("다음주 월요일 로 지정 됩니다.")
+  }else{
+    d.setDate(d.getDate()+1);
+  }
+  dateSelect.value=dateT(d);
+  dateChanged();
 }
