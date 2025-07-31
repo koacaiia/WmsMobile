@@ -632,9 +632,6 @@ function upLoad(){
   const h3List = document.querySelectorAll(".popTitleC");
   const stockList ={"client":h3List[0].innerHTML};
   stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
-  
-  console.log(`📸 로컬 이미지 개수: ${img.length}`);
-  
   if(img.length==0){
     try {
       // toastOn 함수 안전 호출
@@ -909,17 +906,89 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
     });
 }
 
-// 파일명 생성 함수
-function generateFileName(selectTr, index) {
+// returnTime 함수 정의 (파일 상단에 추가)
+function returnTime() {
   try {
-    return selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
   } catch (error) {
-    console.error('❌ 파일명 생성 오류:', error);
-    return `image_${index}_${returnTime()}`;
+    console.error('❌ returnTime 함수 오류:', error);
+    // 대체 방법으로 간단한 시간 반환
+    return new Date().toLocaleTimeString('ko-KR', { 
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   }
 }
 
-// 토스트 형식 프로그레스바 표시 함수 - 디버깅 및 수정
+// toastOn 함수 정의 (이미 있다면 중복 제거)
+function toastOn(message, duration = 3000) {
+  try {
+    // 기존 일반 토스트가 있으면 제거
+    const existingToast = document.getElementById('toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+    
+    // 프로그레스바 토스트가 있으면 일반 토스트는 아래쪽에 표시
+    const progressToast = document.getElementById('progressToast');
+    const topPosition = progressToast ? '120px' : '20px';
+    
+    // 토스트 요소 생성
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `
+      position: fixed !important;
+      top: ${topPosition} !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      background-color: rgba(51, 51, 51, 0.9) !important;
+      color: white !important;
+      padding: 12px 24px !important;
+      border-radius: 6px !important;
+      z-index: 10000 !important;
+      font-size: 14px !important;
+      opacity: 0 !important;
+      transition: opacity 0.3s ease !important;
+      max-width: 90% !important;
+      text-align: center !important;
+      word-wrap: break-word !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    `;
+    
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    // 애니메이션으로 나타나기
+    setTimeout(() => {
+      toast.style.opacity = '1';
+    }, 100);
+    
+    // 지정된 시간 후 토스트 숨기기
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.remove();
+        }
+      }, 300);
+    }, duration);
+    
+    console.log('📱 Toast:', message);
+    return true;
+  } catch (error) {
+    console.error('❌ Toast 함수 오류:', error);
+    console.log('📱 Toast (fallback):', message);
+    return false;
+  }
+}
+
+// 토스트 형식 프로그레스바 표시 함수
 function showProgressBar() {
   console.log('🔄 showProgressBar 함수 호출됨');
   
@@ -1034,7 +1103,7 @@ function showProgressBar() {
   }, 100);
 }
 
-// 토스트 형식 프로그레스바 업데이트 함수 - 디버깅 추가
+// 토스트 형식 프로그레스바 업데이트 함수
 function updateProgress(current, total) {
   console.log(`📊 Progress update: ${current}/${total}`);
   
@@ -1066,7 +1135,7 @@ function updateProgress(current, total) {
   }
 }
 
-// 토스트 형식 프로그레스바 숨기기 함수 - 디버깅 추가
+// 토스트 형식 프로그레스바 숨기기 함수
 function hideProgressBar() {
   console.log('🔄 hideProgressBar 함수 호출됨');
   
@@ -1093,159 +1162,86 @@ function hideProgressBar() {
   }
 }
 
-// 업로드 함수에서 프로그레스바 테스트
-function upLoad(){
-  console.log('🚀 upLoad 함수 시작');
-  
-  let imgUrls = [];
-  const img = fileTr.querySelectorAll(".local-img");
-  const h3List = document.querySelectorAll(".popTitleC");
-  const stockList ={"client":h3List[0].innerHTML};
-  stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
-  
-  console.log(`📸 로컬 이미지 개수: ${img.length}`);
-  
-  if(img.length==0){
-    try {
-      // toastOn 함수 안전 호출
-      try {
-        toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
-      } catch (toastError) {
-        console.log("📱 사진 전송 없이 작업 완료 등록만 진행 합니다.");
-      }
-      
-      // FCM 알림 전송 - 사진 없이 작업 완료 (안전하게)
-      const clientName = h3List[0].innerHTML;
-      const containerInfo = h3List[1].innerHTML;
-      
-      // 모바일 환경에서는 간단한 확인 메시지
-      if (mC) {
-        console.log('📱 Mobile - 작업 완료:', `${clientName} - ${containerInfo}`);
-      } else {
-        // 로컬 알림 우선 사용 (CORS 문제 회피)
-        if (typeof sendLocalNotification === 'function') {
-          const notificationSent = sendLocalNotification(
-            "작업 완료 등록", 
-            `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`,
-            {
-              client: clientName,
-              container: containerInfo,
-              hasImages: false,
-              workType: ioValue === "InCargo" ? "컨테이너진입" : "작업완료"
-            }
-          );
-          
-          // 로컬 알림이 실패한 경우에만 FCM 시도
-          if (!notificationSent && token && typeof sendMessage === 'function') {
-            try {
-              sendMessage(token, 
-                "작업 완료 등록", 
-                `${clientName} - ${containerInfo}: 사진 전송 없이 작업 완료 등록`, 
-                '/WmsMobile/images/icon.png'
-              );
-            } catch (fcmError) {
-              console.log('⚠️ FCM 메시지 전송 실패:', fcmError);
-            }
-          }
-        }
-      }
-    } catch (notificationError) {
-      console.error('❌ 작업 완료 알림 전송 오류:', notificationError);
+// 파일명 생성 함수
+function generateFileName(selectTr, index) {
+  try {
+    if (!selectTr || !selectTr.cells || selectTr.cells.length < 5) {
+      console.log('❌ selectTr이 없거나 셀이 부족함');
+      return `image_${index}_${returnTime()}`;
     }
-  } else {
-    // 이미지 업로드 처리 - 프로그레스바 표시
-    try {
-      console.log('📤 이미지 업로드 시작 - 프로그레스바 표시');
-      
-      // 프로그레스바 강제 표시 (테스트용)
-      showProgressBar();
-      
-      // 테스트를 위해 임시로 프로그레스 업데이트
-      setTimeout(() => updateProgress(1, 3), 500);
-      setTimeout(() => updateProgress(2, 3), 1500);
-      setTimeout(() => updateProgress(3, 3), 2500);
-      setTimeout(() => hideProgressBar(), 3000);
-      
-      for(let i=0;i<img.length;i++){
-        const imgSrc = img[i].src;
-        imgUrls.push(imgSrc);
-      }
-      const storageRef = storage_f.ref(refFile);
-      
-      if (mC) {
-        uploadImagesSequentially(imgUrls, storageRef, h3List);
-      } else {
-        uploadImagesParallel(imgUrls, storageRef, h3List);
-      }
-        
-    } catch (uploadError) {
-      console.error('❌ 이미지 업로드 준비 오류:', uploadError);
-      hideProgressBar();
-      try {
-        toastOn("이미지 업로드 준비 중 오류가 발생했습니다.", 5000);
-      } catch (toastError) {
-        console.log("❌ 이미지 업로드 준비 중 오류가 발생했습니다.");
-      }
+    
+    const cell0 = selectTr.cells[0] ? selectTr.cells[0].innerHTML : 'unknown';
+    const cell2 = selectTr.cells[2] ? selectTr.cells[2].innerHTML : 'unknown';
+    const cell3 = selectTr.cells[3] ? selectTr.cells[3].innerHTML : 'unknown';
+    const cell4 = selectTr.cells[4] ? selectTr.cells[4].innerHTML : 'unknown';
+    
+    return `${cell0}_${cell2}_${cell3}_${cell4}_${index}_${returnTime()}`;
+  } catch (error) {
+    console.error('❌ 파일명 생성 오류:', error);
+    return `image_${index}_${returnTime()}`;
+  }
+}
+
+// 이미지 목록 새로고침 함수
+function refreshImageList() {
+  const fileTr = document.querySelector("#imgTr");
+  if (!fileTr || !refFile) {
+    console.log('❌ fileTr 또는 refFile이 없습니다.');
+    return;
+  }
+
+  // 기존 서버 이미지들만 제거 (local-img는 유지)
+  const serverImages = fileTr.querySelectorAll("td img:not(.local-img)");
+  serverImages.forEach(img => {
+    if (img.parentNode) {
+      img.parentNode.remove();
     }
-  }
+  });
+
+  console.log('🔄 서버 이미지 목록 새로고침 중...');
   
-  // 작업 상태 업데이트
-  let w;
-  if(ioValue=="InCargo"){
-    w={"working":"컨테이너진입","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-  }else{
-    w={"workprocess":"완","regTime":document.querySelector("#dateSelect").value+"_"+returnTime()};
-  }
-  
-  database_f.ref(ref).update(w)
-    .then(() => {
-      console.log("✅ 작업 상태 업데이트 완료");
-      
-      try {
-        const clientName = h3List[0].innerHTML;
-        const containerInfo = h3List[1].innerHTML;
-        const workStatus = ioValue=="InCargo" ? "컨테이너진입" : "작업완료";
-        
-        if (mC) {
-          console.log('📱 Mobile - 상태 업데이트:', `${clientName} - ${containerInfo}: ${workStatus}`);
-        } else if (typeof sendLocalNotification === 'function') {
-          sendLocalNotification(
-            "작업 상태 업데이트", 
-            `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`
-          );
-        }
-      } catch (notificationError) {
-        console.error('❌ 상태 업데이트 알림 전송 오류:', notificationError);
-      }
+  // Firebase Storage에서 이미지 목록 다시 로드
+  storage_f.ref(refFile).listAll()
+    .then((res) => {
+      res.items.forEach((itemRef) => {
+        itemRef.getDownloadURL().then((url) => {
+          const td = document.createElement("td");
+          const img = document.createElement("img");
+          img.src = url;
+          img.className = "server-img";
+          img.addEventListener("click", (e) => {
+            const tdList = img.parentNode.parentNode.querySelectorAll("td");
+            tdList.forEach((td) => {
+              td.classList.remove("file-selected");
+            });
+            img.parentNode.classList.toggle("file-selected");
+            console.log(img.parentNode.classList);
+            
+            // popDetail 함수가 있는 경우에만 호출
+            if (typeof popDetail === 'function') {
+              popDetail(refFile);
+            }
+          });
+          img.style.display = "block";
+          td.style = "width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "scale-down";
+          td.appendChild(img);
+          fileTr.appendChild(td);
+        }).catch((error) => {
+          console.error('❌ 이미지 URL 가져오기 오류:', error);
+        });
+      });
     })
     .catch((error) => {
-      console.error("❌ 작업 상태 업데이트 오류:", error);
+      console.error('❌ 이미지 목록 새로고침 오류:', error);
       try {
-        toastOn("작업 상태 업데이트 실패", 5000);
+        toastOn("이미지 목록 새로고침 실패", 3000);
       } catch (toastError) {
-        console.log("❌ 작업 상태 업데이트 실패");
+        console.log("❌ 이미지 목록 새로고침 실패");
       }
     });
 }
 
-// 프로그레스바 테스트 함수 (디버깅용)
-function testProgressBar() {
-  console.log('🧪 프로그레스바 테스트 시작');
-  showProgressBar();
-  
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += 10;
-    updateProgress(progress, 100);
-    
-    if (progress >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {
-        hideProgressBar();
-      }, 1000);
-    }
-  }, 300);
-}
-
-// 콘솔에서 테스트할 수 있도록 전역 함수로 등록
-window.testProgressBar = testProgressBar;
+// ...existing code...
