@@ -1360,5 +1360,153 @@ function otherContents(e){
   }else{
     window.location.href="https://koacaiia.github.io/CargoStatus/"
   }
-
 }
+
+// sendLocalNotification 함수 정의 추가
+function sendLocalNotification(title, body, data = {}) {
+  try {
+    // 브라우저 알림 권한 확인
+    if (!("Notification" in window)) {
+      console.log("❌ 이 브라우저는 알림을 지원하지 않습니다.");
+      return false;
+    }
+
+    if (Notification.permission === "granted") {
+      // 알림 생성
+      const notification = new Notification(title, {
+        body: body,
+        icon: '/WmsMobile/images/icon.png',
+        badge: '/WmsMobile/images/icon.png',
+        data: data,
+        requireInteraction: true, // 사용자가 직접 닫을 때까지 유지
+        silent: false,
+        tag: 'wms-notification-' + Date.now()
+      });
+
+      notification.onclick = function(event) {
+        console.log('🔔 알림 클릭됨:', event);
+        event.preventDefault();
+        window.focus(); // 브라우저 창 포커스
+        notification.close();
+      };
+
+      notification.onshow = function() {
+        console.log('✅ 알림 표시됨:', title);
+      };
+
+      notification.onerror = function(error) {
+        console.error('❌ 알림 오류:', error);
+      };
+
+      return true;
+    } else if (Notification.permission !== "denied") {
+      // 권한 요청
+      Notification.requestPermission().then(function(permission) {
+        if (permission === "granted") {
+          sendLocalNotification(title, body, data);
+        } else {
+          console.log("❌ 알림 권한이 거부되었습니다.");
+        }
+      });
+      return false;
+    } else {
+      console.log("❌ 알림 권한이 차단되어 있습니다.");
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ 로컬 알림 함수 오류:', error);
+    return false;
+  }
+}
+
+// 알림 권한 요청 함수
+function requestNotificationPermission() {
+  if ("Notification" in window) {
+    if (Notification.permission === "default") {
+      Notification.requestPermission().then(function(permission) {
+        console.log('🔔 알림 권한:', permission);
+        if (permission === "granted") {
+          toastOn("알림 권한이 허용되었습니다.", 2000);
+        } else {
+          toastOn("알림 권한이 거부되었습니다.", 2000);
+        }
+      });
+    } else {
+      console.log('🔔 현재 알림 권한:', Notification.permission);
+    }
+  }
+}
+// FCM 토큰 초기화 및 알림 설정 개선
+function initializeFirebaseMessaging() {
+  try {
+    // VAPID 키 설정 (Firebase Console에서 확인 필요)
+    const vapidKey = "YOUR_VAPID_KEY_HERE"; // 실제 VAPID 키로 교체 필요
+    
+    if (vapidKey !== "YOUR_VAPID_KEY_HERE") {
+      messaging.getToken({ vapidKey: vapidKey }).then((currentToken) => {
+        if (currentToken) {
+          console.log('✅ FCM 토큰 획득:', currentToken);
+          token = currentToken;
+          
+          // 토큰을 서버에 저장하거나 로컬 스토리지에 저장
+          localStorage.setItem('fcm-token', currentToken);
+          
+          // 테스트 알림 전송
+          toastOn("FCM 토큰이 설정되었습니다.", 2000);
+        } else {
+          console.log('❌ FCM 토큰을 가져올 수 없습니다.');
+        }
+      }).catch((err) => {
+        console.error('❌ FCM 토큰 획득 오류:', err);
+      });
+    } else {
+      console.log('⚠️ VAPID 키가 설정되지 않았습니다.');
+    }
+
+    // 포그라운드 메시지 수신
+    messaging.onMessage((payload) => {
+      console.log('🔔 포그라운드 메시지 수신:', payload);
+      
+      // 커스텀 알림 표시
+      if (payload.notification) {
+        sendLocalNotification(
+          payload.notification.title,
+          payload.notification.body,
+          payload.data
+        );
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Firebase 메시징 초기화 오류:', error);
+  }
+}
+
+// sendMessage 함수 정의
+function sendMessage(token, title, body, icon) {
+  // 실제 구현에서는 서버 API를 통해 FCM 메시지 전송
+  console.log('📤 FCM 메시지 전송 시도:', { token, title, body, icon });
+  
+  // 로컬 알림으로 대체 (테스트용)
+  sendLocalNotification(title, body, { icon });
+}
+
+// 페이지 로드 시 알림 관련 초기화
+// document.addEventListener('DOMContentLoaded', function() {
+//   console.log('📱 WMS Mobile 앱 시작');
+  
+//   // 알림 권한 요청
+//   requestNotificationPermission();
+  
+//   // Firebase 메시징 초기화
+//   setTimeout(() => {
+//     initializeFirebaseMessaging();
+//   }, 1000);
+  
+//   // 기존 토큰 확인
+//   const savedToken = localStorage.getItem('fcm-token');
+//   if (savedToken) {
+//     token = savedToken;
+//     console.log('💾 저장된 FCM 토큰 사용:', token);
+//   }
+// });

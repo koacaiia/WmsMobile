@@ -60,7 +60,7 @@ messaging.onBackgroundMessage((payload) => {
     self.registration.showNotification(`[fine2 백그라운드] ${notificationTitle}`, {
       body: `📢 토픽: ${notificationBody}`,
       icon: '/WmsMobile/images/icon.png',
-      badge: '/WmsMobile/images/icon.png',
+    //   badge: '/WmsMobile/images/icon.png',
       tag: 'fine2-background',
       requireInteraction: true,
       data: {
