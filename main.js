@@ -644,6 +644,7 @@ function upLoad(){
       // FCM 알림 전송 - 사진 없이 작업 완료 (안전하게)
       const clientName = h3List[0].innerHTML;
       const containerInfo = h3List[1].innerHTML;
+      const workType = ioValue === "InCargo" ? "컨테이너진입" : "작업완료";
       
       // 모바일 환경에서는 간단한 확인 메시지
       if (mC) {
@@ -658,7 +659,7 @@ function upLoad(){
               client: clientName,
               container: containerInfo,
               hasImages: false,
-              workType: ioValue === "InCargo" ? "컨테이너진입" : "작업완료"
+              workType: workType
             }
           );
           
@@ -676,6 +677,10 @@ function upLoad(){
           }
         }
       }
+      
+      // fine2 토픽으로 메시지 전송 (사진 없는 경우)
+      sendWorkCompletionToFine2(clientName, containerInfo, workType);
+      
     } catch (notificationError) {
       console.error('❌ 작업 완료 알림 전송 오류:', notificationError);
     }
@@ -741,6 +746,10 @@ function upLoad(){
             `${clientName} - ${containerInfo}: ${workStatus} 처리 완료`
           );
         }
+        
+        // fine2 토픽으로 상태 업데이트 알림 전송
+        sendWorkCompletionToFine2(clientName, containerInfo, workStatus);
+        
       } catch (notificationError) {
         console.error('❌ 상태 업데이트 알림 전송 오류:', notificationError);
       }
@@ -755,7 +764,7 @@ function upLoad(){
     });
 }
 
-// 모바일용 순차 업로드 함수 - 프로그레스바 포함
+// 모바일용 순차 업로드 함수 수정 - fine2 토픽 전송 추가
 function uploadImagesSequentially(imgUrls, storageRef, h3List) {
   let successCount = 0;
   let failureCount = 0;
@@ -781,7 +790,24 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
         }, 2500);
       }
       
-      // 이미지 목록 새로고침
+      // fine2 토픽으로 이미지 업로드 완료 알림
+      const clientName = h3List[0].innerHTML;
+      const containerInfo = h3List[1].innerHTML;
+      const workType = ioValue === "InCargo" ? "컨테이너진입" : "작업완료";
+      
+      sendMessageToFine2Topic(
+        'WMS 이미지 업로드 완료',
+        `${clientName} - ${containerInfo}: ${successCount}개 이미지 업로드 완료`,
+        {
+          client: clientName,
+          container: containerInfo,
+          workType: workType,
+          uploadedCount: successCount,
+          failedCount: failureCount,
+          hasImages: true
+        }
+      );
+      
       setTimeout(() => {
         refreshImageList();
       }, 1000);
@@ -840,7 +866,7 @@ function uploadImagesSequentially(imgUrls, storageRef, h3List) {
   uploadNext(0);
 }
 
-// 데스크톱용 병렬 업로드 함수 - 프로그레스바 포함
+// 데스크톱용 병렬 업로드 함수 수정 - fine2 토픽 전송 추가
 function uploadImagesParallel(imgUrls, storageRef, h3List) {
   const total = imgUrls.length;
   let completedCount = 0;
@@ -886,7 +912,6 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
       
       console.log(`✅ 병렬 이미지 업로드 완료: 성공 ${successCount}개, 실패 ${failureCount}개`);
       
-      // 프로그레스바 숨기기
       hideProgressBar();
       
       try {
@@ -895,7 +920,24 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
         console.log(`✅ ${successCount} 파일 업로드 완료`);
       }
       
-      // 이미지 목록 새로고침
+      // fine2 토픽으로 이미지 업로드 완료 알림
+      const clientName = h3List[0].innerHTML;
+      const containerInfo = h3List[1].innerHTML;
+      const workType = ioValue === "InCargo" ? "컨테이너진입" : "작업완료";
+      
+      sendMessageToFine2Topic(
+        'WMS 이미지 업로드 완료',
+        `${clientName} - ${containerInfo}: ${successCount}개 이미지 업로드 완료`,
+        {
+          client: clientName,
+          container: containerInfo,
+          workType: workType,
+          uploadedCount: successCount,
+          failedCount: failureCount,
+          hasImages: true
+        }
+      );
+      
       setTimeout(() => {
         refreshImageList();
       }, 1000);
@@ -1491,22 +1533,180 @@ function sendMessage(token, title, body, icon) {
   sendLocalNotification(title, body, { icon });
 }
 
-// 페이지 로드 시 알림 관련 초기화
-// document.addEventListener('DOMContentLoaded', function() {
-//   console.log('📱 WMS Mobile 앱 시작');
+// fine2 토픽 구독 함수 추가
+function subscribeToFine2Topic() {
+  if (!messaging) {
+    console.error('❌ Firebase messaging이 초기화되지 않았습니다.');
+    return;
+  }
+
+  messaging.getToken().then((currentToken) => {
+    if (currentToken) {
+      console.log('✅ FCM 토큰:', currentToken);
+      
+      // fine2 토픽 구독 (클라이언트 측에서는 제한적, 실제로는 서버에서 처리)
+      console.log('📢 fine2 토픽 구독 준비 완료');
+      toastOn('fine2 토픽 알림 준비 완료', 2000);
+      
+    } else {
+      console.log('❌ FCM 토큰을 가져올 수 없습니다.');
+    }
+  }).catch((err) => {
+    console.error('❌ FCM 토큰 획득 오류:', err);
+  });
+}
+
+// fine2 토픽으로 메시지 전송 함수 (서버 API 호출 시뮬레이션)
+async function sendMessageToFine2Topic(title, body, data = {}) {
+  try {
+    const message = {
+      to: '/topics/fine2',
+      notification: {
+        title: title,
+        body: body
+      },
+      data: {
+        topic: 'fine2',
+        timestamp: new Date().toISOString(),
+        client: data.client || '',
+        container: data.container || '',
+        workType: data.workType || '',
+        ...data
+      }
+    };
+
+    console.log('📤 fine2 토픽 메시지 전송 시도:', message);
+    
+    // 실제 서버 API 호출 대신 로컬 알림으로 시뮬레이션
+    const success = sendLocalNotification(
+      `[fine2] ${title}`,
+      `📢 토픽 알림: ${body}`,
+      message.data
+    );
+    
+    if (success) {
+      console.log('✅ fine2 토픽 메시지 전송 완료 (시뮬레이션)');
+      return true;
+    } else {
+      console.error('❌ fine2 토픽 메시지 전송 실패');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ fine2 토픽 메시지 전송 오류:', error);
+    return false;
+  }
+}
+
+// 작업 완료 시 fine2 토픽으로 알림 전송
+function sendWorkCompletionToFine2(clientName, containerInfo, workType) {
+  const currentTime = new Date().toLocaleString('ko-KR');
   
-//   // 알림 권한 요청
-//   requestNotificationPermission();
+  sendMessageToFine2Topic(
+    'WMS 작업 완료 알림',
+    `${clientName} - ${containerInfo}: ${workType} 처리 완료`,
+    {
+      client: clientName,
+      container: containerInfo,
+      workType: workType,
+      timestamp: currentTime,
+      department: deptName
+    }
+  );
+}
+
+// 테스트 함수들 추가
+function testFine2Topic() {
+  console.log('🧪 fine2 토픽 테스트 시작');
   
-//   // Firebase 메시징 초기화
-//   setTimeout(() => {
-//     initializeFirebaseMessaging();
-//   }, 1000);
+  sendWorkCompletionToFine2(
+    'TEST CLIENT',
+    'TEST123456',
+    '테스트 작업완료'
+  );
+}
+
+function testFine2ImageUpload() {
+  console.log('🧪 fine2 이미지 업로드 토픽 테스트');
   
-//   // 기존 토큰 확인
-//   const savedToken = localStorage.getItem('fcm-token');
-//   if (savedToken) {
-//     token = savedToken;
-//     console.log('💾 저장된 FCM 토큰 사용:', token);
-//   }
-// });
+  sendMessageToFine2Topic(
+    'WMS 이미지 업로드 완료',
+    'TEST CLIENT - TEST123456: 3개 이미지 업로드 완료',
+    {
+      client: 'TEST CLIENT',
+      container: 'TEST123456',
+      workType: '테스트 작업완료',
+      uploadedCount: 3,
+      failedCount: 0,
+      hasImages: true
+    }
+  );
+}
+
+// 콘솔에서 테스트할 수 있도록 전역 함수로 등록
+window.testFine2Topic = testFine2Topic;
+window.testFine2ImageUpload = testFine2ImageUpload;
+
+// Firebase 메시징 초기화 함수 수정
+function initializeFirebaseMessaging() {
+  try {
+    // fine2 토픽 구독
+    subscribeToFine2Topic();
+    
+    // 포그라운드 메시지 수신 (fine2 토픽 메시지 감지)
+    messaging.onMessage((payload) => {
+      console.log('🔔 포그라운드 메시지 수신:', payload);
+      
+      // fine2 토픽 메시지 감지
+      const fromTopic = payload.from || '';
+      const isFine2 = (
+        fromTopic.includes('fine2') ||
+        fromTopic.includes('/topics/fine2') ||
+        payload.data?.topic === 'fine2'
+      );
+      
+      if (isFine2) {
+        console.log('📢 fine2 토픽 메시지 감지');
+        
+        if (payload.notification) {
+          sendLocalNotification(
+            `[fine2] ${payload.notification.title}`,
+            `📢 토픽: ${payload.notification.body}`,
+            { ...payload.data, topic: 'fine2' }
+          );
+        }
+      } else if (payload.notification) {
+        sendLocalNotification(
+          payload.notification.title,
+          payload.notification.body,
+          payload.data
+        );
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Firebase 메시징 초기화 오류:', error);
+  }
+}
+
+// 페이지 로드 시 초기화 (주석 해제)
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('📱 WMS Mobile 앱 시작');
+  
+  // 알림 권한 요청
+  requestNotificationPermission();
+  
+  // Firebase 메시징 초기화
+  setTimeout(() => {
+    initializeFirebaseMessaging();
+  }, 1000);
+  
+  // 기존 토큰 확인
+  const savedToken = localStorage.getItem('fcm-token');
+  if (savedToken) {
+    token = savedToken;
+    console.log('💾 저장된 FCM 토큰 사용:', token);
+  }
+  
+  console.log('📢 fine2 토픽 기능이 활성화되었습니다.');
+  console.log('🧪 테스트 함수: testFine2Topic(), testFine2ImageUpload()');
+});
