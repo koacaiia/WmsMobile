@@ -104,7 +104,7 @@ function saveImg(){
           return response.blob();
         }).then(blob => {
           // Add blob to zip under the folder with original name
-          folder.file(itemRef.name, blob);
+          folder.file(itemRef.name+".jpg", blob);
         }).catch(err => {
           console.error('Error fetching', itemRef.name, err);
         });
