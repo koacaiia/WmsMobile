@@ -82,21 +82,53 @@ function toastOn(msg){
 }
 function saveImg(){
   storage_f.ref(ref).listAll().then((res)=>{
-    res.items.forEach((itemRef)=>{
-      itemRef.getDownloadURL().then((url)=>{
+    if(!res.items || res.items.length===0){
+      toastOn("No images to save");
+      return;
+    }
 
-        fetch(url)
-        .then(response => response.blob())
-        .then(blob => {
-          console.log(blob);
-          const fileName = itemRef.name; // Use the item reference name as the file name
-          saveAs(blob, fileName); // Use FileSaver.js to save the file
-        })
-        .catch(error => {
-          toastOn("Error fetching the file");
-          console.error('Error fetching the file:', error);
+    // Build timestamp folder name: DD_MM_YYYY_HH_mm_ss
+    const pad = (n)=>String(n).padStart(2,'0');
+    const d = new Date();
+    const folderName = `${d.getFullYear()}년${pad(d.getMonth()+1)}월${pad(d.getDate())}일${pad(d.getHours())}시${pad(d.getMinutes())}분${pad(d.getSeconds())}초`;
+
+    // Create zip and add a folder inside it
+    const zip = new JSZip();
+    const folder = zip.folder(folderName);
+
+    // Fetch all blobs and add to zip
+    const fetchPromises = res.items.map((itemRef)=>{
+      return itemRef.getDownloadURL().then((url)=>{
+        return fetch(url).then(response => {
+          if(!response.ok) throw new Error('Network response not ok for ' + itemRef.name);
+          return response.blob();
+        }).then(blob => {
+          // Add blob to zip under the folder with original name
+          folder.file(itemRef.name, blob);
+        }).catch(err => {
+          console.error('Error fetching', itemRef.name, err);
         });
+      }).catch(err=>{
+        console.error('Error getting download URL for', itemRef.name, err);
       });
     });
+
+    Promise.all(fetchPromises).then(()=>{
+      // Generate the zip (DEFLATE compression) and trigger download
+      zip.generateAsync({type:'blob', compression: 'DEFLATE'}).then((content)=>{
+        const zipName = `${folderName}.zip`;
+        saveAs(content, zipName);
+      }).catch(err=>{
+        console.error('Error generating zip', err);
+        toastOn('Error creating zip');
+      });
+    }).catch(err=>{
+      console.error('Error preparing files', err);
+      toastOn('Error preparing files for download');
+    });
+
+  }).catch(err=>{
+    console.error('Error listing storage ref', err);
+    toastOn('Error listing files');
   });
 }

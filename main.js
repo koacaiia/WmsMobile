@@ -691,13 +691,6 @@ function upLoad(){
       
       // 프로그레스바 강제 표시 (테스트용)
       showProgressBar();
-      
-      // 테스트를 위해 임시로 프로그레스 업데이트
-      // setTimeout(() => updateProgress(1, 3), 500);
-      // setTimeout(() => updateProgress(2, 3), 1500);
-      // setTimeout(() => updateProgress(3, 3), 2500);
-      // setTimeout(() => hideProgressBar(), 3000);
-      
       for(let i=0;i<img.length;i++){
         const imgSrc = img[i].src;
         imgUrls.push(imgSrc);
@@ -888,7 +881,7 @@ function uploadImagesParallel(imgUrls, storageRef, h3List) {
         const fileName = generateFileName(selectTr, index);
         const file = new File([blob], fileName, { type: blob.type });
         const fileRef = storageRef.child(fileName.replace("/","_"));
-        
+        console.log("🔄 병렬 업로드 시작:", fileName);
         return fileRef.put(file);
       })
       .then((snapshot) => {
@@ -1478,51 +1471,7 @@ function requestNotificationPermission() {
     }
   }
 }
-// FCM 토큰 초기화 및 알림 설정 개선
-// function initializeFirebaseMessaging() {
-//   try {
-//     // VAPID 키 설정 (Firebase Console에서 확인 필요)
-//     const vapidKey = "YOUR_VAPID_KEY_HERE"; // 실제 VAPID 키로 교체 필요
-    
-//     if (vapidKey !== "YOUR_VAPID_KEY_HERE") {
-//       messaging.getToken({ vapidKey: vapidKey }).then((currentToken) => {
-//         if (currentToken) {
-//           console.log('✅ FCM 토큰 획득:', currentToken);
-//           token = currentToken;
-          
-//           // 토큰을 서버에 저장하거나 로컬 스토리지에 저장
-//           localStorage.setItem('fcm-token', currentToken);
-          
-//           // 테스트 알림 전송
-//           toastOn("FCM 토큰이 설정되었습니다.", 2000);
-//         } else {
-//           console.log('❌ FCM 토큰을 가져올 수 없습니다.');
-//         }
-//       }).catch((err) => {
-//         console.error('❌ FCM 토큰 획득 오류:', err);
-//       });
-//     } else {
-//       console.log('⚠️ VAPID 키가 설정되지 않았습니다.');
-//     }
 
-//     // 포그라운드 메시지 수신
-//     messaging.onMessage((payload) => {
-//       console.log('🔔 포그라운드 메시지 수신:', payload);
-      
-//       // 커스텀 알림 표시
-//       if (payload.notification) {
-//         sendLocalNotification(
-//           payload.notification.title,
-//           payload.notification.body,
-//           payload.data
-//         );
-//       }
-//     });
-
-//   } catch (error) {
-//     console.error('❌ Firebase 메시징 초기화 오류:', error);
-//   }
-// }
 
 // sendMessage 함수 정의
 function sendMessage(token, title, body, icon) {
