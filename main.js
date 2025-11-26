@@ -373,6 +373,9 @@ function popUp(){
           h3List[2].style.fontSize="x-small";
           const sealNo = document.querySelector("#sealNo");
           sealNo.innerHTML="Seal No: "+(val["count"] || "미등록");
+          const cargoNoInput = document.querySelector("#cargoNo");
+          console.log("cargoNo:", val["cargoNo"]);
+          cargoNoInput.value = val["cargoNo"] ;
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
@@ -1661,3 +1664,8 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('📢 fine2 토픽 기능이 활성화되었습니다.');
   console.log('🧪 테스트 함수: testFine2Topic(), testFine2ImageUpload()');
 });
+function regCargoNo(){
+  const cargoNO = document.querySelector("#cargoNo").value;
+  database_f.ref(ref).update({"cargoNo": cargoNO}).then(() => {
+    popUp()})
+  }
