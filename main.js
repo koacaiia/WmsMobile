@@ -1720,10 +1720,10 @@ function adjustPopTitleFontSize() {
     element.style.fontSize = Math.min(fontSize, maxFontSize) + 'px';
     
     // Reduce font size until text fits
-    while ((element.scrollWidth > containerWidth || element.scrollHeight > containerHeight) && fontSize > 10) {
-      fontSize -= 1;
-      element.style.fontSize = fontSize + 'px';
-    }
+    // while ((element.scrollWidth > containerWidth || element.scrollHeight > containerHeight) && fontSize > 10) {
+    //   fontSize -= 1;
+    //   element.style.fontSize = fontSize + 'px';
+    // }
     
     // Increase font size if there's room
     while (element.scrollWidth < containerWidth && element.scrollHeight < containerHeight && fontSize < maxFontSize) {
