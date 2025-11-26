@@ -235,14 +235,18 @@ button{
     margin-right:20px;
 }
 .popTitleC{
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     font-weight: bold;
-    vertical-align: middle;
     margin:0;
     font-size: clamp(0.8rem, 4vw, 2rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    height: 100%;
+    width: 100%;
 }
 #popTitle{
     background-color: #b5b4ee;
