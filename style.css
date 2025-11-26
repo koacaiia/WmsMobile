@@ -238,11 +238,13 @@ button{
     text-align: center;
     font-weight: bold;
     vertical-align: middle;
+    margin:0;
 }
 #popTitle{
     background-color: #b5b4ee;
     display:grid;
-    grid-template-rows: 6vh 24vh;
+    height:30vh;
+    grid-template-rows: 1fr 1fr 5fr;
     border:3px solid black;
     border-radius: 10px;
 }

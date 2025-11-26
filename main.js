@@ -368,9 +368,11 @@ function popUp(){
             document.querySelector("#regTime").innerHTML=regTime;
           }
           h3List[0].innerHTML=val["consignee"];
-          h3List[1].innerHTML=val["container"];
+          h3List[1].innerHTML="Cont No:"+val["container"];
           h3List[2].innerHTML=val["bl"];
           h3List[2].style.fontSize="x-small";
+          const sealNo = document.querySelector("#sealNo");
+          sealNo.innerHTML="Seal No: "+(val["count"] || "미등록");
           database_f.ref(ref).parent.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
