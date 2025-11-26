@@ -396,15 +396,15 @@ function popUp(){
             document.querySelector("#regTime").innerHTML=regTime;
           }
           h3List[0].innerHTML=val["consignee"];
-          h3List[1].innerHTML=val["container"];
-          h3List[2].innerHTML=val["bl"];
+          h3List[1].innerHTML="Cont:"+val["container"];
+          h3List[2].innerHTML="BL:"+val["bl"];
           
           // Adjust font sizes to fit containers
           setTimeout(() => adjustPopTitleFontSize(), 10);
           console.log(h3List)
           h3List[4].innerHTML="보세운송 차량번호";
           const sealNo = document.querySelector("#sealNo");
-          sealNo.innerHTML=(val["count"] || "미등록");
+          sealNo.innerHTML="Seal:"+(val["count"] || "미등록");
           const cargoNoInput = document.querySelector("#cargoNo");
           cargoNoInput.value = val["cargoNo"] ;
           database_f.ref(ref).parent.get().then((snapshot)=>{
