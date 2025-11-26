@@ -239,6 +239,10 @@ button{
     font-weight: bold;
     vertical-align: middle;
     margin:0;
+    font-size: clamp(0.8rem, 4vw, 2rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 #popTitle{
     background-color: #b5b4ee;
@@ -247,6 +251,20 @@ button{
     grid-template-rows: 1fr 1fr 5fr;
     border:3px solid black;
     border-radius: 10px;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+/* Mobile PDF optimization */
+@media print, screen and (max-width: 768px) {
+    #popTitle {
+        text-align: left;
+        padding-left: 1rem;
+    }
+    .popTitleC {
+        text-align: left;
+        font-size: clamp(0.6rem, 3vw, 1.5rem);
+    }
 }
 .tableInfoTr{
     height: 5vh;

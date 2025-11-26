@@ -48,6 +48,34 @@ console.log('- Storage:', !!storage_f);
 
 // Firebase 프로젝트 정보 표시
 console.log('🔥 Firebase Project Info:');
+
+// Add event listeners for dynamic font adjustment
+document.addEventListener('DOMContentLoaded', () => {
+  // Adjust font sizes when page loads
+  setTimeout(() => adjustPopTitleFontSize(), 100);
+  
+  // Adjust on window resize
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => adjustPopTitleFontSize(), 100);
+  });
+  
+  // Monitor popup visibility changes
+  const popup = document.querySelector('#mainPop');
+  if (popup) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          if (popup.style.display !== 'none') {
+            setTimeout(() => adjustPopTitleFontSize(), 50);
+          }
+        }
+      });
+    });
+    observer.observe(popup, { attributes: true, attributeFilter: ['style'] });
+  }
+});
 console.log('   Project ID:', firebaseConfig.projectId);
 console.log('   Sender ID:', firebaseConfig.messagingSenderId);
 console.log('   App ID:', firebaseConfig.appId);
@@ -369,8 +397,9 @@ function popUp(){
           }
           h3List[0].innerHTML=val["consignee"];
           h3List[1].innerHTML="Cont No:"+val["container"];
-          h3List[2].innerHTML=val["bl"];
-          h3List[2].style.fontSize="x-small";
+          h3List[2].innerHTML="Bl No: "+val["bl"];
+          // Adjust font sizes to fit containers
+          setTimeout(() => adjustPopTitleFontSize(), 10);
           const sealNo = document.querySelector("#sealNo");
           sealNo.innerHTML="Seal No: "+(val["count"] || "미등록");
           const cargoNoInput = document.querySelector("#cargoNo");
@@ -421,6 +450,8 @@ function popUp(){
           const eQty = val["eaQty"].split(",");
           h3List[0].innerHTML=val["consigneeName"];
           h3List[1].innerHTML=val["outwarehouse"];
+          // Adjust font sizes to fit containers
+          setTimeout(() => adjustPopTitleFontSize(), 10);
           // const remark = val["remark"].split(" ,");
           let totalPlt=0;
           for(let i=0;i<des.length;i++){
@@ -1669,3 +1700,38 @@ function regCargoNo(){
   database_f.ref(ref).update({"cargoNo": cargoNO}).then(() => {
     popUp()})
   }
+
+// Dynamic font sizing for popTitleC elements
+function adjustPopTitleFontSize() {
+  const titleElements = document.querySelectorAll('.popTitleC');
+  titleElements.forEach(element => {
+    if (element.textContent.trim() === '') return; // Skip empty elements
+    
+    const container = element.parentElement || element;
+    const containerWidth = container.offsetWidth - 10; // Account for padding
+    const containerHeight = container.offsetHeight - 10;
+    
+    let fontSize = parseFloat(window.getComputedStyle(element).fontSize);
+    const maxFontSize = containerHeight * 0.8; // Don't exceed 80% of container height
+    
+    // Start with a reasonable font size
+    element.style.fontSize = Math.min(fontSize, maxFontSize) + 'px';
+    
+    // Reduce font size until text fits
+    while ((element.scrollWidth > containerWidth || element.scrollHeight > containerHeight) && fontSize > 10) {
+      fontSize -= 1;
+      element.style.fontSize = fontSize + 'px';
+    }
+    
+    // Increase font size if there's room
+    while (element.scrollWidth < containerWidth && element.scrollHeight < containerHeight && fontSize < maxFontSize) {
+      fontSize += 1;
+      element.style.fontSize = fontSize + 'px';
+      if (element.scrollWidth > containerWidth || element.scrollHeight > containerHeight) {
+        fontSize -= 1;
+        element.style.fontSize = fontSize + 'px';
+        break;
+      }
+    }
+  });
+}
