@@ -493,7 +493,9 @@ function popUp(){
             tr.style.height="6vh";
           });
           h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
-          h3List[2].style="font-size:large;margin-top:3%;color:red;";
+          h3List[2].style="font-size:large;color:red;";
+          document.querySelectorAll("#popTitle div")[1].remove();
+          document.querySelector("#popTitle").style="grid-template-rows:3fr 7fr";
       }).catch((e)=>{});
   }
   
