@@ -149,8 +149,8 @@ titleDate.innerHTML = dateT(new Date());
 function getData(date){
     const year = date.substring(0,4);
     const month=date.substring(5,7);
-    const refI ="DeptName/"+deptName+"/InCargo/"+month+"월/"+date;
-    const refO ="DeptName/"+deptName+"/OutCargo/"+month+"월/"+date;
+    const refI ="DeptName/"+deptName+"/InCargo/";
+    const refO ="DeptName/"+deptName+"/OutCargo/";
     const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
     
     // Os 데이터 조회 (Promise 오류 처리)
@@ -186,17 +186,30 @@ function getData(date){
         }
       });
     
-    // InCargo 데이터 조회 (Promise 오류 처리)
+    // InCargo 데이터 조회 (Promise 오류 처리) - date 매개변수로 필터링
     database_f.ref(refI).get()
       .then((snapshot)=>{
-        const val=snapshot.val();
+        const allData = snapshot.val();
         let ft4=0;
         let ft2=0;
         let lcl=0;
         
+        console.log('🔍 InCargo 필터링 시작 - 검색 날짜:', date);
+        
         try {
-          if (val) {
-            for(let i in val){
+          if (allData) {
+            // 모든 월과 날짜를 순회하면서 date와 일치하는 leaf nodes만 처리
+            for(let monthKey in allData) {
+              const monthData = allData[monthKey];
+              if(monthData && typeof monthData === 'object') {
+                for(let dateKey in monthData) {
+                  // dateKey가 매개변수 date와 일치하는 경우만 처리
+                  if(dateKey === date) {
+                    console.log('✅ 일치하는 날짜 발견:', dateKey);
+                    const val = monthData[dateKey];
+                    
+                    if(val && typeof val === 'object') {
+                      for(let i in val){
               try {
                 let spec="";
                 if(val[i]["container40"]==="1"){
@@ -257,6 +270,11 @@ function getData(date){
                 continue; // 다음 행 계속 처리
               }
             }
+                    }
+                  }
+                }
+              }
+            }
           }
           
           try {
@@ -282,14 +300,27 @@ function getData(date){
         }
       });
 
-    // OutCargo 데이터 조회 (Promise 오류 처리)
+    // OutCargo 데이터 조회 (Promise 오류 처리) - date 매개변수로 필터링
     database_f.ref(refO).get()
       .then((snapshot)=>{
-        const val=snapshot.val();
+        const allData=snapshot.val();
+        
+        console.log('🔍 OutCargo 필터링 시작 - 검색 날짜:', date);
         
         try {
-          if (val) {
-            for(let i in val){
+          if (allData) {
+            // 모든 월과 날짜를 순회하면서 date와 일치하는 leaf nodes만 처리
+            for(let monthKey in allData) {
+              const monthData = allData[monthKey];
+              if(monthData && typeof monthData === 'object') {
+                for(let dateKey in monthData) {
+                  // dateKey가 매개변수 date와 일치하는 경우만 처리
+                  if(dateKey === date) {
+                    console.log('✅ 일치하는 날짜 발견:', dateKey);
+                    const val = monthData[dateKey];
+                    
+                    if(val && typeof val === 'object') {
+                      for(let i in val){
               try {
                 const tr = document.createElement("tr");
                 tr.id=val[i]["keyValue"];
@@ -343,6 +374,11 @@ function getData(date){
               } catch (rowError) {
                 console.error('❌ OutCargo 행 처리 오류:', rowError);
                 continue; // 다음 행 계속 처리
+              }
+            }
+                    }
+                  }
+                }
               }
             }
           }
