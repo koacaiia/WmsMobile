@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images</title>
+    <link rel="stylesheet" href="img.css" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-functions-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <div id="imageMain" style="display:grid;grid-template-rows:10vh 87vh;height:98vh">
+        <div id="imageTitleDiv" style="display:grid;grid-template-rows: 1fr 1fr;">
+            <!-- <h1 id="imageTitle">Image</h1> -->
+            <div id="titleBtnDiv" style="display:grid;grid-template-columns:1fr 1fr 1fr">
+                <button id="preImg" onclick="btn(this)">Previous</button>
+                <button id="saveImg" onclick="btn(this)">Save Image</button>
+                <button id ="nextImg" onclick="btn(this)">Next</button>
+            </div>
+            <button id="homeBtn" style="font-weight:bold;background-color: bisque;" onclick="btn(this)">Home</button>
+        </div>
+        <div id="imageTableDiv" style="height:86vh">
+            <table style="height:100%">
+                <thead>
+                    <tr>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="imgTr">
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+<script src="imagePop.js"></script>
+</html>

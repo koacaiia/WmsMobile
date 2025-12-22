@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <div id="mainTitle" >
+        <div id="mainDateDiv">
+            <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
+            <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
+            <button id="dateContents" onclick="dateNext()">내일</button>
+            <button id="otherPlt" onclick="otherContents(this)">Pallet</button>  
+            <button id="otherEnF" onclick="otherContents(this)">장비,시설물</button>
+        </div>
+        <div id="mainOs" >
+            <table class="tableW"id="mainOsTable" >
+                <colgroup>
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 70%">
+                </colgroup>    
+                <thead>
+                    <tr>
+                        <th class="osTh">하역(남)</th>
+                        <th class="osTh">여(Fine)</th>
+                        <th class="osTh">여(외부)</th>
+                        <th>
+                            <button id="osBtn" style="width:85%" onclick="osSubmit()">등록,변경</button>
+                        </th>
+                    </tr>
+                </thead>    
+                <tbody>
+                    <tr>
+                        <td class="osTd"><input class="osInput" type="number" id="osMo" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="number" id="osWf" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="number" id="osWo" value="0"></td>
+                        <td class="osTd"><input class="osInput"type="text" id="osRe" value="" ></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+    <div id="mainContent">
+        <div class="main" id="mainIn" style="background-color: rgb(199, 192, 205);border:3px solid black;border-radius:10px">
+            <table class="tableW" id="tableIn">
+                <colgroup>
+                    <col style="width: 20%">
+                    <col style="width: 30%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                    <col style="width: 30%">
+                </colgroup>    
+                <thead>
+                    <tr>
+                        <th style="width:20%">화주</th>
+                        <th style="width:35%">Con't No</th>
+                        <th style="width:5%">PLT</th>
+                        <th style="width:10%">유형</th>
+                        <th style="width:30%">품명</th>
+                    </tr>
+                </thead>
+                <tbody id="tBodyIn">
+                </tbody>                
+            </table>    
+        </div>
+        <div class="main" id="mainOut" style="background-color: rgb(159, 197, 197);border:3px solid black;border-radius:10px">
+            <table class="tableW" id="tableOut">
+                <colgroup>
+                    <col style="width: 20%">
+                    <col style="width: 20%">
+                    <col style="width: 30%">
+                    <col style="width: 30%">
+                    <col style="width: 10%">
+                    <col style="width: 10%">
+                </colgroup>    
+                <thead>
+                    <tr>
+                        <th style="width:20%;background-color:rgb(21, 64, 119)">화주</th>
+                        <th style="width:20%;background-color:rgb(21, 64, 119)">도착지</th>
+                        <th style="width:30%;background-color:rgb(21, 64, 119)">품명</th>
+                        <th style="width:30%;background-color:rgb(21, 64, 119)">관리번호</th>
+                        <th style="width:10%;background-color:rgb(21, 64, 119)">PLT</th>
+                        <th style="width:10%;background-color:rgb(21, 64, 119)">EA</th>
+                        
+                    </tr>
+                </thead>
+                <tbody id="tBodyOut">
+                </tbody>                
+            </table>
+        </div>
+    </div>
+    
+    <div id="mainPop" style="display:none">
+        <div id="popTitle">
+            <div  style="display:grid;grid-template-columns:1fr 1fr 1fr">
+                <h3 class="popTitleC"></h3>
+                <h3 class="popTitleC"></h3>
+                <h5 class="popTitleC"></h5>
+            </div>
+            <div id="popInfoDiv">
+                <table class="tableW" id =popInfoTable >
+                    <thead>
+                    <tr></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="mainPopDiv">
+                <div id="imgTableDiv">
+                        <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
+                    <table id="popImgTable" >
+                        <tbody id="popImgTableTbody">
+                            <tr id="imgTr" style="height:30vh">
+    
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                    <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
+                        <div >
+                            <label>닫기(목록으로)
+                                <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
+                            </label>
+                            <label>사진 전체저장
+                                <button id="btnReport" onclick="popSaveAll()"></button>
+                            </label>
+                        </div>
+                        <div >
+                                <label >파일찾기
+                                    <input type="file" id="fileInput" multiple accept="image/*"  >
+                                </label> 
+                                <label for="btnUpLoad" >사진등록
+                                    <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
+                                </label>
+                        </div>
+                </div>
+            </div>
+    </div>
+
+    <div id="imgModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+                <img id="modalImg"> 
+                <div class="modal-buttons">
+                        <button onclick="fileRemove()">삭제</button>
+                        <button onclick="saveImg()">저장</button>
+                </div>
+        </div>
+    </div>       
+
+<script src="main.js"></script>
+</body>

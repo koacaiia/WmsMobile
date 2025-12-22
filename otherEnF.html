@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enf</title>
+    <link rel="stylesheet" href="otherEnf.css" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-functions-compat.js"></script> -->
+</head>
+<body>
+    <div id="eNfMain" style="display:grid;grid-template-rows:1fr 9fr">
+     <div id="eNfTitle"style="display:grid;grid-template-columns:1fr 1fr;grid-gap:0.5vw" >
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-gap:3%">
+            <select style="height:90%" id ="selectName">
+                <option value="0">장비선택</option>
+            </select>       
+            <input style="height:85%" id="inputName" type="text" placeholder="직접입력">
+        </div>
+        <button id="eNfReg" onclick="eNfReg()">신규 등록</button>
+        <button id="enfSearch"  onclick="enfSearch()">현황 확인</button>
+    </div>
+    <div id="eNfTableDiv" style="height:50vh;overflow: scroll;" >
+        <table id="eNfTable" style="height:48vh">
+            <colgroup>
+                <col style="width: 10%">
+                <col style="width: 30%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 20%">
+            </colgroup>   
+            <thead style="width:98.5%">
+                <tr style="width:98.5%">
+                    <th>장비,시설명</th>
+                    <th>점검내용</th>
+                    <th>점검발생일</th>
+                    <th>진행상황</th>
+                    <th>발주비용</th>
+                    <th>결재비용</th>
+                    <th>비고</th>
+                </tr>
+            </thead>
+            <tbody id="eNfTableTbody">
+            </tbody>
+        </table>
+    </div>  
+    </div>
+    <!-- <div id="popImgSubDiv" class="popUp">
+        <div style="display:grid;grid-template-columns:3fr 2fr 3fr 2fr">
+            <div class="filebox">
+                <label for="fileInput">파일찾기</label> 
+                <input class="upload-name" value="첨부파일" placeholder="첨부파일">
+                <input type="file" id="fileInput" multiple accept="image/*"  >
+            </div>
+            <button id="btnRemove" onclick="fileRemove()">삭제</button>
+            <button id="btnUpLoad"  onclick="upLoad()" >사진등록</button>
+            <button id="btnImgClose" onclick="imgClose()">창닫기</button>
+            <script>
+                function imgClose(){
+                    document.getElementById("popImgSubDiv").classList.toggle("popUp");
+                }
+            </script>
+        </div>
+        <div id="imgTableDiv" style="height:100%;overflow: scroll;">
+            <table id="popImgTable" style="height:23vh" >
+                <tbody id="popImgTableTbody">
+                    <tr id="imgTr" >
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div> -->
+  
+        <div id="resetTableDiv" style="height:100%;overflow: scroll;">
+            <table id="resetTable" style="height:23vh" >
+                <tbody id="resetTableTbody">
+                    <tr id="reImgTr" >
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="contentsEnf" class="popUp">
+        <div id="inputContents"style="height:90%">
+            <div class="contentsInput">
+             <select id ="enfNameSelect">
+                <option value="0">장비시설물명</option>
+            </select>   
+            <input type="text" id="enfName" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <select id ="enfContentSelect">
+                    <option value="0">점검사항</option>
+                </select>
+                <input id="enfContent" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>점검요청일</h4>
+                <input type="date" id="enfContentDate" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>점검일</h4>
+                <input type="date" id="enfContentDate" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>구매발주서 작성일</h4>
+                <input type="date" id="enfOrderDate" value="yyyy-MM-dd">
+            </div>
+            <div class="contentsInput">
+                <h4>구매발주상 내용</h4>
+                <input id="enfOrderContent" placeholder="직접입력">
+            </div>
+            <div class="contentsInput">
+                <h4>구매발주서 금액</h4>
+                <input type="number" id="enfOrderPrice" placeholder="구매발주서 금액">
+            </div>
+            <div class="contentsInput">
+                <h4>구매발주서 결재일</h4>
+                <input type="date" id="enfOrderSignDate" value="yyyy-MM-dd">
+            </div>
+            <div class="contentsInput">
+                <h4>내용 집행일</h4>
+                <input type="date" id="enfSignDate" value="yyyy-MM-dd">
+            </div>
+            <div class="contentsInput">
+                <h4>내용 집행금액(지출결의서작성)</h4>
+                <input type="number" id="enfSignPrice" placeholder="집행금액">
+            </div>
+            <div class="contentsInput">
+                <h4>비고</h4>
+                <input id="enRemark" placeholder="직업입력">
+            </div>
+        </div>
+        
+        <div class="imgCheck" id="imgBefore">
+            <div class="fileInput">
+                <label for="imgBfile">사진파일</label>
+                <input type = "file" id="imgBfile" accept="image/*" style="display:none" multiple>
+                <button class="imgBtn" id="imgBbtn" onclick="imgUpLoad(this)">점검전 사진등록</button>
+                <button class="imgAtn" id="imgAbtn" onclick="imgUpLoad(this)">점검,후 사진등록</button>
+                <button id="contentsReg" onclick="enfSubmit()">진행상황 등록</button>
+                <button id="contentsRegClose" onclick="enfClose()">닫기</button>
+            </div>
+            <table style="height:10vh">
+                <tbody id="imgBeforeTbody">
+                    <tr id="imgBeforeTr" >
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+    <script src="otherEnf.js"></script>
+    <!-- <script src="main.js"></script> -->
+</body>
+</html>

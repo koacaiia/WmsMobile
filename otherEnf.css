@@ -1,0 +1,147 @@
+/* body{
+    height:883px;
+    width:412px;
+} */
+#eNfTable{
+    table-layout:fixed;
+    width:100%;
+}
+.eNfTitleInput{
+    height:98%;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+}
+.eNfTitleInput select{
+    height:100%;
+    width: 100%;
+}
+.eNfTitleInput input{
+    height:90%;
+    width: 90%;
+}
+.filebox .upload-name {
+    display: inline-block;
+    /* height: 2vh; */
+    padding: 0 10px;
+    vertical-align: middle;
+    border: 1px solid #dddddd;
+    /* width: 78%; */
+    color: #999999;
+}
+.filebox label {
+    display: inline-block;
+    padding: 10px 20px;
+    margin:10px;
+    color: #fff;
+    /* vertical-align: middle; */
+    line-height: 2vh;
+    background-color: #1713dd;
+    /* cursor: pointer; */
+    /* height: 2; */
+    width:70%;
+    /* margin-left: 10px; */
+    text-align: center;
+    font-size:x-small;
+    border-radius: 15px;
+}
+.filebox input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}
+.eNfInputSub{
+    width: 80%;
+}
+#btnUpLoad ,#btnImgClose ,#btnRemove{
+    border-radius: 10px;
+    margin-right:20px;
+    margin-top:5px;
+    height:80%;
+}
+#popImgSubDiv.popUp ,#popDataResetDiv.popUp ,#contentsEnf.popUp{
+    display: none; /* Show when the popUp class is added */
+}
+
+#popImgSubDiv ,#popDataResetDiv ,#contentsEnf{
+    display:block; /* Hidden by default */
+    position: fixed;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height:60%;
+    width: 70%;
+    /* max-width: 412px; */
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    border-radius: 10px;
+    border:2px solid black;
+}
+#popImgSubDiv .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+td{
+    text-align:center;
+}
+.file-selected{
+    background-color:grey;
+    border:red 3px solid;
+    border-radius: 10px;
+}
+.contentsInput{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    height:5vh;
+}
+h4{
+    margin:0;
+}
+th{
+    border: 1px solid white;
+    word-break:normal;
+    background:rgb(23, 23, 23);
+    position:sticky;
+    top:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-weight:bold;
+    color:white;
+    font-size:small;
+}
+
+.fileInput{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+}
+.fileInput label, .fileInput button{
+    display: inline-block;
+    padding: 10px 20px;
+    margin:10px;
+    color: #fff;
+    /* vertical-align: middle; */
+    line-height: 2vh;
+    background-color: #1713dd;
+    /* cursor: pointer; */
+    /* height: 2; */
+    /* width:25vw; */
+    /* margin-left: 10px; */
+    text-align: center;
+    font-size:x-small;
+    border-radius: 15px;
+}
+.fileInput input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}

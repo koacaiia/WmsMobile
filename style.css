@@ -1,0 +1,303 @@
+body{
+    display:grid;
+    grid-template-rows:12fr 86fr;
+    row-gap:1vh;
+    /* border:1px solid black;
+    border-radius: 3px; */
+    width:99vw;
+    height:96vh;
+    overflow:auto;
+}
+#mainContent{
+    display:grid;
+    grid-template-rows: 48fr 48fr;
+    row-gap:1vh;
+    /* border:1px solid black;
+    border-radius: 3px; */
+    width:99vw;
+    height:75vh;
+    overflow:auto;
+}
+#mainDateDiv{
+    display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;grid-gap:1px;
+}
+#mainTitle{
+    display:grid;grid-template-rows:0.8fr 1.2fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px;
+}
+.tableW{
+    table-layout:fixed;
+    width:100%;
+}
+td{
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    /* max-width: 30vh;
+    min-width:10vh; */
+    border:1px solid black;
+    font-size:large;
+    height:5vh;
+}
+.main{
+    overflow: scroll;
+}
+.clicked{
+    background-color: #c0c5e9;
+}
+th{
+    border: 1px solid white;
+    word-break:normal;
+    background:rgb(23, 23, 23);
+    position:sticky;
+    top:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    font-weight:bold;
+    color:white;
+    font-size:small;
+}
+
+#tost_message {
+    opacity: 0;
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translate(-50%,0);
+    padding: 10px 50px;
+    background: rgba(0, 0, 0, 0.70);
+    border-radius: 100px;
+    color: #fff;
+    box-shadow: 3px 4px 11px 0px #00000040;
+    transition: all 0.5s;
+}
+/*토스트 메시지 활성화 되었을 때*/
+#tost_message.active {
+    opacity: 100%;
+    bottom: 50px;
+}
+.file-selected{
+    background-color:grey;
+    border:red 3px solid;
+    border-radius: 10px;
+}
+.osInput{
+    width: 100%;
+    height: 4vh;
+    text-align: center;
+    padding: 0;
+    border: 0;
+    font-weight:bold;
+}
+.osTd{
+    height:100%;
+}
+button{
+    background-color: blanchedalmond;
+}
+/* @keyframes flowText {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  } */
+/* .mobile#osRe {
+    width: 100%;
+    height: 4vh;
+    padding: 0;
+    border: 0;
+    font-weight:bold;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: flowText 10s linear infinite;
+}  */
+    @media (pointer: coarse) {
+        td{
+            text-align: center;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            /* max-width: 30vh;
+            min-width:10vh; */
+            border:1px solid black;
+            font-size:xx-small;
+        }
+        #imgTr td{
+            width: 33vw;
+        }
+        body{
+            display:grid;
+            grid-template-rows:12fr 40fr 48fr;
+            /* border:1px solid black;
+            border-radius: 3px; */
+            width:99vw;
+            height:96vh;
+            overflow:auto;
+        }
+        #btnUpLoad{
+            margin:10px;
+        }
+        .osTh{
+            font-size:xx-small
+        }
+        #osRe{
+            font-size:xx-small;
+        }
+    }
+    #mainPop {
+        display:grid;
+        grid-template-rows: 30vh 60vh;
+        /* height: 100%; */
+    }
+    #mainPopDiv {
+        display: grid;
+        grid-template-rows: 44vh 15vh;
+        border:3px solid black;
+        border-radius: 10px;
+        row-gap: 1vh;
+        
+    }
+    
+    /* #popInfoTable {
+        height: 29vh;
+    } */
+    #popInfoDiv{
+        height: 100%;
+        overflow: scroll;
+    }
+    #popImgTable{
+        height:100%;
+        table-layout:fixed;
+        width: 100%;
+    }
+    #fileInput{
+        height:2.5vh;
+    }
+.filebox .upload-name {
+    display: inline-block;
+    height: 2vh;
+    padding: 0 10px;
+    vertical-align: middle;
+    border: 1px solid #dddddd;
+    /* width: 78%; */
+    color: #999999;
+}
+.filebox label {
+    display: flex;
+    /* padding: 10px 10px; */
+    /* margin:0; */
+    color: #fff;
+    /* line-height: 9vh; */
+    background-color: #1713dd;
+    margin-left: 10%;
+    margin-right: 10%;
+    margin-bottom:4%;
+    height:80%;
+    /* cursor: pointer; */
+    /* height: 2; */
+    /* width:80%;
+    height:75%; */
+    /* height:10vh; */
+    /* line-height:3; */
+    /* text-align: center; */
+    justify-content: center;
+    align-items:center;
+    font-size:larger;
+    font-weight: bold;
+    border-radius: 15px;
+}
+.filebox input[type="file"], .filebox button {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}
+.filebox div{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    
+}
+#imgTableDiv{
+    display: grid;
+    grid-template-rows: 3.5vh 38vh;
+    overflow-x: scroll;
+    border-bottom:2px double black;
+    border-radius: 10px;
+    background-color:grey;
+}
+#btnUpLoad{
+    border-radius: 10px;
+    margin-right:20px;
+}
+.popTitleC{
+    text-align: center;
+    font-weight: bold;
+    vertical-align: middle;
+}
+#popTitle{
+    background-color: #b5b4ee;
+    display:grid;
+    grid-template-rows: 6vh 24vh;
+    border:3px solid black;
+    border-radius: 10px;
+}
+.tableInfoTr{
+    height: 5vh;
+}
+/* #popBtn button{
+    margin-left:10px;
+    margin-right:10px;
+    border-radius: 10px;
+} */
+.filebox{
+    margin:0;
+    width:100%;
+    vertical-align: middle;
+    height:100%;
+}
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 3% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    height: 80%; /* Could be more or less, depending on screen size */
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
