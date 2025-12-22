@@ -75,7 +75,7 @@ titleDate.innerHTML = dateT(new Date());
 function getData(date){
     const year = date.substring(0,4);
     const month=date.substring(5,7);
-    const refI ="DeptName/"+deptName+"/InCargo/"+month+"월/"+date;
+    const refI ="DeptName/"+deptName+"/InCargo/"+year+"/"+month+"/"+date.substring(8,10);
     const refO ="DeptName/"+deptName+"/OutCargo/"+month+"월/"+date;
     const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
     database_f.ref(refOs).get().then((snapshot)=>{
@@ -97,32 +97,78 @@ function getData(date){
         let ft4=0;
         let ft2=0;
         let lcl=0;
-        for(let i in val){
+        
+        // leaf nodes 추출 함수
+        const getLeafNodes = (obj, path = '') => {
+            let leafNodes = {};
+            for(let key in obj){
+                if(obj[key] !== null && typeof obj[key] === 'object' && !Array.isArray(obj[key])){
+                    // 객체인 경우 재귀 호출
+                    Object.assign(leafNodes, getLeafNodes(obj[key], path + key + '/'));
+                } else {
+                    // leaf node인 경우
+                    if(!leafNodes[path]){
+                        leafNodes[path] = {};
+                    }
+                }
+            }
+            // 최하위 객체들을 반환
+            if(Object.keys(leafNodes).length === 0 && path === ''){
+                return obj;
+            }
+            return leafNodes;
+        };
+        
+        // leaf nodes의 부모 객체들을 추출
+        const extractLeafParents = (obj) => {
+            let result = {};
+            const traverse = (current, path = []) => {
+                let hasNonObjectChild = false;
+                for(let key in current){
+                    if(current[key] !== null && typeof current[key] === 'object' && !Array.isArray(current[key])){
+                        traverse(current[key], [...path, key]);
+                    } else {
+                        hasNonObjectChild = true;
+                    }
+                }
+                if(hasNonObjectChild && path.length > 0){
+                    result[path.join('/')] = current;
+                }
+            };
+            traverse(obj);
+            return result;
+        };
+        
+        const leafData = extractLeafParents(val) || {};
+        console.log(leafData,refI);
+        
+        for(let i in leafData){
+            const item = leafData[i];
             let spec="";
-            if(val[i]["container40"]==="1"){
+            if(item["container40"]==="1"){
                 spec="40FT";
               ft4+=1;}
-            else if(val[i]["container20"]==="1"){
+            else if(item["container20"]==="1"){
                 spec="20FT";
               ft2+=1;}
-            else if(val[i]["lclcargo"]!="0"){
-                spce="LcL";
+            else if(item["lclcargo"]!="0"){
+                spec="LcL";
                 lcl+=1;
             }else{
              continue
             }
             const tr = document.createElement("tr");
-            tr.id=val[i]["refValue"];
+            tr.id=item["refValue"] || refI + "/" + i;
             const td1 = document.createElement("td");
-            td1.innerHTML=val[i]["consignee"];
+            td1.innerHTML=item["consignee"];
             const td2 = document.createElement("td");
-            td2.innerHTML=val[i]["container"];
+            td2.innerHTML=item["container"];
             const td3 = document.createElement("td");
-            td3.innerHTML=val[i]["Pqty"];
+            td3.innerHTML=item["Pqty"]||item["qtyPlt"];
             const td4 = document.createElement("td");
             td4.innerHTML=spec;
             const td5 = document.createElement("td");
-            td5.innerHTML=val[i]["description"];
+            td5.innerHTML=item["description"];
             tr.appendChild(td1);
             tr.appendChild(td2);
             tr.appendChild(td3);
@@ -141,7 +187,7 @@ function getData(date){
                 ioValue="InCargo";
                 popUp();
             });
-            if(val[i]["working"]!=""){
+            if(item["working"]!=""){
                 tr.style="color:red;";}
         }
         toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
@@ -624,7 +670,10 @@ function osSubmit(){
   }).catch((e)=>{});
 }
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js')
+  const swPath = window.location.hostname === 'koacaiia.github.io' 
+    ? '/WmsMobile/firebase-messaging-sw.js' 
+    : './firebase-messaging-sw.js';
+  navigator.serviceWorker.register(swPath)
     .then((registration) => {
       console.log('Service Worker registered with scope:', registration.scope);
       function requestPermission(){
@@ -643,10 +692,12 @@ if ('serviceWorker' in navigator) {
       
       function getToken() {
         console.log(registration);
-        return messaging.getToken({ vapidKey: 'BMSh553qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' }) // Replace with your actual VAPID key
+        // VAPID 키 없이 토큰 요청
+        return messaging.getToken({ serviceWorkerRegistration: registration })
           .then(currentToken => {
             if (currentToken) {
               token = currentToken;
+              console.log('FCM Token received:', currentToken);
               return currentToken;
             } else {
               console.log('No registration token available. Request permission to generate one.');
@@ -664,7 +715,8 @@ if ('serviceWorker' in navigator) {
         // Example: Send a message after getting the token
         getToken().then(token => {
           if (token) {
-            sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
+            console.log('FCM Token:', token);
+            // sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
           }
         });
       });
@@ -786,7 +838,7 @@ async function sendMessageToServer(message, token) {
   }
 }
 // // Example usage
-sendMessageToServer('Hello!', token);
+// sendMessageToServer('Hello!', token);
  function reLoad(){
   if(mC){
     location.reload();
