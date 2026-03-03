@@ -194,7 +194,7 @@ button{
     background-color: #1713dd;
     margin-left: 10%;
     margin-right: 10%;
-    margin-bottom:4%;
+    margin-bottom:2%;
     height:80%;
     /* cursor: pointer; */
     /* height: 2; */
@@ -235,16 +235,40 @@ button{
     margin-right:20px;
 }
 .popTitleC{
+    display: flex;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     font-weight: bold;
-    vertical-align: middle;
+    margin:0;
+    font-size: clamp(0.8rem, 4vw, 2rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 100%;
+    width: 100%;
 }
 #popTitle{
     background-color: #b5b4ee;
     display:grid;
-    grid-template-rows: 6vh 24vh;
+    height:30vh;
+    grid-template-rows: 1fr 1fr 5fr;
     border:3px solid black;
     border-radius: 10px;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+/* Mobile PDF optimization */
+@media print, screen and (max-width: 768px) {
+    #popTitle {
+        text-align: left;
+        padding-left: 1rem;
+    }
+    .popTitleC {
+        text-align: left;
+        font-size: clamp(0.6rem, 3vw, 1.5rem);
+    }
 }
 .tableInfoTr{
     height: 5vh;

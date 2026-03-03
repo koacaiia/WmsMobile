@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mobile</title>
+    <link rel="icon" type="image/x-icon" href="/WmsMobile/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/WmsMobile/images/icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/WmsMobile/images/icon.png">
+    <link rel="apple-touch-icon" href="/WmsMobile/images/icon.png">
     <link rel="stylesheet" href="style.css" type="text/css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -11,6 +15,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-analytics-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
@@ -22,13 +27,13 @@
             <button id="otherPlt" onclick="otherContents(this)">Pallet</button>  
             <button id="otherEnF" onclick="otherContents(this)">장비,시설물</button>
         </div>
-        <div id="mainOs" >
+        <div id="mainOs" style="display:grid;grid-template-columns:10fr 1fr ">
             <table class="tableW"id="mainOsTable" >
                 <colgroup>
                     <col style="width: 10%">
                     <col style="width: 10%">
                     <col style="width: 10%">
-                    <col style="width: 70%">
+                    <col style="width: 60%">
                 </colgroup>    
                 <thead>
                     <tr>
@@ -36,7 +41,7 @@
                         <th class="osTh">여(Fine)</th>
                         <th class="osTh">여(외부)</th>
                         <th>
-                            <button id="osBtn" style="width:85%" onclick="osSubmit()">등록,변경</button>
+                            <button id="osBtn" style="width:85%" onclick="testMobileNotification()">등록,변경</button>
                         </th>
                     </tr>
                 </thead>    
@@ -49,7 +54,10 @@
                     </tr>
                 </tbody>
             </table>
+        <button id="logData" style="background-color:rgb(21, 64, 119);color:white;border-radius: 10px;" onclick="loaData()">User</button>
+        <script>
             
+        </script>    
         </div>
     </div>
     <div id="mainContent">
@@ -109,6 +117,11 @@
                 <h3 class="popTitleC"></h3>
                 <h5 class="popTitleC"></h5>
             </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;height:100%">
+                <h3 class="popTitleC" id="sealNo"></h3>
+                    <h3 class="popTitleC"onclick="regCargoNo()">보세운송차량 번호</h3>
+                    <input type="text" id="cargoNo" ></input>
+            </div>
             <div id="popInfoDiv">
                 <table class="tableW" id =popInfoTable >
                     <thead>
@@ -120,35 +133,35 @@
         </div>
         
         <div id="mainPopDiv">
-                <div id="imgTableDiv">
-                        <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
-                    <table id="popImgTable" >
-                        <tbody id="popImgTableTbody">
-                            <tr id="imgTr" style="height:30vh">
-    
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                    <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
-                        <div >
-                            <label>닫기(목록으로)
-                                <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
-                            </label>
-                            <label>사진 전체저장
-                                <button id="btnReport" onclick="popSaveAll()"></button>
-                            </label>
-                        </div>
-                        <div >
-                                <label >파일찾기
-                                    <input type="file" id="fileInput" multiple accept="image/*"  >
-                                </label> 
-                                <label for="btnUpLoad" >사진등록
-                                    <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
-                                </label>
-                        </div>
-                </div>
+            <div id="imgTableDiv">
+                <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
+                <table id="popImgTable" >
+                    <tbody id="popImgTableTbody">
+                        <tr id="imgTr" style="height:30vh">
+
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+                <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
+                    <div >
+                        <label>닫기(목록으로)
+                            <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
+                        </label>
+                        <label>사진 전체저장
+                            <button id="btnReport" onclick="popSaveAll()"></button>
+                        </label>
+                    </div>
+                    <div >
+                            <label >파일찾기
+                                <input type="file" id="fileInput" multiple accept="image/*"  >
+                            </label> 
+                            <label for="btnUpLoad" >사진등록
+                                <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
+                            </label>
+                    </div>
+            </div>
+        </div>
     </div>
 
     <div id="imgModal" class="modal">
@@ -161,6 +174,8 @@
                 </div>
         </div>
     </div>       
-
+<div id="popup" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; z-index:1000;">
+  팝업 내용
+</div>
 <script src="main.js"></script>
 </body>
