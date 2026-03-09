@@ -125,9 +125,6 @@ button{
             border:1px solid black;
             font-size:xx-small;
         }
-        #imgTr td{
-            width: 33vw;
-        }
         body{
             display:grid;
             grid-template-rows:12fr 40fr 48fr;
@@ -167,11 +164,6 @@ button{
     #popInfoDiv{
         height: 100%;
         overflow: scroll;
-    }
-    #popImgTable{
-        height:100%;
-        table-layout:fixed;
-        width: 100%;
     }
     #fileInput{
         height:2.5vh;
@@ -242,10 +234,33 @@ button{
 #imgTableDiv{
     /* display: grid;
     grid-template-rows: 3.5vh 38vh; */
-    overflow-x: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-bottom:2px double black;
     border-radius: 10px;
     background-color:grey;
+    padding: 8px;
+}
+#imgTr{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    align-content: start;
+}
+.image-card{
+    border:1px dashed red;
+    border-radius:5px;
+    overflow: hidden;
+    background: #fff;
+    aspect-ratio: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.image-card img{
+    width:100%;
+    height:100%;
+    object-fit: scale-down;
 }
 #regTime{
     position: relative;

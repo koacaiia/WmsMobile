@@ -545,7 +545,8 @@ function popUp(){
       maxSize: 1500,
     };
     const originalFileName = e.target.files[i].name;
-    const imgTag = document.createElement("td");
+    const imgTag = document.createElement("div");
+    imgTag.className = "image-card";
     resizeImage(config)
       .then((resizedImage) => {
         const url = window.URL.createObjectURL(resizedImage);
@@ -557,12 +558,6 @@ function popUp(){
         });
         img.setAttribute("src", url);
         img.style.display = "block";
-        imgTag.style.width="32.5vw";
-        imgTag.style.height="40vh";
-        img.style.width="100%";
-        img.style.height="100%";
-        img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
-
         imgTag.appendChild(img);
         fileTr.appendChild(imgTag);
       })
@@ -588,7 +583,8 @@ function popUp(){
     console.log(res);
     res.items.forEach((itemRef)=>{
       itemRef.getDownloadURL().then((url)=>{
-        const td = document.createElement("td");
+        const td = document.createElement("div");
+        td.className = "image-card";
         const img = document.createElement("img");
         img.src=url;
         img.className="server-img";
@@ -596,10 +592,6 @@ function popUp(){
         img.dataset.serverPath = itemRef.fullPath;
         bindServerImageEvents(img, itemRef.fullPath);
         img.style.display="block";
-        td.style="width:32.5vw;height:40vh;border:1px dashed red;border-radius:5px";
-        img.style.width="100%";
-        img.style.height="100%";
-        img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
         td.appendChild(img);
         fileTr.appendChild(td);
       });
@@ -695,7 +687,8 @@ async function upLoad(){
               storage_f.ref(imgRef).listAll().then((res)=>{
                 res.items.forEach((itemRef)=>{
                   itemRef.getDownloadURL().then((url)=>{
-                    const td = document.createElement("td");
+                    const td = document.createElement("div");
+                    td.className = "image-card";
                     const img = document.createElement("img");
                     img.src=url;
                     img.className="server-img";
@@ -703,11 +696,6 @@ async function upLoad(){
                     img.dataset.serverPath = itemRef.fullPath;
                     bindServerImageEvents(img, itemRef.fullPath);
                     img.style.display="block";
-                    img.style.display="block";
-                    td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
-                    img.style.width="100%";
-                    img.style.height="100%";
-                    img.style.objectFit = "scale-down";
                     td.appendChild(img);
                     fileTr.appendChild(td);
                   });
@@ -938,7 +926,7 @@ function bindServerImageEvents(imgTag, serverPath){
         return;
       }
       storage_f.ref(serverPath).delete().then(() => {
-        const td = imgTag.closest("td");
+        const td = imgTag.closest(".image-card");
         if (td) {
           td.remove();
         }
@@ -1043,7 +1031,7 @@ function fileRemove() {
   const imgUrls = [];
 
   if (confirmRemove) {
-    fileTr.querySelectorAll("td.file-selected").forEach((td) => {
+    fileTr.querySelectorAll(".image-card.file-selected").forEach((td) => {
       const img = td.querySelector("img");
       const imgSrc = img.src;
       if (img.classList.contains("local-img")) {
@@ -1063,7 +1051,7 @@ function fileRemove() {
 }
 function closeModal() {
   const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr td");
+  const tdList = document.querySelectorAll("#imgTr .image-card");
   tdList.forEach((td)=>{
     td.classList.remove("file-selected");
   });
