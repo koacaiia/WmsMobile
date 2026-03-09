@@ -213,7 +213,7 @@ button{
     pointer-events: none;
     opacity: 0.6;
 }
-.filebox input[type="file"], .filebox button {
+.filebox input[type="file"] {
     position: absolute;
     width: 0;
     height: 0;
@@ -226,6 +226,19 @@ button{
     grid-template-columns: 1fr 1fr;
     
 }
+#popBtn{
+    align-items: start;
+    column-gap: 1%;
+}
+#popBtn #btnUploadAction,
+#popBtn #regTime{
+    margin: 0;
+    align-self: start;
+    height: 80%;
+}
+#popBtn #btnUploadAction{
+    width: 100%;
+}
 #imgTableDiv{
     /* display: grid;
     grid-template-rows: 3.5vh 38vh; */
@@ -236,14 +249,13 @@ button{
 }
 #regTime{
     position: relative;
-    width: 80%;
+    width: 100%;
     justify-self: stretch;
-    align-self: center;
+    align-self: start;
     margin: 0;
     padding: 0;
     height: 80%;
     border-radius: 12px;
-    margin-bottom: 8%;
     border: 0;
     cursor: pointer;
     text-align: center;
