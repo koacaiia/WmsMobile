@@ -240,6 +240,12 @@ button{
     justify-self: stretch;
     align-self: center;
     margin: 0;
+    padding: 0;
+    height: 80%;
+    border-radius: 12px;
+    margin-bottom: 6%;
+    border: 0;
+    cursor: pointer;
     text-align: center;
 }
 #btnUpLoad{
@@ -271,19 +277,6 @@ button{
     box-sizing: border-box;
     position: relative;
 }
-#mainPopCloseBtn{
-    position: absolute;
-    top: 0.25rem;
-    right: 0.5rem;
-    border: 0;
-    background: transparent;
-    font-size: 2rem;
-    line-height: 1;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 2;
-}
-
 /* Mobile PDF optimization */
 @media print, screen and (max-width: 768px) {
     #popTitle {

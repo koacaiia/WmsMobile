@@ -112,7 +112,6 @@
     
     <div id="mainPop" style="display:none">
         <div id="popTitle">
-            <button id="mainPopCloseBtn" type="button" onclick="closeMainPop()">&times;</button>
             <div  style="display:grid;grid-template-columns:1fr 1fr 1fr">
                 <h3 class="popTitleC"></h3>
                 <h3 class="popTitleC"></h3>
@@ -144,14 +143,13 @@
                     </tbody>
                 </table>
             </div>
-                <div id="popBtn" class="filebox" style="display:grid;grid-template-columns:1fr 9fr;row-gap:1vh">
-                    <h6 id="regTime">Registration Time</h6>
-                    <div style="grid-template-columns:1fr;">
+                <div id="popBtn" class="filebox" style="display:grid;grid-template-columns:9fr 1fr;">
+                   
                             <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
                             <label id="btnUploadAction" onclick="handleUploadAction()">
                                 <span id="btnUploadActionText">사진등록</span>
                             </label>
-                    </div>
+                             <button id="regTime" type="button" onclick="closeMainPop()">Registration Time</button>
             </div>
         </div>
     </div>
