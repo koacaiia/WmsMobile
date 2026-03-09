@@ -317,8 +317,6 @@ button{
         text-align: left;
         font-size: clamp(0.6rem, 3vw, 1.5rem);
     }
-}
-@media (pointer: coarse) {
     #imgTableDiv{
         overflow-y: auto;
         overflow-x: hidden;
