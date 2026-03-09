@@ -39,6 +39,7 @@ let ioValue;
 let upfileList;
 let token;
 let isUploading = false;
+let modalTargetImage = null;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
@@ -553,9 +554,13 @@ function popUp(){
         const img = document.createElement("img");
         img.className = "local-img"
         img.dataset.fileName = originalFileName;
-        img.addEventListener("click", () => {
-          downloadImageFromImgTag(img);
-        });
+        if (mC) {
+          bindMobileImageDeleteEvents(img);
+        } else {
+          img.addEventListener("click", () => {
+            showModal(img);
+          });
+        }
         img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.appendChild(img);
@@ -906,35 +911,46 @@ async function sendMessageToServer(message, token) {
 function popDetail(ref){
   location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
 }
-function bindServerImageEvents(imgTag, serverPath){
+function bindMobileImageDeleteEvents(imgTag, serverPath){
   if (!imgTag) {
     return;
   }
   let pressTimer = null;
-  let longPressed = false;
+
+  const removeCard = () => {
+    const card = imgTag.closest(".image-card");
+    if (card) {
+      card.remove();
+    }
+  };
 
   const startPress = () => {
-    if (!serverPath || isUploading) {
+    if (isUploading) {
       return;
     }
-    longPressed = false;
     clearTimeout(pressTimer);
     pressTimer = setTimeout(() => {
-      longPressed = true;
-      const confirmDelete = confirm("삭제 대상 서버 경로:\n" + serverPath + "\n\n해당 파일을 삭제하시겠습니까?");
+      const confirmMessage = serverPath
+        ? "삭제 대상 서버 경로:\n" + serverPath + "\n\n해당 파일을 삭제하시겠습니까?"
+        : "선택한 이미지를 삭제하시겠습니까?";
+      const confirmDelete = confirm(confirmMessage);
       if (!confirmDelete) {
         return;
       }
-      storage_f.ref(serverPath).delete().then(() => {
-        const td = imgTag.closest(".image-card");
-        if (td) {
-          td.remove();
-        }
-        toastOn("서버 이미지 삭제 완료");
-      }).catch((error) => {
-        console.error("서버 이미지 삭제 오류:", error);
-        toastOn("서버 이미지 삭제 실패");
-      });
+
+      if (serverPath) {
+        storage_f.ref(serverPath).delete().then(() => {
+          removeCard();
+          toastOn("서버 이미지 삭제 완료");
+        }).catch((error) => {
+          console.error("서버 이미지 삭제 오류:", error);
+          toastOn("서버 이미지 삭제 실패");
+        });
+        return;
+      }
+
+      removeCard();
+      toastOn("이미지 삭제 완료");
     }, 800);
   };
 
@@ -949,14 +965,24 @@ function bindServerImageEvents(imgTag, serverPath){
   imgTag.addEventListener("touchend", clearPress);
   imgTag.addEventListener("touchcancel", clearPress);
   imgTag.addEventListener("click", (e) => {
-    if (longPressed) {
-      e.preventDefault();
-      e.stopPropagation();
-      longPressed = false;
-      return;
-    }
-    downloadImageFromImgTag(imgTag);
+    e.preventDefault();
+    e.stopPropagation();
   });
+  imgTag.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+  });
+}
+function bindServerImageEvents(imgTag, serverPath){
+  if (!imgTag) {
+    return;
+  }
+  if (!mC) {
+    imgTag.addEventListener("click", () => {
+      showModal(imgTag);
+    });
+    return;
+  }
+  bindMobileImageDeleteEvents(imgTag, serverPath);
 }
 function downloadImageFromImgTag(imgTag){
   if (!imgTag || !imgTag.src) {
@@ -1016,47 +1042,76 @@ function otherContents(e){
   }
   
 }
-function showModal(url,imgTag){
+function showModal(imgTag){
+    if (!imgTag) {
+      return;
+    }
+    modalTargetImage = imgTag;
     const modal = document.getElementById("imgModal");
     const modalImg = document.getElementById("modalImg");
-    modalImg.src = url;
+    modalImg.src = imgTag.src;
     modal.style.display = "block";
     modalImg.style ="object-fit:scale-down;width:100%;height:90%";
-    modalImg.dataset.imgTag = imgTag;
-    
 }
 function fileRemove() {
-  const fileTr = document.querySelector("#imgTr");
-  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
-  const imgUrls = [];
-
-  if (confirmRemove) {
-    fileTr.querySelectorAll(".image-card.file-selected").forEach((td) => {
-      const img = td.querySelector("img");
-      const imgSrc = img.src;
-      if (img.classList.contains("local-img")) {
-        imgUrls.push(imgSrc);
-      } else {
-        const storageRef = firebase.storage().refFromURL(imgSrc);
-        storageRef.delete().then(() => {
-          console.log("이미지 삭제 완료:", imgSrc);
-        }).catch((error) => {
-          console.error("이미지 삭제 오류:", error);
-        });
-      }
-      td.remove(); // td 요소 제거
-    });
+  const targetImg = modalTargetImage;
+  if (!targetImg) {
+    closeModal();
+    return;
   }
+  const confirmRemove = confirm("파일을 삭제하시겠습니까?");
+  if (!confirmRemove) {
+    return;
+  }
+
+  const removeCard = () => {
+    const card = targetImg.closest(".image-card");
+    if (card) {
+      card.remove();
+    }
+  };
+
+  if (targetImg.classList.contains("server-img")) {
+    const serverPath = targetImg.dataset.serverPath;
+    const deletePromise = serverPath
+      ? storage_f.ref(serverPath).delete()
+      : firebase.storage().refFromURL(targetImg.src).delete();
+    deletePromise.then(() => {
+      removeCard();
+      toastOn("이미지 삭제 완료");
+      closeModal();
+    }).catch((error) => {
+      console.error("이미지 삭제 오류:", error);
+      toastOn("이미지 삭제 실패");
+    });
+    return;
+  }
+
+  removeCard();
+  toastOn("이미지 삭제 완료");
   closeModal();
 }
 function closeModal() {
   const modal = document.getElementById("imgModal");
-  const tdList = document.querySelectorAll("#imgTr .image-card");
-  tdList.forEach((td)=>{
-    td.classList.remove("file-selected");
-  });
+  modalTargetImage = null;
   modal.style.display = "none";
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("imgModal");
+  if (!modal) {
+    return;
+  }
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.style.display === "block") {
+      closeModal();
+    }
+  });
+});
 function deleteImage() {
   const modalImg = document.getElementById("modalImg");
   const imgTag = modalImg.dataset.imgTag;
@@ -1065,16 +1120,11 @@ function deleteImage() {
   closeModal();
 }
 function saveImg() {
-  const modalImg = document.getElementById("modalImg");
-  const url = modalImg.src;
-  fetch(url)
-    .then(response => response.blob())
-    .then(blob => {
-      saveAs(blob, modalImg.dataset.imgTag);
-    })
-    .catch(error => {
-      console.error("Error saving image:", error);
-    });
+  if (!modalTargetImage) {
+    closeModal();
+    return;
+  }
+  downloadImageFromImgTag(modalTargetImage);
   closeModal();
   
 }
