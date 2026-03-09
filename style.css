@@ -154,7 +154,7 @@ button{
     }
     #mainPopDiv {
         display: grid;
-        grid-template-rows: 44vh 15vh;
+        grid-template-rows: 49vh 10vh;
         border:3px solid black;
         border-radius: 10px;
         row-gap: 1vh;
@@ -209,6 +209,10 @@ button{
     font-weight: bold;
     border-radius: 15px;
 }
+#btnUploadAction.upload-disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}
 .filebox input[type="file"], .filebox button {
     position: absolute;
     width: 0;
@@ -223,12 +227,20 @@ button{
     
 }
 #imgTableDiv{
-    display: grid;
-    grid-template-rows: 3.5vh 38vh;
+    /* display: grid;
+    grid-template-rows: 3.5vh 38vh; */
     overflow-x: scroll;
     border-bottom:2px double black;
     border-radius: 10px;
     background-color:grey;
+}
+#regTime{
+    position: relative;
+    width: 100%;
+    justify-self: stretch;
+    align-self: center;
+    margin: 0;
+    text-align: center;
 }
 #btnUpLoad{
     border-radius: 10px;
@@ -257,6 +269,19 @@ button{
     border-radius: 10px;
     padding: 0.5rem;
     box-sizing: border-box;
+    position: relative;
+}
+#mainPopCloseBtn{
+    position: absolute;
+    top: 0.25rem;
+    right: 0.5rem;
+    border: 0;
+    background: transparent;
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
 }
 
 /* Mobile PDF optimization */

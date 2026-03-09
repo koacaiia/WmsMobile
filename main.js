@@ -38,6 +38,7 @@ let refFile;
 let ioValue;
 let upfileList;
 let token;
+let isUploading = false;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const dateT = (d)=>{
     let result_date;
@@ -248,6 +249,96 @@ function getData(date){
     
 }
 getData(titleDate.innerHTML);
+async function compressImageBlobToMaxBytes(blob, maxBytes){
+  try{
+    if (!blob || blob.size <= maxBytes) {
+      return blob;
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = objectUrl;
+    });
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    let quality = 0.9;
+    let scale = 1;
+    let resultBlob = blob;
+
+    const canvasToBlob = (qualityValue) => {
+      return new Promise((resolve) => {
+        canvas.toBlob((generatedBlob) => {
+          resolve(generatedBlob);
+        }, "image/jpeg", qualityValue);
+      });
+    };
+
+    for (let attempt = 0; attempt < 14; attempt++) {
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      canvas.width = width;
+      canvas.height = height;
+      context.clearRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+
+      const compressedBlob = await canvasToBlob(quality);
+      if (compressedBlob) {
+        resultBlob = compressedBlob;
+      }
+
+      if (resultBlob.size <= maxBytes) {
+        URL.revokeObjectURL(objectUrl);
+        return resultBlob;
+      }
+
+      if (quality > 0.45) {
+        quality -= 0.1;
+      } else {
+        scale *= 0.85;
+      }
+    }
+
+    URL.revokeObjectURL(objectUrl);
+    return resultBlob;
+  }catch(error){
+    console.error("이미지 압축 오류:", error);
+    return blob;
+  }
+}
+function setUploadProgress(percent){
+  const uploadAction = document.querySelector("#btnUploadAction");
+  const uploadActionText = document.querySelector("#btnUploadActionText");
+  if (!uploadAction || !uploadActionText) {
+    return;
+  }
+  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  uploadAction.style.backgroundImage = "linear-gradient(to right, #2f8f2f " + safePercent + "%, #1713dd " + safePercent + "%)";
+  uploadActionText.textContent = "업로드 중... " + safePercent + "%";
+}
+function resetUploadProgress(){
+  const uploadAction = document.querySelector("#btnUploadAction");
+  const uploadActionText = document.querySelector("#btnUploadActionText");
+  if (!uploadAction || !uploadActionText) {
+    return;
+  }
+  uploadAction.style.backgroundImage = "none";
+  uploadActionText.textContent = "사진등록";
+}
+function setUploadActionDisabled(disabled){
+  const uploadAction = document.querySelector("#btnUploadAction");
+  if (!uploadAction) {
+    return;
+  }
+  if (disabled) {
+    uploadAction.classList.add("upload-disabled");
+  } else {
+    uploadAction.classList.remove("upload-disabled");
+  }
+}
 function popUp(){
     const mainTitle = document.querySelector("#mainTitle");
     mainTitle.style="display:none";
@@ -258,6 +349,12 @@ function popUp(){
     const mainDiv = document.querySelector("#mainPopDiv");
     // mainDiv.replaceChildren();
     const fileInput = document.querySelector("#fileInput");
+    if (fileInput) {
+      fileInput.value = "";
+    }
+    isUploading = false;
+    setUploadActionDisabled(false);
+    resetUploadProgress();
    
     const table= document.querySelector("#popInfoTable");
     const thR = table.querySelectorAll("tr")[0];
@@ -438,30 +535,30 @@ function popUp(){
   const handleImgInput = (e) => {
     fileTr.replaceChildren();
     upfileList = e.target.files;
+    const uploadActionText = document.querySelector("#btnUploadActionText");
+    if (uploadActionText) {
+      uploadActionText.textContent = e.target.files.length > 0 ? "사진 업로드" : "사진등록";
+    }
     for(let i=0;i<e.target.files.length;i++){
     const config = {
       file: e.target.files[i],
       maxSize: 1500,
     };
+    const originalFileName = e.target.files[i].name;
     const imgTag = document.createElement("td");
     resizeImage(config)
       .then((resizedImage) => {
         const url = window.URL.createObjectURL(resizedImage);
         const img = document.createElement("img");
         img.className = "local-img"
-        img.addEventListener("click", (e) => {
-          const tdList = img.parentNode.parentNode.querySelectorAll("td");
-          tdList.forEach((td)=>{
-              td.classList.remove("file-selected");
-          });
-          img.parentNode.classList.toggle("file-selected");
-          console.log(img.parentNode.classList);
-          showModal(url,imgTag)
+        img.dataset.fileName = originalFileName;
+        img.addEventListener("click", () => {
+          downloadImageFromImgTag(img);
         });
         img.setAttribute("src", url);
         img.style.display = "block";
         imgTag.style.width="32.5vw";
-        imgTag.style.height="36vh";
+        imgTag.style.height="40vh";
         img.style.width="100%";
         img.style.height="100%";
         img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
@@ -475,7 +572,7 @@ function popUp(){
     }
     // document.querySelector(".upload-name").value=document.querySelector("#fileInput").value;
   };
-  fileInput.addEventListener("change",handleImgInput);
+  fileInput.onchange = handleImgInput;
   fileTr.replaceChildren();
   let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
   // imgRef.replace("/",",");
@@ -495,18 +592,11 @@ function popUp(){
         const img = document.createElement("img");
         img.src=url;
         img.className="server-img";
-        img.addEventListener("click", (e) => {
-          const tdList = img.parentNode.parentNode.querySelectorAll("td");
-          tdList.forEach((td)=>{
-              td.classList.remove("file-selected");
-          });
-          img.parentNode.classList.toggle("file-selected");
-          console.log(img.parentNode.classList);
-          // showModal(url,itemRef.name)
-          popDetail(imgRef);
-        });
+        img.dataset.fileName = itemRef.name;
+        img.dataset.serverPath = itemRef.fullPath;
+        bindServerImageEvents(img, itemRef.fullPath);
         img.style.display="block";
-        td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
+        td.style="width:32.5vw;height:40vh;border:1px dashed red;border-radius:5px";
         img.style.width="100%";
         img.style.height="100%";
         img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
@@ -516,18 +606,26 @@ function popUp(){
     });
   });
 };
-function popClose(){
-  location.reload();;
-    // document.querySelector("#mainTitle").style="display:grid";
-    // document.querySelector("#mainPop").style="display:none";
-    // document.querySelector("#mainContent").style="display:grid";
-    // document.querySelectorAll(".clicked").forEach((e)=>{
-    //     e.classList.remove("clicked");
-    // });
-    // document.querySelector("#mainOut").style="display:block";
-}
 const fileTr = document.querySelector("#imgTr");
-function upLoad(){
+function handleUploadAction(){
+  if (isUploading) {
+    toastOn("업로드 진행중입니다.");
+    return;
+  }
+  const fileInput = document.querySelector("#fileInput");
+  const hasSelectedFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+  if(!hasSelectedFiles){
+    fileInput.click();
+    return;
+  }
+  const proceedUpload = confirm("선택한 사진을 업로드할까요?\n취소를 누르면 파일을 다시 선택합니다.");
+  if(proceedUpload){
+    upLoad();
+  }else{
+    fileInput.click();
+  }
+}
+async function upLoad(){
     let imgUrls = [];
     const img = fileTr.querySelectorAll(".local-img");
     const h3List = document.querySelectorAll(".popTitleC");
@@ -536,68 +634,93 @@ function upLoad(){
     if(img.length==0){
       toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
           }else{
+            isUploading = true;
+            setUploadActionDisabled(true);
             for(let i=0;i<img.length;i++){
               const imgSrc = img[i].src;
               imgUrls.push(imgSrc);
             }
             const storageRef = storage_f.ref(refFile);
-            
-    imgUrls.forEach((imgUrl, index) => {
-      fetch(imgUrl)
-          .then(response => response.blob())
-          .then(blob => {
-              // const fileName = imgUrl.split('/').pop(); // Extract file name from URL
-              const selectTr = document.querySelector(".clicked");
-              const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
-              const file = new File([blob], fileName, { type: blob.type });
-              const fileRef = storageRef.child(fileName.replace("/","_"));
-              fileRef.put(file).then((snapshot) => {
-                  if (index === imgUrls.length - 1) {
-                      // alert(imgUrls.length+" 개 Images업로드 완료");
-                      console.log("업로드 완료");
-                      fileTr.replaceChildren();
-                      let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
-                      // imgRef.replace("/",",");
-                      imgRef = imgRef.split(",");
-                      const io=imgRef[4];
-                      const dateArr = imgRef[2];
-                      imgRef[3]=dateArr;
-                      imgRef[2]=io;
-                      imgRef.splice(4,1);
-                      imgRef=imgRef.toString().replaceAll(",","/")+"/";
-                      console.log(imgRef);
-                      refFile=imgRef;
-                      storage_f.ref(imgRef).listAll().then((res)=>{
-                        res.items.forEach((itemRef)=>{
-                          itemRef.getDownloadURL().then((url)=>{
-                            const td = document.createElement("td");
-                            const img = document.createElement("img");
-                            img.src=url;
-                            img.className="server-img";
-                            img.addEventListener("click", (e) => {
-                              img.parentNode.classList.toggle("file-selected");
-                            });
-                            img.style.display="block";
-                            img.style.display="block";
-                            td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
-                            img.style.width="100%";
-                            img.style.height="100%";
-                            img.style.objectFit = "scale-down"; // Ensures the image covers the container without distortion
-                            td.appendChild(img);
-                            fileTr.appendChild(td);
-                          });
-                        });
-                      });
-                      // popClose();
-                  }
+            try{
+              const blobs = await Promise.all(
+                imgUrls.map((imgUrl) => fetch(imgUrl).then(response => response.blob()))
+              );
+              const uploadBlobs = await Promise.all(
+                blobs.map((blob) => compressImageBlobToMaxBytes(blob, 100 * 1024))
+              );
+              const totalBytes = uploadBlobs.reduce((sum, blob)=>sum + blob.size, 0);
+              const uploadedBytesByFile = {};
+              setUploadProgress(0);
+
+              const uploadPromises = uploadBlobs.map((blob, index)=>{
+                const selectTr = document.querySelector(".clicked");
+                const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+                const file = new File([blob], fileName, { type: blob.type });
+                const fileRef = storageRef.child(fileName.replace("/","_"));
+                const uploadTask = fileRef.put(file);
+
+                return new Promise((resolve, reject)=>{
+                  uploadTask.on("state_changed", (snapshot)=>{
+                    uploadedBytesByFile[index] = snapshot.bytesTransferred;
+                    const uploadedTotal = Object.values(uploadedBytesByFile).reduce((sum, value)=>sum + value, 0);
+                    const percent = totalBytes > 0 ? (uploadedTotal / totalBytes) * 100 : 100;
+                    setUploadProgress(percent);
+                  }, (error)=>{
+                    reject(error);
+                  }, ()=>{
+                    uploadedBytesByFile[index] = file.size;
+                    const uploadedTotal = Object.values(uploadedBytesByFile).reduce((sum, value)=>sum + value, 0);
+                    const percent = totalBytes > 0 ? (uploadedTotal / totalBytes) * 100 : 100;
+                    setUploadProgress(percent);
+                    resolve();
+                  });
+                });
               });
-          })
-          .catch(error => {
-            alert("Error uploading file:", error);
-            console.error("Error uploading file:", error);
-        });
-      });
-      toastOn(imgUrls.length+" 파일 업로드 완료");
+
+              await Promise.all(uploadPromises);
+              setUploadProgress(100);
+
+              console.log("업로드 완료");
+              fileTr.replaceChildren();
+              let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
+              imgRef = imgRef.split(",");
+              const io=imgRef[4];
+              const dateArr = imgRef[2];
+              imgRef[3]=dateArr;
+              imgRef[2]=io;
+              imgRef.splice(4,1);
+              imgRef=imgRef.toString().replaceAll(",","/")+"/";
+              console.log(imgRef);
+              refFile=imgRef;
+              storage_f.ref(imgRef).listAll().then((res)=>{
+                res.items.forEach((itemRef)=>{
+                  itemRef.getDownloadURL().then((url)=>{
+                    const td = document.createElement("td");
+                    const img = document.createElement("img");
+                    img.src=url;
+                    img.className="server-img";
+                    img.dataset.fileName = itemRef.name;
+                    img.dataset.serverPath = itemRef.fullPath;
+                    bindServerImageEvents(img, itemRef.fullPath);
+                    img.style.display="block";
+                    img.style.display="block";
+                    td.style="width:32.5vw;height:36vh;border:1px dashed red;border-radius:5px";
+                    img.style.width="100%";
+                    img.style.height="100%";
+                    img.style.objectFit = "scale-down";
+                    td.appendChild(img);
+                    fileTr.appendChild(td);
+                  });
+                });
+              });
+              toastOn(imgUrls.length+" 파일 업로드 완료");
+            }catch(error){
+              alert("Error uploading file:", error);
+              console.error("Error uploading file:", error);
+            }finally{
+              isUploading = false;
+              setUploadActionDisabled(false);
+            }
           }
     let w;
     if(ioValue=="InCargo"){
@@ -606,6 +729,11 @@ function upLoad(){
       w={"workprocess":"완","regTime":returnTime()};
     }
     database_f.ref(ref).update(w);
+    const fileInput = document.querySelector("#fileInput");
+    if (fileInput) {
+      fileInput.value = "";
+    }
+    resetUploadProgress();
  
 }
 
@@ -790,6 +918,100 @@ async function sendMessageToServer(message, token) {
 function popDetail(ref){
   location.href=`imagePop.html?ref=${encodeURIComponent(ref)}`;
 }
+function bindServerImageEvents(imgTag, serverPath){
+  if (!imgTag) {
+    return;
+  }
+  let pressTimer = null;
+  let longPressed = false;
+
+  const startPress = () => {
+    if (!serverPath || isUploading) {
+      return;
+    }
+    longPressed = false;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      const confirmDelete = confirm("삭제 대상 서버 경로:\n" + serverPath + "\n\n해당 파일을 삭제하시겠습니까?");
+      if (!confirmDelete) {
+        return;
+      }
+      storage_f.ref(serverPath).delete().then(() => {
+        const td = imgTag.closest("td");
+        if (td) {
+          td.remove();
+        }
+        toastOn("서버 이미지 삭제 완료");
+      }).catch((error) => {
+        console.error("서버 이미지 삭제 오류:", error);
+        toastOn("서버 이미지 삭제 실패");
+      });
+    }, 800);
+  };
+
+  const clearPress = () => {
+    clearTimeout(pressTimer);
+  };
+
+  imgTag.addEventListener("mousedown", startPress);
+  imgTag.addEventListener("touchstart", startPress, { passive: true });
+  imgTag.addEventListener("mouseup", clearPress);
+  imgTag.addEventListener("mouseleave", clearPress);
+  imgTag.addEventListener("touchend", clearPress);
+  imgTag.addEventListener("touchcancel", clearPress);
+  imgTag.addEventListener("click", (e) => {
+    if (longPressed) {
+      e.preventDefault();
+      e.stopPropagation();
+      longPressed = false;
+      return;
+    }
+    downloadImageFromImgTag(imgTag);
+  });
+}
+function downloadImageFromImgTag(imgTag){
+  if (!imgTag || !imgTag.src) {
+    return;
+  }
+  const src = imgTag.src;
+  const fallbackName = "image_" + returnTime().replaceAll(":", "-") + ".jpg";
+  const fileName = imgTag.dataset.fileName || fallbackName;
+  fetch(src)
+    .then(response => response.blob())
+    .then(blob => {
+      saveAs(blob, fileName);
+    })
+    .catch((error)=>{
+      console.error("이미지 다운로드 오류:", error);
+      toastOn("이미지 다운로드 실패");
+    });
+}
+function closeMainPop(){
+  const mainTitle = document.querySelector("#mainTitle");
+  const mainContent = document.querySelector("#mainContent");
+  const mainPop = document.querySelector("#mainPop");
+  const fileInput = document.querySelector("#fileInput");
+  const fileTr = document.querySelector("#imgTr");
+
+  mainTitle.style = "display:grid";
+  mainContent.style = "display:grid";
+  mainPop.style = "display:none";
+
+  document.querySelectorAll(".clicked").forEach((row)=>{
+    row.classList.remove("clicked");
+  });
+
+  if (fileInput) {
+    fileInput.value = "";
+  }
+  if (fileTr) {
+    fileTr.replaceChildren();
+  }
+  isUploading = false;
+  setUploadActionDisabled(false);
+  resetUploadProgress();
+}
 function returnTime(){
   const now = new Date();
   const hours = now.getHours().toString().padStart(2, '0');
@@ -867,27 +1089,5 @@ function saveImg() {
     });
   closeModal();
   
-}
-function popSaveAll(){
-  const fileTr = document.querySelector("#imgTr");
-  const img = fileTr.querySelectorAll(".server-img");
-  const imgUrls = [];
-  for(let i=0;i<img.length;i++){
-    const imgSrc = img[i].src;
-    imgUrls.push(imgSrc);
-  }
-  imgUrls.forEach((imgUrl, index) => {
-    fetch(imgUrl)
-        .then(response => response.blob())
-        .then(blob => {
-            const fileName = "SaveAll_"+index+"_"+returnTime();
-            const file = new File([blob], fileName, { type: blob.type });
-            saveAs(file, fileName);
-        })
-        .catch(error => {
-          alert("Error uploading file:", error);
-          console.error("Error uploading file:", error);
-      });
-    });
 }
 //test

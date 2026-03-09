@@ -112,6 +112,7 @@
     
     <div id="mainPop" style="display:none">
         <div id="popTitle">
+            <button id="mainPopCloseBtn" type="button" onclick="closeMainPop()">&times;</button>
             <div  style="display:grid;grid-template-columns:1fr 1fr 1fr">
                 <h3 class="popTitleC"></h3>
                 <h3 class="popTitleC"></h3>
@@ -134,30 +135,21 @@
         
         <div id="mainPopDiv">
             <div id="imgTableDiv">
-                <h6 id="regTime" style="text-align: center;margin-top:10px;">Registration Time</h6>
+                
                 <table id="popImgTable" >
                     <tbody id="popImgTableTbody">
-                        <tr id="imgTr" style="height:30vh">
+                        <tr id="imgTr" style="height:100%">
 
                         </tr>
                     </tbody>
                 </table>
             </div>
-                <div id="popBtn" class="filebox" style="display:grid;grid-template-rows:1fr 1fr;row-gap:1vh">
-                    <div >
-                        <label>닫기(목록으로)
-                            <button id="btnClose" onclick="popClose()">닫기(목록으로)</button>    
-                        </label>
-                        <label>사진 전체저장
-                            <button id="btnReport" onclick="popSaveAll()"></button>
-                        </label>
-                    </div>
-                    <div >
-                            <label >파일찾기
-                                <input type="file" id="fileInput" multiple accept="image/*"  >
-                            </label> 
-                            <label for="btnUpLoad" >사진등록
-                                <button id="btnUpLoad" style="height:100%;font-weight: bold;font-size:larger;color:red" onclick="upLoad()"></button>
+                <div id="popBtn" class="filebox" style="display:grid;grid-template-columns:1fr 9fr;row-gap:1vh">
+                    <h6 id="regTime">Registration Time</h6>
+                    <div style="grid-template-columns:1fr;">
+                            <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
+                            <label id="btnUploadAction" onclick="handleUploadAction()">
+                                <span id="btnUploadActionText">사진등록</span>
                             </label>
                     </div>
             </div>
