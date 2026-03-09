@@ -236,14 +236,14 @@ button{
 }
 #regTime{
     position: relative;
-    width: 100%;
+    width: 80%;
     justify-self: stretch;
     align-self: center;
     margin: 0;
     padding: 0;
     height: 80%;
     border-radius: 12px;
-    margin-bottom: 6%;
+    margin-bottom: 8%;
     border: 0;
     cursor: pointer;
     text-align: center;
