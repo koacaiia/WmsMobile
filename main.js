@@ -573,16 +573,16 @@ function buildLegacyImageStorageRef(dataRef){
   imgRef.splice(4, 1);
   return imgRef.toString().replaceAll(",", "/") + "/";
 }
-async function checkServerImagesAvailable(primaryRef, fallbackRef){
+async function getServerImageCount(primaryRef, fallbackRef){
   const primaryResult = await storage_f.ref(primaryRef).listAll().catch(()=>({ items: [] }));
   if (primaryResult.items && primaryResult.items.length > 0) {
-    return true;
+    return primaryResult.items.length;
   }
   if (!fallbackRef || fallbackRef === primaryRef) {
-    return false;
+    return 0;
   }
   const fallbackResult = await storage_f.ref(fallbackRef).listAll().catch(()=>({ items: [] }));
-  return !!(fallbackResult.items && fallbackResult.items.length > 0);
+  return (fallbackResult.items && fallbackResult.items.length) || 0;
 }
 function popUp(){
     const mainTitle = document.querySelector("#mainTitle");
@@ -826,9 +826,9 @@ function popUp(){
   const legacyImgRef = buildLegacyImageStorageRef(ref);
   refFile=imgRef;
   refLegacyFile=legacyImgRef;
-  checkServerImagesAvailable(imgRef, legacyImgRef).then((hasServerImages)=>{
+  getServerImageCount(imgRef, legacyImgRef).then((imageCount)=>{
     if (isMobilePopupContext()) {
-      if (!hasServerImages) {
+      if (imageCount === 0) {
         setUploadActionMode("register", "사진등록");
         setTimeout(() => {
           const mainPop = document.querySelector("#mainPop");
@@ -838,7 +838,7 @@ function popUp(){
         }, 0);
         return;
       }
-      setUploadActionMode("check", "사진확인");
+      setUploadActionMode("check", imageCount + "개 사진확인");
       return;
     }
     loadServerImages(imgRef, legacyImgRef);
