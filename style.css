@@ -286,6 +286,9 @@ textarea{
     font-weight: bold;
     border-radius: 15px;
 }
+#btnUploadAction.no-photo-mode{
+    background-color: #d97706;
+}
 #btnUploadAction.upload-disabled {
     pointer-events: none;
     opacity: 0.6;

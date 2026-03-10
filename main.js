@@ -40,6 +40,7 @@ let upfileList;
 let token;
 let isUploading = false;
 let modalTargetImage = null;
+let filePickerPending = false;
 let deferredInstallPrompt = null;
 const installGuideDismissKey = "wmsInstallGuideDismissUntil";
 const installGuideDismissMs = 24 * 60 * 60 * 1000;
@@ -478,13 +479,41 @@ function setUploadActionMode(mode, label){
     return;
   }
   uploadAction.dataset.mode = mode || "register";
+  if (mode === "register-without-photo") {
+    uploadAction.classList.add("no-photo-mode");
+  } else {
+    uploadAction.classList.remove("no-photo-mode");
+  }
   uploadActionText.textContent = label || "사진등록";
+}
+function handleFilePickerClosed(){
+  filePickerPending = false;
+  const mainPop = document.querySelector("#mainPop");
+  if (!mainPop || mainPop.style.display === "none") {
+    return;
+  }
+  const fileInput = document.querySelector("#fileInput");
+  const hasSelectedFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+  const hasLocalImages = fileTr && fileTr.querySelectorAll(".local-img").length > 0;
+  if (!hasSelectedFiles && !hasLocalImages) {
+    setUploadActionMode("register-without-photo", "사진등록없이 등록");
+  }
 }
 function tryOpenFilePicker(isAutoOpen){
   const fileInput = document.querySelector("#fileInput");
   if (!fileInput) {
     return;
   }
+  filePickerPending = true;
+  const focusHandler = () => {
+    window.removeEventListener("focus", focusHandler, true);
+    setTimeout(() => {
+      if (filePickerPending) {
+        handleFilePickerClosed();
+      }
+    }, 250);
+  };
+  window.addEventListener("focus", focusHandler, true);
   fileInput.click();
   if (isAutoOpen) {
     setTimeout(() => {
@@ -510,8 +539,10 @@ function popUp(){
     if (fileInput) {
       fileInput.value = "";
     }
+    filePickerPending = false;
     isUploading = false;
     setUploadActionDisabled(false);
+    setUploadActionMode("register", "사진등록");
     resetUploadProgress();
    
     const table= document.querySelector("#popInfoTable");
@@ -691,11 +722,13 @@ function popUp(){
   };
 
   const handleImgInput = (e) => {
+    filePickerPending = false;
     fileTr.replaceChildren();
     upfileList = e.target.files;
-    const uploadActionText = document.querySelector("#btnUploadActionText");
-    if (uploadActionText) {
-      uploadActionText.textContent = e.target.files.length > 0 ? "사진 업로드" : "사진등록";
+    if (e.target.files.length > 0) {
+      setUploadActionMode("register", "사진 업로드");
+    } else {
+      setUploadActionMode("register-without-photo", "사진등록없이 등록");
     }
     for(let i=0;i<e.target.files.length;i++){
     const config = {
@@ -791,6 +824,10 @@ function handleUploadAction(){
     return;
   }
   const uploadAction = document.querySelector("#btnUploadAction");
+  if (uploadAction && uploadAction.dataset.mode === "register-without-photo") {
+    upLoad();
+    return;
+  }
   if (isMobilePopupContext() && uploadAction && uploadAction.dataset.mode === "check") {
     loadServerImages(refFile).then(()=>{
       setUploadActionMode("register", "사진추가등록");
