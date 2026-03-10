@@ -1,3 +1,12 @@
+html,
+body{
+    margin:0;
+    padding:0;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height:1.2;
+}
 body{
     display:grid;
     grid-template-rows:12fr 86fr;
@@ -119,6 +128,12 @@ th{
 }
 button{
     background-color: blanchedalmond;
+    font: inherit;
+}
+input,
+select,
+textarea{
+    font: inherit;
 }
 /* @keyframes flowText {
     0% {
@@ -165,10 +180,14 @@ button{
         #mainContent{
             width:100%;
             height:100%;
+            min-height:0;
         }
         #mainContent{
             grid-template-rows:1fr 1fr;
             row-gap:0;
+        }
+        .main{
+            min-height:0;
         }
         #btnUpLoad{
             margin:10px;
