@@ -9,11 +9,11 @@
     <meta name="apple-mobile-web-app-title" content="WMS Mobile">
     <meta name="mobile-web-app-capable" content="yes">
     <title>Mobile</title>
-    <link rel="manifest" href="/WmsMobile/manifest.webmanifest">
-    <link rel="icon" type="image/x-icon" href="/WmsMobile/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/WmsMobile/images/icon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/WmsMobile/images/icon.png">
-    <link rel="apple-touch-icon" href="/WmsMobile/images/icon.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icon.png">
+    <link rel="apple-touch-icon" href="images/icon.png">
     <link rel="stylesheet" href="style.css" type="text/css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -33,7 +33,7 @@
     <div id="mainTitle" >
         <div id="mainDateDiv">
             <button style="text-align:center;font-weight:bold;" id="titleDate" onclick="reLoad()">Date</button>
-            <input type="date" id="dateSelect" value="yyyy-MM-dd" onchange="dateChanged()">
+            <input type="date" id="dateSelect" onchange="dateChanged()">
             <button id="dateContents" onclick="dateNext()">내일</button>
             <button id="otherPlt" onclick="otherContents(this)">Pallet</button>  
             <button id="otherEnF" onclick="otherContents(this)">장비,시설물</button>

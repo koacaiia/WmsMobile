@@ -1124,7 +1124,7 @@ function osSubmit(){
   }).catch((e)=>{});
 }
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/WmsMobile/firebase-messaging-sw.js').then((registration)=>{
+  navigator.serviceWorker.register('firebase-messaging-sw.js').then((registration)=>{
     console.log('Service Worker 등록 완료:', registration.scope);
   }).catch((error)=>{
     console.error('Service Worker 등록 실패:', error);
