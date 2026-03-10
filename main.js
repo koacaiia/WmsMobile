@@ -35,6 +35,7 @@ const deptName = "WareHouseDept2";
 //   });
 let ref;
 let refFile;
+let refLegacyFile;
 let ioValue;
 let upfileList;
 let token;
@@ -526,6 +527,63 @@ function tryOpenFilePicker(isAutoOpen){
     }, 350);
   }
 }
+function buildImageStorageRef(dataRef){
+  if (!dataRef) {
+    return "";
+  }
+
+  const parts = dataRef.split("/");
+  if (parts.length < 5) {
+    return dataRef.replace("DeptName", "images") + "/";
+  }
+
+  const dept = parts[1];
+  const cargoType = parts[2];
+
+  if (cargoType === "InCargo") {
+    const year = parts[3] || "";
+    const month = parts[4] || "";
+    const day = parts[5] || "";
+    const rest = parts.slice(6);
+    return ["images", dept, "InCargo", year, month, day].concat(rest).join("/") + "/";
+  }
+
+  if (cargoType === "OutCargo") {
+    const date = parts[4] || "";
+    const dateParts = date.split("-");
+    const year = dateParts[0] || "";
+    const month = dateParts[1] || "";
+    const day = dateParts[2] || "";
+    const rest = parts.slice(5);
+    return ["images", dept, "OutCargo", year, month, day].concat(rest).join("/") + "/";
+  }
+
+  return buildLegacyImageStorageRef(dataRef);
+}
+function buildLegacyImageStorageRef(dataRef){
+  if (!dataRef) {
+    return "";
+  }
+  let imgRef = dataRef.replace("DeptName", "images").replaceAll("/", ",");
+  imgRef = imgRef.split(",");
+  const io = imgRef[4];
+  const dateArr = imgRef[2];
+  imgRef[3] = dateArr;
+  imgRef[2] = io;
+  imgRef.splice(4, 1);
+  return imgRef.toString().replaceAll(",", "/") + "/";
+}
+async function checkServerImagesAvailable(primaryRef, fallbackRef){
+  const primaryResult = await storage_f.ref(primaryRef).listAll().catch(()=>({ items: [] }));
+  if (primaryResult.items && primaryResult.items.length > 0) {
+    return true;
+  }
+  if (!fallbackRef || fallbackRef === primaryRef) {
+    return false;
+  }
+  const fallbackResult = await storage_f.ref(fallbackRef).listAll().catch(()=>({ items: [] }));
+  return !!(fallbackResult.items && fallbackResult.items.length > 0);
+}
 function popUp(){
     const mainTitle = document.querySelector("#mainTitle");
     mainTitle.style="display:none";
@@ -764,18 +822,11 @@ function popUp(){
   };
   fileInput.onchange = handleImgInput;
   fileTr.replaceChildren();
-  let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
-  // imgRef.replace("/",",");
-  imgRef = imgRef.split(",");
-  const io=imgRef[4];
-  const dateArr = imgRef[2];
-  imgRef[3]=dateArr;
-  imgRef[2]=io;
-  imgRef.splice(4,1);
-  imgRef=imgRef.toString().replaceAll(",","/")+"/";
+  const imgRef = buildImageStorageRef(ref);
+  const legacyImgRef = buildLegacyImageStorageRef(ref);
   refFile=imgRef;
-  storage_f.ref(imgRef).listAll().then((res)=>{
-    const hasServerImages = res.items && res.items.length > 0;
+  refLegacyFile=legacyImgRef;
+  checkServerImagesAvailable(imgRef, legacyImgRef).then((hasServerImages)=>{
     if (isMobilePopupContext()) {
       if (!hasServerImages) {
         setUploadActionMode("register", "사진등록");
@@ -790,17 +841,27 @@ function popUp(){
       setUploadActionMode("check", "사진확인");
       return;
     }
-    loadServerImages(imgRef);
+    loadServerImages(imgRef, legacyImgRef);
   });
 };
 const fileTr = document.querySelector("#imgTr");
-function loadServerImages(imageRef){
-  if (!imageRef) {
+function loadServerImages(imageRef, fallbackRef){
+  if (!imageRef && !fallbackRef) {
     return Promise.resolve();
   }
   fileTr.replaceChildren();
-  return storage_f.ref(imageRef).listAll().then((res)=>{
-    const downloadPromises = res.items.map((itemRef)=>{
+  const primaryRef = imageRef || fallbackRef;
+  const tryFallback = fallbackRef && fallbackRef !== primaryRef;
+  return storage_f.ref(primaryRef).listAll().then((res)=>{
+    let items = res.items || [];
+    if (items.length > 0 || !tryFallback) {
+      return { items };
+    }
+    return storage_f.ref(fallbackRef).listAll().then((fallbackRes)=>{
+      return { items: fallbackRes.items || [] };
+    });
+  }).then((result)=>{
+    const downloadPromises = result.items.map((itemRef)=>{
       return itemRef.getDownloadURL().then((url)=>{
         const td = document.createElement("div");
         td.className = "image-card";
@@ -829,7 +890,7 @@ function handleUploadAction(){
     return;
   }
   if (isMobilePopupContext() && uploadAction && uploadAction.dataset.mode === "check") {
-    loadServerImages(refFile).then(()=>{
+    loadServerImages(refFile, refLegacyFile).then(()=>{
       setUploadActionMode("register", "사진추가등록");
     }).catch((error)=>{
       console.error("서버 이미지 로드 오류:", error);
@@ -906,7 +967,7 @@ async function upLoad(){
               setUploadProgress(100);
 
               console.log("업로드 완료");
-              loadServerImages(refFile);
+              loadServerImages(refFile, refLegacyFile);
               toastOn(imgUrls.length+" 파일 업로드 완료");
             }catch(error){
               alert("Error uploading file:", error);
