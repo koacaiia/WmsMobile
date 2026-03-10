@@ -64,6 +64,24 @@ const isSamsungInternet = ()=>{
 const isChromeMobile = ()=>{
   return /Chrome/i.test(navigator.userAgent) && !isSamsungInternet() && !/EdgA|OPR/i.test(navigator.userAgent);
 };
+function applyMobileTopButtonLabels(){
+  const titleBtn = document.querySelector("#titleDate");
+  const dateNextBtn = document.querySelector("#dateContents");
+  const otherPltBtn = document.querySelector("#otherPlt");
+  const otherEnFBtn = document.querySelector("#otherEnF");
+  const installBtn = document.querySelector("#installAppBtn");
+
+  if (!titleBtn || !dateNextBtn || !otherPltBtn || !otherEnFBtn || !installBtn) {
+    return;
+  }
+
+  if (isMobilePopupContext()) {
+    titleBtn.textContent = "새로고침";
+    dateNextBtn.textContent = "+1일";
+    otherPltBtn.textContent = "Pallet";
+    otherEnFBtn.textContent = "장비";
+  }
+}
 function updateInstallButtonVisibility(){
   const installBtn = document.querySelector("#installAppBtn");
   if (!installBtn) {
@@ -1249,6 +1267,7 @@ function closeModal() {
   modal.style.display = "none";
 }
 document.addEventListener("DOMContentLoaded", () => {
+  applyMobileTopButtonLabels();
   updateInstallButtonVisibility();
   const modal = document.getElementById("imgModal");
   if (!modal) {

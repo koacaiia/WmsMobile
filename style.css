@@ -52,7 +52,25 @@ body{
     overflow:auto;
 }
 #mainDateDiv{
-    display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;grid-gap:1px;
+    display:grid;
+    grid-template-columns:repeat(6, minmax(0, 1fr));
+    gap:1px;
+    width:100%;
+    box-sizing:border-box;
+}
+#mainDateDiv > *{
+    min-width:0;
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+}
+#mainDateDiv button,
+#mainDateDiv input,
+#mainDateDiv select{
+    padding:0 2px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
 }
 #mainTitle{
     display:grid;grid-template-rows:0.8fr 1.2fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px;
@@ -154,6 +172,11 @@ textarea{
     animation: flowText 10s linear infinite;
 }  */
     @media (pointer: coarse) {
+        #mainDateDiv button,
+        #mainDateDiv input,
+        #mainDateDiv select{
+            font-size:11px;
+        }
         td{
             text-align: center;
             text-overflow: ellipsis;
