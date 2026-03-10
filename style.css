@@ -10,7 +10,7 @@ body{
 body{
     display:grid;
     grid-template-rows:12fr 86fr;
-    row-gap:1vh;
+    gap:1%;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
@@ -44,7 +44,7 @@ body{
 #mainContent{
     display:grid;
     grid-template-rows: 48fr 48fr;
-    row-gap:1vh;
+    gap:1%;
     /* border:1px solid black;
     border-radius: 3px; */
     width:99vw;
@@ -91,7 +91,8 @@ td{
     height:5vh;
 }
 .main{
-    overflow: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 .clicked{
     background-color: #c0c5e9;
@@ -190,7 +191,7 @@ textarea{
         body{
             display:grid;
             grid-template-rows:2fr 8fr;
-            row-gap: 0;
+            gap: 1%;
             /* border:1px solid black;
             border-radius: 3px; */
             width:100vw;
@@ -207,7 +208,7 @@ textarea{
         }
         #mainContent{
             grid-template-rows:1fr 1fr;
-            row-gap:0;
+            gap:1%;
         }
         .main{
             min-height:0;
