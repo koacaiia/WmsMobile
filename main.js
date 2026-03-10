@@ -40,11 +40,121 @@ let upfileList;
 let token;
 let isUploading = false;
 let modalTargetImage = null;
+let deferredInstallPrompt = null;
+const installGuideDismissKey = "wmsInstallGuideDismissUntil";
+const installGuideDismissMs = 24 * 60 * 60 * 1000;
+const installGuideDismissWeekMs = 7 * 24 * 60 * 60 * 1000;
+const isStandaloneMode = ()=>{
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+};
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isMobilePopupContext = ()=>{
   const coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   return mC || navigator.maxTouchPoints > 0 || coarsePointer || window.innerWidth <= 900;
 };
+const isIOSDevice = ()=>{
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+};
+const isAndroidDevice = ()=>{
+  return /Android/i.test(navigator.userAgent);
+};
+const isSamsungInternet = ()=>{
+  return /SamsungBrowser/i.test(navigator.userAgent);
+};
+const isChromeMobile = ()=>{
+  return /Chrome/i.test(navigator.userAgent) && !isSamsungInternet() && !/EdgA|OPR/i.test(navigator.userAgent);
+};
+function updateInstallButtonVisibility(){
+  const installBtn = document.querySelector("#installAppBtn");
+  if (!installBtn) {
+    return;
+  }
+  if (isMobilePopupContext() && !isStandaloneMode()) {
+    if (isIOSDevice()) {
+      installBtn.textContent = "홈추가";
+    } else if (deferredInstallPrompt) {
+      installBtn.textContent = "앱설치";
+    } else {
+      installBtn.textContent = "설치안내";
+    }
+    installBtn.style.display = "block";
+  } else {
+    installBtn.style.display = "none";
+    hideInstallGuideBanner();
+  }
+}
+function showInstallGuideBanner(message){
+  try {
+    const dismissUntil = parseInt(localStorage.getItem(installGuideDismissKey) || "0", 10);
+    if (dismissUntil > Date.now()) {
+      return;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+  const banner = document.querySelector("#installGuideBanner");
+  const text = document.querySelector("#installGuideText");
+  if (!banner || !text) {
+    toastOn(message, 4500);
+    return;
+  }
+  text.textContent = message;
+  banner.style.display = "grid";
+}
+function hideInstallGuideBanner(){
+  const banner = document.querySelector("#installGuideBanner");
+  if (!banner) {
+    return;
+  }
+  banner.style.display = "none";
+}
+function setInstallGuideDismiss(ms){
+  try {
+    localStorage.setItem(installGuideDismissKey, String(Date.now() + ms));
+  } catch (e) {
+    console.log(e);
+  }
+}
+function closeInstallGuideBanner(){
+  setInstallGuideDismiss(installGuideDismissMs);
+  hideInstallGuideBanner();
+}
+function closeInstallGuideBannerForWeek(){
+  setInstallGuideDismiss(installGuideDismissWeekMs);
+  hideInstallGuideBanner();
+}
+window.closeInstallGuideBanner = closeInstallGuideBanner;
+window.closeInstallGuideBannerForWeek = closeInstallGuideBannerForWeek;
+async function promptInstallApp(){
+  if (isStandaloneMode()) {
+    toastOn("이미 앱 모드로 실행 중입니다.");
+    return;
+  }
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choiceResult = await deferredInstallPrompt.userChoice;
+    if (choiceResult && choiceResult.outcome === "accepted") {
+      toastOn("앱 설치가 진행되었습니다.");
+    }
+    deferredInstallPrompt = null;
+    updateInstallButtonVisibility();
+    return;
+  }
+  if (isIOSDevice()) {
+    showInstallGuideBanner("Safari 공유 버튼 → 홈 화면에 추가를 눌러 설치하세요.");
+    return;
+  }
+  if (isSamsungInternet()) {
+    showInstallGuideBanner("삼성 인터넷 메뉴(≡) → 페이지 추가 → 홈 화면을 선택하세요.");
+    return;
+  }
+  if (isChromeMobile() || isAndroidDevice()) {
+    showInstallGuideBanner("크롬 메뉴(⋮) → 홈 화면에 추가 또는 앱 설치를 선택하세요.");
+    return;
+  }
+  showInstallGuideBanner("브라우저 메뉴에서 '홈 화면에 추가'를 선택하세요.");
+}
+window.promptInstallApp = promptInstallApp;
 const dateT = (d)=>{
     let result_date;
     try{
@@ -1139,6 +1249,7 @@ function closeModal() {
   modal.style.display = "none";
 }
 document.addEventListener("DOMContentLoaded", () => {
+  updateInstallButtonVisibility();
   const modal = document.getElementById("imgModal");
   if (!modal) {
     return;
@@ -1153,6 +1264,26 @@ document.addEventListener("DOMContentLoaded", () => {
       closeModal();
     }
   });
+
+  if (isMobilePopupContext() && !isStandaloneMode()) {
+    setTimeout(()=>{
+      window.scrollTo(0, 1);
+    }, 250);
+    if (!sessionStorage.getItem("wmsStandaloneNoticeShown")) {
+      sessionStorage.setItem("wmsStandaloneNoticeShown", "1");
+      toastOn("주소창 없이 사용하려면 브라우저 메뉴에서 '홈 화면에 추가' 후 앱 아이콘으로 실행하세요.", 4500);
+    }
+  }
+});
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  updateInstallButtonVisibility();
+});
+window.addEventListener("appinstalled", ()=>{
+  deferredInstallPrompt = null;
+  updateInstallButtonVisibility();
+  toastOn("앱 설치 완료");
 });
 function deleteImage() {
   const modalImg = document.getElementById("modalImg");

@@ -1,9 +1,11 @@
 {
+  "id": "/WmsMobile/",
   "name": "WMS Mobile",
   "short_name": "WMS",
-  "start_url": "/WmsMobile/index.html",
+  "start_url": "/WmsMobile/",
   "scope": "/WmsMobile/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#154077",
   "icons": [
