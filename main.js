@@ -487,6 +487,76 @@ function setUploadActionMode(mode, label){
   }
   uploadActionText.textContent = label || "사진등록";
 }
+function removeTableColumn(table, columnIndex){
+  if (!table || columnIndex < 0) {
+    return;
+  }
+  const rows = table.querySelectorAll("tr");
+  rows.forEach((row)=>{
+    if (row.cells && row.cells.length > columnIndex) {
+      row.deleteCell(columnIndex);
+    }
+  });
+}
+function adjustPopInfoTableLayout(){
+  const table = document.querySelector("#popInfoTable");
+  if (!table) {
+    return;
+  }
+
+  const headerRow = table.querySelector("thead tr");
+  const bodyRows = Array.from(table.querySelectorAll("tbody tr"));
+  if (!headerRow) {
+    return;
+  }
+
+  const headerCells = Array.from(headerRow.cells || []);
+  const remarkIndex = headerCells.findIndex((cell)=>cell.textContent.trim() === "비고");
+  if (remarkIndex >= 0) {
+    const hasRemarkValue = bodyRows.some((row)=>{
+      const remarkCell = row.cells[remarkIndex];
+      return remarkCell && remarkCell.textContent.trim() !== "";
+    });
+    if (!hasRemarkValue) {
+      removeTableColumn(table, remarkIndex);
+    }
+  }
+
+  const latestHeader = table.querySelector("thead tr");
+  const latestBodyRows = Array.from(table.querySelectorAll("tbody tr"));
+  if (!latestHeader || latestBodyRows.length === 0) {
+    return;
+  }
+
+  table.style.tableLayout = "auto";
+  const columnCount = latestHeader.cells.length;
+  if (columnCount === 0) {
+    return;
+  }
+
+  const widthWeights = Array(columnCount).fill(4);
+  latestBodyRows.forEach((row)=>{
+    for (let index = 0; index < columnCount; index++) {
+      const cell = row.cells[index];
+      if (!cell) {
+        continue;
+      }
+      const contentLength = cell.textContent.trim().length;
+      widthWeights[index] = Math.max(widthWeights[index], Math.min(30, contentLength + 2));
+    }
+  });
+
+  const totalWeight = widthWeights.reduce((sum, value)=>sum + value, 0) || 1;
+  for (let index = 0; index < columnCount; index++) {
+    const widthPercent = (widthWeights[index] / totalWeight) * 100;
+    latestHeader.cells[index].style.width = widthPercent.toFixed(2) + "%";
+    latestBodyRows.forEach((row)=>{
+      if (row.cells[index]) {
+        row.cells[index].style.width = widthPercent.toFixed(2) + "%";
+      }
+    });
+  }
+}
 function handleFilePickerClosed(){
   filePickerPending = false;
   const mainPop = document.querySelector("#mainPop");
@@ -656,6 +726,7 @@ function popUp(){
               tBody.querySelectorAll("tr").forEach((tr)=>{
                 tr.style.height="6vh";
               });
+              adjustPopInfoTableLayout();
           }).catch((e)=>{
               console.log(e)});
   
@@ -702,6 +773,7 @@ function popUp(){
           });
           h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
           h3List[2].style="font-size:large;margin-top:3%;color:red;";
+          adjustPopInfoTableLayout();
       }).catch((e)=>{});
   }
   
