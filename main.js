@@ -685,6 +685,7 @@ function popUp(){
     const h3List = document.querySelectorAll(".popTitleC");
     for(let i=0;i<h3List.length;i++){
       h3List[i].innerHTML="";
+      h3List[i].removeAttribute("style");
     }
     if(ioValue=="InCargo"){
       thList=["품명","PLT","EA","비고",];
@@ -771,7 +772,7 @@ function popUp(){
             tr.style.height="6vh";
           });
           h3List[2].innerHTML="총출고 "+totalPlt+" PLT";
-          h3List[2].style="margin-top:3%;color:red;";
+          h3List[2].style.color="red";
           adjustPopInfoTableLayout();
       }).catch((e)=>{});
   }

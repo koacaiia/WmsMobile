@@ -324,7 +324,7 @@ textarea{
 #popBtn #regTime{
     margin: 0;
     align-self: start;
-    height: 80%;
+    height: 70%;
 }
 #popBtn #btnUploadAction{
     width: 100%;
@@ -388,14 +388,14 @@ textarea{
     font-weight: bold;
     margin:0;
     font-size: clamp(0.95rem, 2.8vw, 2.1rem);
-    line-height: 1.1;
+    line-height: 1;
     white-space: normal;
     word-break: break-word;
     overflow: hidden;
     text-overflow: ellipsis;
     height: 100%;
     width: 100%;
-    padding: 0.15rem;
+    padding: 0 0.15rem;
     box-sizing: border-box;
 }
 .popTitleRow,
