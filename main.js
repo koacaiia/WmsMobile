@@ -279,7 +279,7 @@ function getData(date){
     const month=date.substring(5,7);
     const refI ="DeptName/"+deptName+"/InCargo/"+year+"/"+month+"/"+date.substring(8,10);
     const refO ="DeptName/"+deptName+"/OutCargo/"+month+"월/"+date;
-    const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+    const refOs ="DeptName/"+deptName+"/sC/"+year+"/"+month+"/"+date.substring(8,10);
     database_f.ref(refOs).get().then((snapshot)=>{
       const val = snapshot.val();
       if(val==null){
@@ -1181,7 +1181,7 @@ function osSubmit(){
   const date = document.querySelector("#dateSelect").value;
   const year = date.substring(0,4);
   const month= date.substring(5,7);
-  const refOs ="DeptName/"+deptName+"/Os/"+year+"/"+month+"월/"+date;
+  const refOs ="DeptName/"+deptName+"/sC/"+year+"/"+month+"/"+date;
   const osM= document.querySelector("#osMo").value;
   const osWf = document.querySelector("#osWf").value;
   const osWo = document.querySelector("#osWo").value;
@@ -1191,6 +1191,34 @@ function osSubmit(){
     toastOn(osObject);
   }).catch((e)=>{});
 }
+function staffCheck(){
+  const selectedDate = (document.querySelector("#dateSelect").value || dateT(new Date())).trim();
+  const dateObj = new Date(selectedDate);
+  if (isNaN(dateObj.getTime())) {
+    toastOn("날짜 형식이 올바르지 않습니다.");
+    return;
+  }
+
+  const year = String(dateObj.getFullYear());
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+
+  const osM = document.querySelector("#osMo").value;
+  const osWf = document.querySelector("#osWf").value;
+  const osWo = document.querySelector("#osWo").value;
+  const osR = document.querySelector("#osRe").value;
+
+  const refOs = "/DeptName/" + deptName + "/sC/" + year + "/" + month + "/" + day;
+  const sC = {"osM":osM, "osWf":osWf, "osWo":osWo, "osR":osR};
+
+  database_f.ref(refOs).update(sC).then(()=>{
+    toastOn("인력 정보 등록 완료");
+  }).catch((error)=>{
+    console.log(error);
+    toastOn("인력 정보 등록 실패");
+  });
+}
+window.staffCheck = staffCheck;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('firebase-messaging-sw.js').then((registration)=>{
     console.log('Service Worker 등록 완료:', registration.scope);
