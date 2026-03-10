@@ -41,6 +41,10 @@ let token;
 let isUploading = false;
 let modalTargetImage = null;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isMobilePopupContext = ()=>{
+  const coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  return mC || navigator.maxTouchPoints > 0 || coarsePointer || window.innerWidth <= 900;
+};
 const dateT = (d)=>{
     let result_date;
     try{
@@ -340,6 +344,32 @@ function setUploadActionDisabled(disabled){
     uploadAction.classList.remove("upload-disabled");
   }
 }
+function setUploadActionMode(mode, label){
+  const uploadAction = document.querySelector("#btnUploadAction");
+  const uploadActionText = document.querySelector("#btnUploadActionText");
+  if (!uploadAction || !uploadActionText) {
+    return;
+  }
+  uploadAction.dataset.mode = mode || "register";
+  uploadActionText.textContent = label || "사진등록";
+}
+function tryOpenFilePicker(isAutoOpen){
+  const fileInput = document.querySelector("#fileInput");
+  if (!fileInput) {
+    return;
+  }
+  fileInput.click();
+  if (isAutoOpen) {
+    setTimeout(() => {
+      const mainPop = document.querySelector("#mainPop");
+      const isOpen = mainPop && mainPop.style.display !== "none";
+      const noSelection = !fileInput.files || fileInput.files.length === 0;
+      if (isOpen && noSelection) {
+        toastOn("자동 파일창이 차단되면 아래 사진등록 버튼을 눌러주세요.", 2500);
+      }
+    }, 350);
+  }
+}
 function popUp(){
     const mainTitle = document.querySelector("#mainTitle");
     mainTitle.style="display:none";
@@ -585,41 +615,75 @@ function popUp(){
   imgRef=imgRef.toString().replaceAll(",","/")+"/";
   refFile=imgRef;
   storage_f.ref(imgRef).listAll().then((res)=>{
-    console.log(res);
-    res.items.forEach((itemRef)=>{
-      itemRef.getDownloadURL().then((url)=>{
+    const hasServerImages = res.items && res.items.length > 0;
+    if (isMobilePopupContext()) {
+      if (!hasServerImages) {
+        setUploadActionMode("register", "사진등록");
+        setTimeout(() => {
+          const mainPop = document.querySelector("#mainPop");
+          if (mainPop && mainPop.style.display !== "none") {
+            tryOpenFilePicker(true);
+          }
+        }, 0);
+        return;
+      }
+      setUploadActionMode("check", "사진확인");
+      return;
+    }
+    loadServerImages(imgRef);
+  });
+};
+const fileTr = document.querySelector("#imgTr");
+function loadServerImages(imageRef){
+  if (!imageRef) {
+    return Promise.resolve();
+  }
+  fileTr.replaceChildren();
+  return storage_f.ref(imageRef).listAll().then((res)=>{
+    const downloadPromises = res.items.map((itemRef)=>{
+      return itemRef.getDownloadURL().then((url)=>{
         const td = document.createElement("div");
         td.className = "image-card";
         const img = document.createElement("img");
-        img.src=url;
-        img.className="server-img";
+        img.src = url;
+        img.className = "server-img";
         img.dataset.fileName = itemRef.name;
         img.dataset.serverPath = itemRef.fullPath;
         bindServerImageEvents(img, itemRef.fullPath);
-        img.style.display="block";
+        img.style.display = "block";
         td.appendChild(img);
         fileTr.appendChild(td);
       });
     });
+    return Promise.all(downloadPromises);
   });
-};
-const fileTr = document.querySelector("#imgTr");
+}
 function handleUploadAction(){
   if (isUploading) {
     toastOn("업로드 진행중입니다.");
     return;
   }
+  const uploadAction = document.querySelector("#btnUploadAction");
+  if (isMobilePopupContext() && uploadAction && uploadAction.dataset.mode === "check") {
+    loadServerImages(refFile).then(()=>{
+      setUploadActionMode("register", "사진추가등록");
+    }).catch((error)=>{
+      console.error("서버 이미지 로드 오류:", error);
+      toastOn("사진 로드 실패");
+    });
+    return;
+  }
   const fileInput = document.querySelector("#fileInput");
   const hasSelectedFiles = fileInput && fileInput.files && fileInput.files.length > 0;
   if(!hasSelectedFiles){
-    fileInput.click();
+    tryOpenFilePicker(false);
     return;
   }
   const proceedUpload = confirm("선택한 사진을 업로드할까요?\n취소를 누르면 파일을 다시 선택합니다.");
   if(proceedUpload){
     upLoad();
   }else{
-    fileInput.click();
+    tryOpenFilePicker(false);
   }
 }
 async function upLoad(){
@@ -678,34 +742,7 @@ async function upLoad(){
               setUploadProgress(100);
 
               console.log("업로드 완료");
-              fileTr.replaceChildren();
-              let imgRef=ref.replace("DeptName","images").replaceAll("/",",");
-              imgRef = imgRef.split(",");
-              const io=imgRef[4];
-              const dateArr = imgRef[2];
-              imgRef[3]=dateArr;
-              imgRef[2]=io;
-              imgRef.splice(4,1);
-              imgRef=imgRef.toString().replaceAll(",","/")+"/";
-              console.log(imgRef);
-              refFile=imgRef;
-              storage_f.ref(imgRef).listAll().then((res)=>{
-                res.items.forEach((itemRef)=>{
-                  itemRef.getDownloadURL().then((url)=>{
-                    const td = document.createElement("div");
-                    td.className = "image-card";
-                    const img = document.createElement("img");
-                    img.src=url;
-                    img.className="server-img";
-                    img.dataset.fileName = itemRef.name;
-                    img.dataset.serverPath = itemRef.fullPath;
-                    bindServerImageEvents(img, itemRef.fullPath);
-                    img.style.display="block";
-                    td.appendChild(img);
-                    fileTr.appendChild(td);
-                  });
-                });
-              });
+              loadServerImages(refFile);
               toastOn(imgUrls.length+" 파일 업로드 완료");
             }catch(error){
               alert("Error uploading file:", error);
