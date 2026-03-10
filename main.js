@@ -69,9 +69,8 @@ function applyMobileTopButtonLabels(){
   const dateNextBtn = document.querySelector("#dateContents");
   const otherPltBtn = document.querySelector("#otherPlt");
   const otherEnFBtn = document.querySelector("#otherEnF");
-  const installBtn = document.querySelector("#installAppBtn");
 
-  if (!titleBtn || !dateNextBtn || !otherPltBtn || !otherEnFBtn || !installBtn) {
+  if (!titleBtn || !dateNextBtn || !otherPltBtn || !otherEnFBtn) {
     return;
   }
 
