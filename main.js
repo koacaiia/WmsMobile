@@ -39,6 +39,7 @@ let refLegacyFile;
 let ioValue;
 let upfileList;
 let token;
+let userName = "";
 let isUploading = false;
 let modalTargetImage = null;
 let filePickerPending = false;
@@ -46,6 +47,7 @@ let deferredInstallPrompt = null;
 const installGuideDismissKey = "wmsInstallGuideDismissUntil";
 const installGuideDismissMs = 24 * 60 * 60 * 1000;
 const installGuideDismissWeekMs = 7 * 24 * 60 * 60 * 1000;
+const userNameStorageKey = "wmsUserName";
 const isStandaloneMode = ()=>{
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 };
@@ -66,6 +68,70 @@ const isSamsungInternet = ()=>{
 const isChromeMobile = ()=>{
   return /Chrome/i.test(navigator.userAgent) && !isSamsungInternet() && !/EdgA|OPR/i.test(navigator.userAgent);
 };
+function syncUserNameFromStorage(){
+  try {
+    userName = (localStorage.getItem(userNameStorageKey) || "").trim();
+  } catch (e) {
+    userName = "";
+  }
+  window.userName = userName;
+}
+function updateUserRegButtonLabel(){
+  const userBtn = document.querySelector("#logData");
+  if (!userBtn) {
+    return;
+  }
+  userBtn.textContent = userName ? userName : "User";
+}
+function userReg(){
+  const currentName = userName || "";
+  const inputName = prompt("사용자 이름을 입력하세요.", currentName);
+  if (inputName === null) {
+    return;
+  }
+  const nextName = inputName.trim();
+  userName = nextName;
+  window.userName = userName;
+  try {
+    if (nextName) {
+      localStorage.setItem(userNameStorageKey, nextName);
+    } else {
+      localStorage.removeItem(userNameStorageKey);
+    }
+  } catch (e) {
+    console.log(e);
+  }
+  updateUserRegButtonLabel();
+  toastOn(nextName ? "사용자명 저장 완료" : "사용자명 초기화 완료");
+}
+function ensureUserNameOnStartup(){
+  syncUserNameFromStorage();
+  while (!userName) {
+    const inputName = prompt("최초 1회 사용자 이름을 입력하세요.", "");
+    if (inputName === null) {
+      alert("사용자 이름 입력 후 진행할 수 있습니다.");
+      continue;
+    }
+    const nextName = inputName.trim();
+    if (!nextName) {
+      alert("사용자 이름을 입력해주세요.");
+      continue;
+    }
+    userName = nextName;
+    window.userName = userName;
+    try {
+      localStorage.setItem(userNameStorageKey, nextName);
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  updateUserRegButtonLabel();
+}
+window.userReg = userReg;
+window.userName = userName;
+syncUserNameFromStorage();
+window.userName = userName;
+updateUserRegButtonLabel();
 function applyMobileTopButtonLabels(){
   const titleBtn = document.querySelector("#titleDate");
   const dateNextBtn = document.querySelector("#dateContents");
@@ -196,6 +262,7 @@ const titleDate = document.querySelector("#titleDate");
 const dateSelect = document.querySelector("#dateSelect");
 const tBodyIn=document.querySelector("#tBodyIn");
 const tBodyOut=document.querySelector("#tBodyOut");
+ensureUserNameOnStartup();
 function dateChanged(){
     const d = dateSelect.value;
     titleDate.innerHTML = d;
@@ -1012,7 +1079,8 @@ async function upLoad(){
 
               const uploadPromises = uploadBlobs.map((blob, index)=>{
                 const selectTr = document.querySelector(".clicked");
-                const fileName = selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
+                const safeUserName = (userName || "anonymous").replace(/[\\/:*?"<>|\s]+/g, "_");
+                const fileName = safeUserName+"_"+selectTr.cells[0].innerHTML+"_"+selectTr.cells[2].innerHTML+"_"+selectTr.cells[3].innerHTML+"_"+selectTr.cells[4].innerHTML+"_"+index+"_"+returnTime();
                 const file = new File([blob], fileName, { type: blob.type });
                 const fileRef = storageRef.child(fileName.replace("/","_"));
                 const uploadTask = fileRef.put(file);
@@ -1051,9 +1119,9 @@ async function upLoad(){
           }
     let w;
     if(ioValue=="InCargo"){
-      w={"working":"컨테이너진입","regTime":returnTime()};
+      w={"working":"컨테이너진입","regTime":returnTime(),"userName":userName||""};
     }else{
-      w={"workprocess":"완","regTime":returnTime()};
+      w={"workprocess":"완","regTime":returnTime(),"userName":userName||""};
     }
     database_f.ref(ref).update(w);
     const fileInput = document.querySelector("#fileInput");
