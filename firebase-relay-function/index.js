@@ -11,12 +11,16 @@ const allowedOrigins = [
 
 function setCors(req, res) {
   const origin = req.headers.origin || "";
+  // Public web app endpoint: always return ACAO to satisfy browser preflight.
+  // Security is enforced by relay auth checks, not by CORS origin filtering.
+  res.set("Access-Control-Allow-Origin", "*");
   if (allowedOrigins.includes(origin)) {
     res.set("Access-Control-Allow-Origin", origin);
   }
   res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, x-api-key, Authorization");
+  res.set("Access-Control-Max-Age", "3600");
 }
 
 function normalizeIconPath(iconValue) {
