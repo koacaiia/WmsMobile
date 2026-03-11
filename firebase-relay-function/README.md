@@ -37,7 +37,9 @@ Example shape:
 
 ## 5) Connect from frontend
 
-In browser console (once):
+Endpoint is auto-filled in `main.js` by default.
+
+Set relay API key in each browser once:
 
 ```javascript
 localStorage.setItem("fcmRelayEndpoint", "https://asia-southeast1-fine-bondedwarehouse.cloudfunctions.net/sendFcmRelay");
@@ -46,9 +48,9 @@ localStorage.setItem("fcmRelayApiKey", "change-this-long-random-key");
 
 ## 6) Required frontend header
 
-When calling relay endpoint, send `x-api-key` with `localStorage.fcmRelayApiKey`.
+Use `x-api-key` with the value configured in `RELAY_API_KEY`.
 
-If your frontend currently omits this header, add it in `main.js` fetch options.
+If the key is missing, `main.js` prompts once and stores it in localStorage.
 
 ## 7) Request payload modes
 

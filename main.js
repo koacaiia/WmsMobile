@@ -23,6 +23,8 @@ const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const deptName = "WareHouseDept2";
 const notificationIconUrl = new URL("images/icon.png", window.location.href).toString();
+const defaultRelayEndpoint = "https://asia-southeast1-fine-bondedwarehouse.cloudfunctions.net/sendFcmRelay";
+const defaultRelayApiKey = "REPLACE_WITH_RELAY_API_KEY";
 function normalizeNotificationIconUrl(rawIconUrl){
   const value = String(rawIconUrl || "").trim();
   if (!value) {
@@ -106,9 +108,24 @@ function registerDeviceToken(currentToken){
     });
 }
 function getRelayConfig(){
-  const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
-  const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+  let relayEndpoint = defaultRelayEndpoint;
+  let relayApiKey = defaultRelayApiKey;
+  try {
+    relayEndpoint = (window.FCM_RELAY_ENDPOINT || defaultRelayEndpoint || "").trim();
+  } catch (error) {
+    console.error("Relay endpoint 확인 실패:", error);
+    relayEndpoint = (window.FCM_RELAY_ENDPOINT || "").trim();
+  }
+  try {
+    relayApiKey = (window.FCM_RELAY_API_KEY || defaultRelayApiKey || "").trim();
+  } catch (error) {
+    console.error("Relay API Key 확인 실패:", error);
+    relayApiKey = (window.FCM_RELAY_API_KEY || defaultRelayApiKey || "").trim();
+  }
   return { relayEndpoint, relayApiKey };
+}
+function ensureRelayApiKeyConfigured(){
+  return getRelayConfig();
 }
 async function getRegisteredDeviceTokens(){
   const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch((error)=>{
@@ -1616,7 +1633,7 @@ messaging.onMessage((payload) => {
 function sendMessage(token, title, body, icon) {
   // Browser -> FCM direct calls are blocked by CORS and exposing serverKey is unsafe.
   // Use a relay endpoint (Cloud Function / backend API) instead.
-  const { relayEndpoint, relayApiKey } = getRelayConfig();
+  const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
 
   if (!relayEndpoint) {
     console.warn("FCM relay endpoint is not configured.");
@@ -1653,7 +1670,7 @@ function sendMessage(token, title, body, icon) {
   });
 }
 async function sendMessageToAllDevices(title, body, icon){
-  const { relayEndpoint, relayApiKey } = getRelayConfig();
+  const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
   if (!relayEndpoint) {
     throw new Error("FCM relay endpoint not configured");
   }
@@ -1692,13 +1709,17 @@ async function sendMessageToAllDevices(title, body, icon){
   return data;
 }
 window.fcmDebugStatus = async function fcmDebugStatus(){
+  const config = ensureRelayApiKeyConfigured();
   const status = {
     hasCurrentToken: !!token,
     currentTokenPreview: token ? token.substring(0, 20) + "..." : "",
-    relayConfigured: !!(getRelayConfig().relayEndpoint && getRelayConfig().relayApiKey),
+    relayConfigured: !!(config.relayEndpoint && config.relayApiKey),
     tokenCount: 0,
     error: ""
   };
+  if (!status.relayConfigured) {
+    status.error = "Relay endpoint/apiKey 미설정 (프롬프트에서 API Key 입력 필요)";
+  }
   try {
     const list = await getRegisteredDeviceTokens();
     status.tokenCount = list.length;
@@ -1854,7 +1875,7 @@ async function test(){
   try {
     const title = "WMS Test";
     const body = "test 메시지 발송";
-    const { relayEndpoint, relayApiKey } = getRelayConfig();
+    const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
     if (!relayEndpoint || !relayApiKey) {
       // Relay 미설정 환경에서는 로컬 알림으로 테스트 가능하게 처리
       if (Notification.permission === "granted") {

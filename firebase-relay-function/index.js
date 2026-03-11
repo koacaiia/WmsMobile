@@ -16,7 +16,7 @@ function setCors(req, res) {
   }
   res.set("Vary", "Origin");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+  res.set("Access-Control-Allow-Headers", "Content-Type, x-api-key, Authorization");
 }
 
 function normalizeIconPath(iconValue) {
@@ -45,7 +45,29 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res)
 
   const relayApiKey = process.env.RELAY_API_KEY || "";
   const requestApiKey = String(req.headers["x-api-key"] || "");
-  if (!relayApiKey || requestApiKey !== relayApiKey) {
+  const authorization = String(req.headers.authorization || "");
+
+  let isAuthorized = false;
+
+  // Preferred path: Firebase Auth ID token (Bearer)
+  if (authorization.toLowerCase().startsWith("bearer ")) {
+    const idToken = authorization.substring(7).trim();
+    if (idToken) {
+      try {
+        await admin.auth().verifyIdToken(idToken);
+        isAuthorized = true;
+      } catch (error) {
+        console.error("Invalid bearer token:", error);
+      }
+    }
+  }
+
+  // Backward-compatible path: API key header (optional)
+  if (!isAuthorized && relayApiKey && requestApiKey === relayApiKey) {
+    isAuthorized = true;
+  }
+
+  if (!isAuthorized) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
