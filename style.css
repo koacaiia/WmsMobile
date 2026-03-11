@@ -22,30 +22,6 @@ body{
     overflow:auto;
     box-sizing:border-box;
 }
-#installGuideBanner{
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    background-color: rgb(21, 64, 119);
-    color: #fff;
-    display: none;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    font-size: small;
-}
-#installGuideClose,
-#installGuideCloseWeek{
-    background-color: #fff;
-    color: rgb(21, 64, 119);
-    border: 0;
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-weight: bold;
-}
 #mainContent{
     display:grid;
     grid-template-rows: 48fr 48fr;
