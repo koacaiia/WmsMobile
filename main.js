@@ -63,6 +63,54 @@ function syncUserNameFromStorage(){
   }
   window.userName = userName;
 }
+function getDeviceTokenRootRef(){
+  return "DeptName/" + deptName + "/DeviceTokens";
+}
+function normalizeDeviceTokenKey(value){
+  return String(value || "").trim().replace(/[.#$\[\]\/]/g, "_");
+}
+function registerDeviceToken(currentToken){
+  const safeToken = String(currentToken || "").trim();
+  if (!safeToken) {
+    return Promise.resolve();
+  }
+  const tokenKey = normalizeDeviceTokenKey(safeToken);
+  if (!tokenKey) {
+    return Promise.resolve();
+  }
+
+  const payload = {
+    token: safeToken,
+    userName: userName || "",
+    userAgent: navigator.userAgent || "",
+    updatedAt: new Date().toISOString()
+  };
+  return database_f.ref(getDeviceTokenRootRef() + "/" + tokenKey).set(payload).catch((error)=>{
+    console.error("토큰 저장 실패:", error);
+  });
+}
+function getRelayConfig(){
+  const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
+  const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+  return { relayEndpoint, relayApiKey };
+}
+async function getRegisteredDeviceTokens(){
+  const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch(()=>null);
+  if (!snapshot || !snapshot.exists()) {
+    return token ? [token] : [];
+  }
+
+  const raw = snapshot.val() || {};
+  const values = Object.values(raw);
+  const list = values
+    .map((item)=> item && item.token ? String(item.token).trim() : "")
+    .filter((item)=> item.length > 0);
+
+  if (token) {
+    list.push(String(token).trim());
+  }
+  return Array.from(new Set(list));
+}
 function updateUserRegButtonLabel(){
   const userBtn = document.querySelector("#logData");
   if (!userBtn) {
@@ -1509,6 +1557,7 @@ if ('serviceWorker' in navigator) {
       .then(currentToken => {
         if (currentToken) {
           token = currentToken;
+          registerDeviceToken(currentToken);
           console.log('FCM Token received:', currentToken);
           return currentToken;
         } else {
@@ -1545,8 +1594,7 @@ messaging.onMessage((payload) => {
 function sendMessage(token, title, body, icon) {
   // Browser -> FCM direct calls are blocked by CORS and exposing serverKey is unsafe.
   // Use a relay endpoint (Cloud Function / backend API) instead.
-  const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
-  const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+  const { relayEndpoint, relayApiKey } = getRelayConfig();
 
   if (!relayEndpoint) {
     console.warn("FCM relay endpoint is not configured.");
@@ -1581,6 +1629,44 @@ function sendMessage(token, title, body, icon) {
   .catch(error => {
     console.error('Error sending message:', error);
   });
+}
+async function sendMessageToAllDevices(title, body, icon){
+  const { relayEndpoint, relayApiKey } = getRelayConfig();
+  if (!relayEndpoint) {
+    throw new Error("FCM relay endpoint not configured");
+  }
+  if (!relayApiKey) {
+    throw new Error("FCM relay API key not configured");
+  }
+
+  const tokens = await getRegisteredDeviceTokens();
+  if (!tokens.length) {
+    throw new Error("No registered device tokens");
+  }
+
+  const messagePayload = {
+    tokens,
+    notification: {
+      title: title,
+      body: body,
+      icon: icon || notificationIconUrl
+    }
+  };
+
+  const response = await fetch(relayEndpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': relayApiKey
+    },
+    body: JSON.stringify(messagePayload)
+  });
+  const data = await response.json().catch(()=>({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Broadcast request failed");
+  }
+  console.log("Broadcast sent:", data);
+  return data;
 }
  function reLoad(){
   if(mC){
@@ -1726,14 +1812,9 @@ function otherContents(e){
 }
 async function test(){
   try {
-    if (!token) {
-      toastOn("FCM 토큰 확인중입니다. 잠시 후 다시 시도하세요.");
-      return;
-    }
     const title = "WMS Test";
     const body = "test 메시지 발송";
-    const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
-    const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+    const { relayEndpoint, relayApiKey } = getRelayConfig();
     if (!relayEndpoint || !relayApiKey) {
       // Relay 미설정 환경에서는 로컬 알림으로 테스트 가능하게 처리
       if (Notification.permission === "granted") {
@@ -1743,8 +1824,13 @@ async function test(){
       return;
     }
 
-    await sendMessage(token, title, body, notificationIconUrl);
-    toastOn("test 메시지 발송 요청 완료", 2000);
+    if (!token) {
+      toastOn("현재 기기 토큰이 아직 없어도, 등록된 다른 기기들로 전송 시도합니다.", 2200);
+    }
+    const result = await sendMessageToAllDevices(title, body, notificationIconUrl);
+    const successCount = Number(result && result.successCount ? result.successCount : 0);
+    const failureCount = Number(result && result.failureCount ? result.failureCount : 0);
+    toastOn("전체 전송 완료: 성공 " + successCount + " / 실패 " + failureCount, 2600);
   } catch (error) {
     console.error("test FCM send error:", error);
     toastOn("test 메시지 발송 실패");

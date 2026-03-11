@@ -42,28 +42,59 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res)
   try {
     const body = req.body || {};
     const to = String(body.to || "").trim();
+    const tokens = Array.isArray(body.tokens) ? body.tokens : [];
     const notification = body.notification || {};
 
-    if (!to) {
-      res.status(400).json({ error: "Missing 'to' token" });
+    const normalizedTokens = tokens
+      .map((item) => String(item || "").trim())
+      .filter((item) => item.length > 0);
+
+    const uniqueTokens = Array.from(new Set(normalizedTokens));
+    const hasSingleToken = !!to;
+    const hasMultiTokens = uniqueTokens.length > 0;
+
+    if (!hasSingleToken && !hasMultiTokens) {
+      res.status(400).json({ error: "Missing target token(s). Provide 'to' or 'tokens'." });
+      return;
+    }
+
+    const notificationPayload = {
+      title: String(notification.title || "WMS"),
+      body: String(notification.body || "")
+    };
+
+    const webpushPayload = {
+      notification: {
+        icon: String(notification.icon || "/WmsMobile/images/icon.png")
+      }
+    };
+
+    if (hasMultiTokens) {
+      const multicastMessage = {
+        tokens: uniqueTokens,
+        notification: notificationPayload,
+        webpush: webpushPayload
+      };
+
+      const result = await admin.messaging().sendEachForMulticast(multicastMessage);
+      res.status(200).json({
+        ok: true,
+        mode: "multicast",
+        requested: uniqueTokens.length,
+        successCount: result.successCount,
+        failureCount: result.failureCount
+      });
       return;
     }
 
     const message = {
       token: to,
-      notification: {
-        title: String(notification.title || "WMS"),
-        body: String(notification.body || "")
-      },
-      webpush: {
-        notification: {
-          icon: String(notification.icon || "/images/default-icon.png")
-        }
-      }
+      notification: notificationPayload,
+      webpush: webpushPayload
     };
 
     const messageId = await admin.messaging().send(message);
-    res.status(200).json({ ok: true, messageId });
+    res.status(200).json({ ok: true, mode: "single", messageId });
   } catch (error) {
     console.error("sendFcmRelay error:", error);
     res.status(500).json({ ok: false, error: error.message || "Unknown error" });

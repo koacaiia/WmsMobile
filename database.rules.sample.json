@@ -1,0 +1,15 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "DeptName": {
+      "$dept": {
+        "DeviceTokens": {
+          "$tokenKey": {
+            ".validate": "newData.hasChildren(['token', 'updatedAt']) && newData.child('token').isString() && newData.child('token').val().length > 20 && newData.child('token').val().length < 500 && (!newData.child('userName').exists() || newData.child('userName').isString()) && (!newData.child('userAgent').exists() || newData.child('userAgent').isString()) && newData.child('updatedAt').isString()"
+          }
+        }
+      }
+    }
+  }
+}

@@ -49,3 +49,45 @@ localStorage.setItem("fcmRelayApiKey", "change-this-long-random-key");
 When calling relay endpoint, send `x-api-key` with `localStorage.fcmRelayApiKey`.
 
 If your frontend currently omits this header, add it in `main.js` fetch options.
+
+## 7) Request payload modes
+
+Single device send:
+
+```json
+{
+  "to": "<FCM_TOKEN>",
+  "notification": {
+    "title": "WMS",
+    "body": "single send",
+    "icon": "https://koacaiia.github.io/WmsMobile/images/icon.png"
+  }
+}
+```
+
+Multi-device send (broadcast):
+
+```json
+{
+  "tokens": ["<FCM_TOKEN_1>", "<FCM_TOKEN_2>"],
+  "notification": {
+    "title": "WMS",
+    "body": "broadcast send",
+    "icon": "https://koacaiia.github.io/WmsMobile/images/icon.png"
+  }
+}
+```
+
+## 8) Realtime Database rules for device token registry
+
+`main.js` now stores tokens under:
+
+`DeptName/<deptName>/DeviceTokens/<sanitizedToken>`
+
+If your Realtime Database rules are strict, allow this path (or apply the sample below).
+
+Sample rules file has been added at:
+
+`../database.rules.sample.json`
+
+You can paste it in Firebase Console > Realtime Database > Rules, or wire it into your Firebase CLI deployment.
