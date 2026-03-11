@@ -79,6 +79,15 @@ td{
 .clicked{
     background-color: #c0c5e9;
 }
+.schedule-selected{
+    background-image: linear-gradient(135deg, rgba(16, 185, 129, 0.32), rgba(59, 130, 246, 0.34));
+    border-left: 4px solid #0f766e;
+}
+#scheduleChange.active{
+    background-image: linear-gradient(135deg, #0f766e, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+}
 th{
     border: 1px solid white;
     word-break:normal;
@@ -472,4 +481,32 @@ textarea{
     display: flex;
     justify-content: space-around;
     margin-top: 20px;
+}
+.schedule-modal-content {
+    width: min(92vw, 540px);
+    height: auto;
+    margin: 10vh auto;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+#scheduleModalTitle {
+    margin: 0 0 12px 0;
+    text-align: center;
+}
+#scheduleModalBody {
+    white-space: pre-wrap;
+    max-height: 45vh;
+    overflow: auto;
+    line-height: 1.4;
+}
+#scheduleModalActions {
+    gap: 10px;
+    flex-wrap: wrap;
+}
+#scheduleModalActions button {
+    min-width: 100px;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
 }

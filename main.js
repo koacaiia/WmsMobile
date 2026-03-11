@@ -43,6 +43,8 @@ let userName = "";
 let isUploading = false;
 let modalTargetImage = null;
 let filePickerPending = false;
+let isScheduleMode = false;
+let isScheduleProcessing = false;
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isMobilePopupContext = ()=>{
@@ -130,6 +132,291 @@ function applyMobileTopButtonLabels(){
     otherEnFBtn.textContent = "장비";
   }
 }
+function clearScheduleSelections(){
+  document.querySelectorAll("#tBodyIn tr.schedule-selected, #tBodyOut tr.schedule-selected").forEach((row)=>{
+    row.classList.remove("schedule-selected");
+  });
+  updateScheduleSelectionCounter();
+}
+function updateScheduleSelectionCounter(){
+  const scheduleBtn = document.querySelector("#scheduleChange");
+  if (!scheduleBtn) {
+    return;
+  }
+  if (!isScheduleMode) {
+    scheduleBtn.textContent = "일정변경";
+    return;
+  }
+  const selectedCount = document.querySelectorAll("#tBodyIn tr.schedule-selected, #tBodyOut tr.schedule-selected").length;
+  scheduleBtn.textContent = "선택완료(" + selectedCount + ")";
+}
+function toggleScheduleRowSelection(row){
+  if (!row) {
+    return;
+  }
+  row.classList.toggle("schedule-selected");
+  updateScheduleSelectionCounter();
+}
+function setScheduleMode(enabled){
+  isScheduleMode = !!enabled;
+  clearScheduleSelections();
+  const scheduleBtn = document.querySelector("#scheduleChange");
+  if (scheduleBtn) {
+    scheduleBtn.classList.toggle("active", isScheduleMode);
+  }
+  updateScheduleSelectionCounter();
+  dateChanged();
+}
+function getSelectedScheduleItems(){
+  const items = [];
+  document.querySelectorAll("#tBodyIn tr.schedule-selected, #tBodyOut tr.schedule-selected").forEach((row)=>{
+    if (!row.id) {
+      return;
+    }
+    items.push({
+      ref: row.id,
+      io: row.closest("tbody") && row.closest("tbody").id === "tBodyOut" ? "outCargo" : "InCargo"
+    });
+  });
+  return items;
+}
+function getTomorrowDateText(){
+  const baseDate = new Date((dateSelect && dateSelect.value) ? dateSelect.value : dateT(new Date()));
+  baseDate.setDate(baseDate.getDate() + 1);
+  return dateT(baseDate);
+}
+function showScheduleModal(config){
+  const modal = document.querySelector("#scheduleModal");
+  const title = document.querySelector("#scheduleModalTitle");
+  const body = document.querySelector("#scheduleModalBody");
+  const actions = document.querySelector("#scheduleModalActions");
+  if (!modal || !title || !body || !actions) {
+    return Promise.resolve(null);
+  }
+
+  title.textContent = (config && config.title) || "작업";
+  body.replaceChildren(document.createTextNode((config && config.bodyText) || ""));
+
+  if (config && config.bodyNode) {
+    body.replaceChildren(config.bodyNode);
+  }
+
+  actions.replaceChildren();
+  const buttons = (config && config.buttons) || [];
+
+  return new Promise((resolve)=>{
+    let closed = false;
+    const closeByBackdrop = (event)=>{
+      if (event.target === modal) {
+        cleanup(null);
+      }
+    };
+
+    const cleanup = (result)=>{
+      if (closed) {
+        return;
+      }
+      closed = true;
+      modal.removeEventListener("click", closeByBackdrop);
+      modal.style.display = "none";
+      actions.replaceChildren();
+      resolve(result);
+    };
+
+    buttons.forEach((buttonConfig)=>{
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = buttonConfig.label;
+      button.addEventListener("click", ()=>cleanup(buttonConfig.value));
+      actions.appendChild(button);
+    });
+
+    modal.addEventListener("click", closeByBackdrop);
+    modal.style.display = "block";
+  });
+}
+async function pickTargetDateByModal(){
+  const pickedMode = await showScheduleModal({
+    title: "일정 변경",
+    bodyText: "변경 날짜를 선택하세요.",
+    buttons: [
+      { label: "내일", value: "tomorrow" },
+      { label: "날짜선택", value: "pick" },
+      { label: "취소", value: "cancel" }
+    ]
+  });
+
+  if (!pickedMode || pickedMode === "cancel") {
+    return null;
+  }
+  if (pickedMode === "tomorrow") {
+    return getTomorrowDateText();
+  }
+
+  const wrapper = document.createElement("div");
+  const label = document.createElement("div");
+  label.textContent = "변경할 날짜를 입력하세요.";
+  label.style.marginBottom = "10px";
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.value = dateSelect.value || dateT(new Date());
+  dateInput.style.width = "100%";
+  wrapper.appendChild(label);
+  wrapper.appendChild(dateInput);
+
+  const dateResult = await showScheduleModal({
+    title: "날짜 선택",
+    bodyNode: wrapper,
+    buttons: [
+      { label: "확인", value: "ok" },
+      { label: "취소", value: "cancel" }
+    ]
+  });
+  if (dateResult !== "ok") {
+    return null;
+  }
+  const trimmed = (dateInput.value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || isNaN(new Date(trimmed).getTime())) {
+    toastOn("날짜 형식이 올바르지 않습니다.");
+    return null;
+  }
+  return trimmed;
+}
+function buildMovedRef(oldRef, nextDate){
+  const parts = (oldRef || "").split("/");
+  const nextYear = nextDate.substring(0, 4);
+  const nextMonth = nextDate.substring(5, 7);
+  const nextDay = nextDate.substring(8, 10);
+
+  if (parts.length >= 6 && parts[2] === "InCargo") {
+    return parts.slice(0, 3).concat([nextYear, nextMonth, nextDay], parts.slice(6)).join("/");
+  }
+
+  if (parts.length >= 5 && parts[2] === "OutCargo") {
+    return parts.slice(0, 3).concat([nextMonth + "월", nextDate], parts.slice(5)).join("/");
+  }
+
+  return "";
+}
+async function moveScheduleItemToDate(itemRef, nextDate){
+  const oldRef = (itemRef || "").trim();
+  const newRef = buildMovedRef(oldRef, nextDate);
+  if (!oldRef || !newRef || oldRef === newRef) {
+    return { status: "skipped", ref: oldRef };
+  }
+
+  const snapshot = await database_f.ref(oldRef).get();
+  if (!snapshot.exists()) {
+    return { status: "missing", ref: oldRef };
+  }
+
+  const payload = snapshot.val();
+  if (payload && typeof payload === "object") {
+    if (Object.prototype.hasOwnProperty.call(payload, "refValue")) {
+      payload.refValue = newRef;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "keyValue")) {
+      payload.keyValue = newRef;
+    }
+  }
+
+  await database_f.ref(newRef).set(payload);
+  await database_f.ref(oldRef).remove();
+  return { status: "moved", from: oldRef, to: newRef };
+}
+async function removeScheduleItem(itemRef){
+  const targetRef = (itemRef || "").trim();
+  if (!targetRef) {
+    return { status: "skipped", ref: targetRef };
+  }
+  await database_f.ref(targetRef).remove();
+  return { status: "removed", ref: targetRef };
+}
+async function scheduleChange(){
+  if (isScheduleProcessing) {
+    toastOn("일정 변경 작업 진행중입니다.");
+    return;
+  }
+
+  if (!isScheduleMode) {
+    setScheduleMode(true);
+    toastOn("선택 모드: 빨간 항목 제외, 다중 선택 가능", 2500);
+    return;
+  }
+
+  const selectedItems = getSelectedScheduleItems();
+  if (selectedItems.length === 0) {
+    toastOn("선택된 항목이 없습니다.");
+    return;
+  }
+
+  const action = await showScheduleModal({
+    title: "선택 작업",
+    bodyText: selectedItems.length + "개 항목 선택됨",
+    buttons: [
+      { label: "항목 일정 변경", value: "move" },
+      { label: "삭제", value: "delete" },
+      { label: "취소", value: "cancel" }
+    ]
+  });
+  if (!action || action === "cancel") {
+    setScheduleMode(false);
+    toastOn("선택 모드 종료");
+    return;
+  }
+
+  try {
+    isScheduleProcessing = true;
+
+    if (action === "move") {
+      const nextDate = await pickTargetDateByModal();
+      if (!nextDate) {
+        return;
+      }
+      const moveConfirm = await showScheduleModal({
+        title: "일정 변경 확인",
+        bodyText: selectedItems.length + "건을 " + nextDate + " 일정으로 변경합니다.",
+        buttons: [
+          { label: "확인", value: "ok" },
+          { label: "취소", value: "cancel" }
+        ]
+      });
+      if (moveConfirm !== "ok") {
+        return;
+      }
+
+      await Promise.all(selectedItems.map((item)=>moveScheduleItemToDate(item.ref, nextDate)));
+      toastOn("일정 변경 완료: " + selectedItems.length + "건", 2500);
+      setScheduleMode(false);
+      return;
+    }
+
+    if (action === "delete") {
+      const refListText = selectedItems.map((item, index)=>(index + 1) + ". " + item.ref).join("\n");
+      const removeConfirm = await showScheduleModal({
+        title: "삭제 확인",
+        bodyText: "아래 경로 데이터를 삭제합니다.\n\n" + refListText,
+        buttons: [
+          { label: "삭제", value: "ok" },
+          { label: "취소", value: "cancel" }
+        ]
+      });
+      if (removeConfirm !== "ok") {
+        return;
+      }
+      await Promise.all(selectedItems.map((item)=>removeScheduleItem(item.ref)));
+      toastOn("삭제 완료: " + selectedItems.length + "건", 2500);
+      setScheduleMode(false);
+      return;
+    }
+  } catch (error) {
+    console.error("scheduleChange error:", error);
+    toastOn("작업 중 오류가 발생했습니다.");
+  } finally {
+    isScheduleProcessing = false;
+  }
+}
+window.scheduleChange = scheduleChange;
 const dateT = (d)=>{
     let result_date;
     try{
@@ -265,20 +552,29 @@ function getData(date){
             tr.appendChild(td3);
             tr.appendChild(td4);
             tr.appendChild(td5);
+            const isWorkingDone = item["working"]!="";
+            if (isScheduleMode && isWorkingDone) {
+              continue;
+            }
             tBodyIn.appendChild(tr);
             tr.addEventListener("click",(e)=>{
+                const row = e.currentTarget;
+                if (isScheduleMode) {
+                  toggleScheduleRowSelection(row);
+                  return;
+                }
                 const trList = document.querySelectorAll("#tBodyIn tr");
                 trList.forEach((e)=>{
                   if(e.classList.contains("clicked")){
                        e.classList.remove("clicked");}
                 });
-                e.target.parentNode.classList.toggle("clicked");
+                row.classList.toggle("clicked");
                 // document.querySelector("#mainOut").style="display:none";
-                ref=tr.id;
+                ref=row.id;
                 ioValue="InCargo";
                 popUp();
             });
-            if(item["working"]!=""){
+            if(isWorkingDone){
                 tr.style="color:red;";}
         }
           moveRedRowsToBottom(tBodyIn);
@@ -318,20 +614,29 @@ function getData(date){
             tr.appendChild(td4);
             tr.appendChild(td5);
             tr.appendChild(td6);
+            const isWorkDone = val[i]["workprocess"]!="미";
+            if (isScheduleMode && isWorkDone) {
+              continue;
+            }
             tBodyOut.appendChild(tr);
             tr.addEventListener("click",(e)=>{
+                const row = e.currentTarget;
+                if (isScheduleMode) {
+                  toggleScheduleRowSelection(row);
+                  return;
+                }
                 const trList = document.querySelectorAll("#tBodyOut tr");
                 trList.forEach((e)=>{
                   if(e.classList.contains("clicked")){
                     e.classList.remove("clicked");}
                 });
-                e.target.parentNode.classList.toggle("clicked");
+                row.classList.toggle("clicked");
                 // document.querySelector("#mainIn").style="display:none";
-                ref=tr.id;
+                ref=row.id;
                 ioValue="outCargo";
                 popUp();
             });
-            if(val[i]["workprocess"]!="미"){
+            if(isWorkDone){
               tr.style="color:red;";}
         }
         moveRedRowsToBottom(tBodyOut);

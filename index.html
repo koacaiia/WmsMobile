@@ -31,7 +31,7 @@
             <input type="date" id="dateSelect" onchange="dateChanged()">
             <button id="dateContents" onclick="dateNext()">내일</button>
             <button id="otherPlt" onclick="otherContents(this)">Pallet</button>  
-            <button id="otherEnF" onclick="otherContents(this)">장비,시설물</button>
+            <button id="scheduleChange" onclick="scheduleChange(this)">일정변경</button>
         </div>
         <div id="mainOs" style="display:grid;grid-template-columns:10fr 1fr ">
             <table class="tableW"id="mainOsTable" >
@@ -162,7 +162,15 @@
                     <button onclick="saveImg()">다운</button>
                 </div>
         </div>
-    </div>       
+    </div>
+
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content schedule-modal-content">
+            <h3 id="scheduleModalTitle">일정 작업</h3>
+            <div id="scheduleModalBody"></div>
+            <div id="scheduleModalActions" class="modal-buttons"></div>
+        </div>
+    </div>
 <div id="popup" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; z-index:1000;">
   팝업 내용
 </div>
