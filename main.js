@@ -127,6 +127,69 @@ function getRelayConfig(){
 function ensureRelayApiKeyConfigured(){
   return getRelayConfig();
 }
+function getRelayEndpointCandidates(){
+  const candidates = [];
+  try {
+    candidates.push((window.FCM_RELAY_ENDPOINT || "").trim());
+  } catch (error) {
+    console.error("FCM_RELAY_ENDPOINT 확인 실패:", error);
+  }
+  try {
+    candidates.push((localStorage.getItem("fcmRelayEndpoint") || "").trim());
+  } catch (error) {
+    console.error("fcmRelayEndpoint 로드 실패:", error);
+  }
+  candidates.push(defaultRelayEndpoint);
+  return Array.from(new Set(candidates.filter((item)=>!!item)));
+}
+function saveWorkingRelayEndpoint(endpoint){
+  if (!endpoint) {
+    return;
+  }
+  try {
+    localStorage.setItem("fcmRelayEndpoint", endpoint);
+  } catch (error) {
+    console.error("fcmRelayEndpoint 저장 실패:", error);
+  }
+}
+async function postRelayWithFallback(messagePayload, relayApiKey){
+  const endpoints = getRelayEndpointCandidates();
+  if (!endpoints.length) {
+    throw new Error("FCM relay endpoint not configured");
+  }
+
+  let lastError = null;
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i];
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": relayApiKey
+        },
+        body: JSON.stringify(messagePayload)
+      });
+      const data = await response.json().catch(()=>({}));
+      if (response.ok) {
+        saveWorkingRelayEndpoint(endpoint);
+        data.endpoint = endpoint;
+        return data;
+      }
+
+      const errorMessage = data.error || ("Relay request failed: " + response.status);
+      // 인증/요청 형식 오류는 endpoint fallback을 해도 해결되지 않으므로 즉시 종료
+      if (response.status === 400 || response.status === 401 || response.status === 403) {
+        throw new Error(errorMessage);
+      }
+      lastError = new Error(errorMessage);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Relay request failed");
+}
 async function getRegisteredDeviceTokens(){
   const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch((error)=>{
     throw new Error("기기 토큰 목록 조회 실패(권한/네트워크 확인): " + (error && error.message ? error.message : "unknown"));
@@ -1653,15 +1716,7 @@ function sendMessage(token, title, body, icon) {
     }
   };
 
-  return fetch(relayEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': relayApiKey
-    },
-    body: JSON.stringify(messagePayload)
-  })
-  .then(response => response.json())
+  return postRelayWithFallback(messagePayload, relayApiKey)
   .then(data => {
     console.log('Message sent successfully:', data);
   })
@@ -1693,18 +1748,7 @@ async function sendMessageToAllDevices(title, body, icon){
     }
   };
 
-  const response = await fetch(relayEndpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': relayApiKey
-    },
-    body: JSON.stringify(messagePayload)
-  });
-  const data = await response.json().catch(()=>({}));
-  if (!response.ok) {
-    throw new Error(data.error || "Broadcast request failed");
-  }
+  const data = await postRelayWithFallback(messagePayload, relayApiKey);
   console.log("Broadcast sent:", data);
   return data;
 }
@@ -1714,6 +1758,7 @@ window.fcmDebugStatus = async function fcmDebugStatus(){
     hasCurrentToken: !!token,
     currentTokenPreview: token ? token.substring(0, 20) + "..." : "",
     relayConfigured: !!(config.relayEndpoint && config.relayApiKey),
+    relayCandidates: getRelayEndpointCandidates().length,
     tokenCount: 0,
     error: ""
   };
