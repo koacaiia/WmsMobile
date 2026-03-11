@@ -45,6 +45,8 @@ let modalTargetImage = null;
 let filePickerPending = false;
 let isScheduleMode = false;
 let isScheduleProcessing = false;
+let messagingSwRegistration = null;
+let messagingSwRegistrationPromise = null;
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isMobilePopupContext = ()=>{
@@ -1443,11 +1445,33 @@ function staffCheck(){
 }
 window.staffCheck = staffCheck;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('firebase-messaging-sw.js').then((registration)=>{
-    console.log('Service Worker 등록 완료:', registration.scope);
-  }).catch((error)=>{
-    console.error('Service Worker 등록 실패:', error);
-  });
+  function ensureMessagingServiceWorker() {
+    if (messagingSwRegistration) {
+      return Promise.resolve(messagingSwRegistration);
+    }
+    if (messagingSwRegistrationPromise) {
+      return messagingSwRegistrationPromise;
+    }
+
+    messagingSwRegistrationPromise = navigator.serviceWorker.register('firebase-messaging-sw.js')
+      .then((registration)=>{
+        messagingSwRegistration = registration;
+        console.log('Service Worker 등록 완료:', registration.scope);
+        return registration;
+      })
+      .catch((error)=>{
+        console.error('Service Worker 등록 실패:', error);
+        return null;
+      })
+      .finally(()=>{
+        messagingSwRegistrationPromise = null;
+      });
+
+    return messagingSwRegistrationPromise;
+  }
+
+  ensureMessagingServiceWorker();
+
   function requestPermission(){
     Notification.requestPermission().then((permission)=> {
       if(permission == "granted"){
@@ -1463,8 +1487,16 @@ if ('serviceWorker' in navigator) {
   }
   
   function getToken() {
-    // VAPID 키를 사용하여 토큰 요청 (GitHub Pages 호환)
-    return messaging.getToken({ vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k' })
+    // GitHub Pages 하위 경로에서는 등록된 service worker를 명시해야 기본 경로 404를 피할 수 있습니다.
+    return ensureMessagingServiceWorker().then((registration)=> {
+      if (!registration) {
+        throw new Error("Messaging Service Worker registration not available");
+      }
+      return messaging.getToken({
+        vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
+        serviceWorkerRegistration: registration
+      });
+    })
       .then(currentToken => {
         if (currentToken) {
           token = currentToken;
@@ -1483,14 +1515,6 @@ if ('serviceWorker' in navigator) {
   
   document.addEventListener('DOMContentLoaded', () => {
     requestPermission();
-  
-    // Example: Send a message after getting the token
-    getToken().then(token => {
-      if (token) {
-        console.log('FCM Token:', token);
-        // sendMessage(token, 'Hello!', 'This is a test message.', '/images/icon.png');
-      }
-    });
   });
 }
 
@@ -1549,26 +1573,6 @@ function sendMessage(token, title, body, icon) {
     console.error('Error sending message:', error);
   });
 }
-async function sendMessageToServer(message, token) {
-  try {
-    const response = await fetch('https://fcm.googleapis.com/fcm/send', { // Your server's endpoint
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ message, token }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    console.log('Notification request sent to server.');
-  } catch (error) {
-    console.error('Error sending notification request:', error);
-  }
-}
-// // Example usage
-// sendMessageToServer('Hello!', token);
  function reLoad(){
   if(mC){
     location.reload();
