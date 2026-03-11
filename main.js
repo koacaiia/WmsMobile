@@ -1510,8 +1510,19 @@ messaging.onMessage((payload) => {
 // Call requestPermission on page load
 
 function sendMessage(token, title, body, icon) {
-  const fcmEndpoint = 'https://fcm.googleapis.com/fcm/send';
-  const serverKey = "AAAAYLjTacM:APA91bEfxvEgfzLykmd3YAu-WAI6VW64Ol8TdmGC0GIKao0EB9c3OMAsJNpPCDEUVsMgUkQjbWCpP_Dw2CNpF2u-4u3xuUF30COZslRIqqbryAAhQu0tGLdtFsTXU5EqsMGaMnGK8jpQ"; // Replace with your actual server key
+  // Browser -> FCM direct calls are blocked by CORS and exposing serverKey is unsafe.
+  // Use a relay endpoint (Cloud Function / backend API) instead.
+  const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
+  const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+
+  if (!relayEndpoint) {
+    console.warn("FCM relay endpoint is not configured.");
+    return Promise.reject(new Error("FCM relay endpoint not configured"));
+  }
+  if (!relayApiKey) {
+    console.warn("FCM relay API key is not configured.");
+    return Promise.reject(new Error("FCM relay API key not configured"));
+  }
 
   const messagePayload = {
     to: token,
@@ -1522,11 +1533,11 @@ function sendMessage(token, title, body, icon) {
     }
   };
 
-  fetch(fcmEndpoint, {
+  return fetch(relayEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'key=' + serverKey
+      'x-api-key': relayApiKey
     },
     body: JSON.stringify(messagePayload)
   })
@@ -1700,6 +1711,33 @@ function otherContents(e){
   }
   
 }
+async function test(){
+  try {
+    if (!token) {
+      toastOn("FCM 토큰 확인중입니다. 잠시 후 다시 시도하세요.");
+      return;
+    }
+    const title = "WMS Test";
+    const body = "test 메시지 발송";
+    const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
+    const relayApiKey = (window.FCM_RELAY_API_KEY || localStorage.getItem("fcmRelayApiKey") || "").trim();
+    if (!relayEndpoint || !relayApiKey) {
+      // Relay 미설정 환경에서는 로컬 알림으로 테스트 가능하게 처리
+      if (Notification.permission === "granted") {
+        new Notification(title, { body, icon: "/images/icon.png" });
+      }
+      toastOn("릴레이(endpoint/apiKey) 미설정: 로컬 알림으로 테스트했습니다.", 2500);
+      return;
+    }
+
+    await sendMessage(token, title, body, "/images/icon.png");
+    toastOn("test 메시지 발송 요청 완료", 2000);
+  } catch (error) {
+    console.error("test FCM send error:", error);
+    toastOn("test 메시지 발송 실패");
+  }
+}
+window.test = test;
 function showModal(imgTag){
     if (!imgTag) {
       return;
@@ -1756,6 +1794,10 @@ function closeModal() {
 }
 document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
+  const otherPltBtn = document.querySelector("#otherPlt");
+  if (otherPltBtn) {
+    otherPltBtn.addEventListener("click", test);
+  }
   const modal = document.getElementById("imgModal");
   if (!modal) {
     return;
