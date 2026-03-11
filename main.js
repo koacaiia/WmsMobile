@@ -22,6 +22,7 @@ const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const deptName = "WareHouseDept2";
+const notificationIconUrl = new URL("images/icon.png", window.location.href).toString();
 // messaging.onBackgroundMessage(function(payload) {
 //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
 //   // Customize notification here
@@ -1532,7 +1533,7 @@ messaging.onMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
       body: payload.notification.body,
-       icon: payload.notification.icon || '/images/default-icon.png'
+      icon: payload.notification.icon || notificationIconUrl
   };
   console.log(notificationTitle,notificationOptions);
   new Notification(notificationTitle, notificationOptions);
@@ -1561,7 +1562,7 @@ function sendMessage(token, title, body, icon) {
     notification: {
       title: title,
       body: body,
-      icon: icon || '/images/default-icon.png'
+      icon: icon || notificationIconUrl
     }
   };
 
@@ -1736,13 +1737,13 @@ async function test(){
     if (!relayEndpoint || !relayApiKey) {
       // Relay 미설정 환경에서는 로컬 알림으로 테스트 가능하게 처리
       if (Notification.permission === "granted") {
-        new Notification(title, { body, icon: "/images/icon.png" });
+        new Notification(title, { body, icon: notificationIconUrl });
       }
       toastOn("릴레이(endpoint/apiKey) 미설정: 로컬 알림으로 테스트했습니다.", 2500);
       return;
     }
 
-    await sendMessage(token, title, body, "/images/icon.png");
+    await sendMessage(token, title, body, notificationIconUrl);
     toastOn("test 메시지 발송 요청 완료", 2000);
   } catch (error) {
     console.error("test FCM send error:", error);
