@@ -47,6 +47,7 @@ let isScheduleMode = false;
 let isScheduleProcessing = false;
 let messagingSwRegistration = null;
 let messagingSwRegistrationPromise = null;
+const messagingSwVersion = "20260311-1";
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 const isMobilePopupContext = ()=>{
@@ -1453,7 +1454,8 @@ if ('serviceWorker' in navigator) {
       return messagingSwRegistrationPromise;
     }
 
-    messagingSwRegistrationPromise = navigator.serviceWorker.register('firebase-messaging-sw.js')
+    const swScriptUrl = new URL("firebase-messaging-sw.js?v=" + messagingSwVersion, window.location.href).toString();
+    messagingSwRegistrationPromise = navigator.serviceWorker.register(swScriptUrl, { scope: "./" })
       .then((registration)=>{
         messagingSwRegistration = registration;
         console.log('Service Worker 등록 완료:', registration.scope);
@@ -1492,6 +1494,12 @@ if ('serviceWorker' in navigator) {
       if (!registration) {
         throw new Error("Messaging Service Worker registration not available");
       }
+
+      // compat SDK에서는 useServiceWorker 바인딩이 필요한 환경이 있어 명시적으로 연결합니다.
+      if (typeof messaging.useServiceWorker === "function") {
+        messaging.useServiceWorker(registration);
+      }
+
       return messaging.getToken({
         vapidKey: 'BMSh5U53qMZrt9KYOmmcjST0BBjua_nUcA3bzMO2l5OUEF6CgMnsu-_2Nf1PqwWsjuq3XEVrXZfGFPEMtE8Kr_k',
         serviceWorkerRegistration: registration
