@@ -23,6 +23,19 @@ const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const deptName = "WareHouseDept2";
 const notificationIconUrl = new URL("images/icon.png", window.location.href).toString();
+function normalizeNotificationIconUrl(rawIconUrl){
+  const value = String(rawIconUrl || "").trim();
+  if (!value) {
+    return notificationIconUrl;
+  }
+  if (value.startsWith("/images/")) {
+    return new URL("WmsMobile" + value, window.location.origin + "/").toString();
+  }
+  if (value.startsWith("images/")) {
+    return new URL(value, window.location.href).toString();
+  }
+  return value;
+}
 // messaging.onBackgroundMessage(function(payload) {
 //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
 //   // Customize notification here
@@ -72,11 +85,11 @@ function normalizeDeviceTokenKey(value){
 function registerDeviceToken(currentToken){
   const safeToken = String(currentToken || "").trim();
   if (!safeToken) {
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
   const tokenKey = normalizeDeviceTokenKey(safeToken);
   if (!tokenKey) {
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
   const payload = {
@@ -85,9 +98,12 @@ function registerDeviceToken(currentToken){
     userAgent: navigator.userAgent || "",
     updatedAt: new Date().toISOString()
   };
-  return database_f.ref(getDeviceTokenRootRef() + "/" + tokenKey).set(payload).catch((error)=>{
-    console.error("토큰 저장 실패:", error);
-  });
+  return database_f.ref(getDeviceTokenRootRef() + "/" + tokenKey).set(payload)
+    .then(()=>true)
+    .catch((error)=>{
+      console.error("토큰 저장 실패:", error);
+      return false;
+    });
 }
 function getRelayConfig(){
   const relayEndpoint = (window.FCM_RELAY_ENDPOINT || localStorage.getItem("fcmRelayEndpoint") || "").trim();
@@ -95,7 +111,9 @@ function getRelayConfig(){
   return { relayEndpoint, relayApiKey };
 }
 async function getRegisteredDeviceTokens(){
-  const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch(()=>null);
+  const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch((error)=>{
+    throw new Error("기기 토큰 목록 조회 실패(권한/네트워크 확인): " + (error && error.message ? error.message : "unknown"));
+  });
   if (!snapshot || !snapshot.exists()) {
     return token ? [token] : [];
   }
@@ -1557,7 +1575,11 @@ if ('serviceWorker' in navigator) {
       .then(currentToken => {
         if (currentToken) {
           token = currentToken;
-          registerDeviceToken(currentToken);
+          registerDeviceToken(currentToken).then((saved)=>{
+            if (!saved) {
+              toastOn("토큰 저장 실패: DB rules/네트워크 확인", 2600);
+            }
+          });
           console.log('FCM Token received:', currentToken);
           return currentToken;
         } else {
@@ -1582,7 +1604,7 @@ messaging.onMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
       body: payload.notification.body,
-      icon: payload.notification.icon || notificationIconUrl
+      icon: normalizeNotificationIconUrl(payload.notification.icon)
   };
   console.log(notificationTitle,notificationOptions);
   new Notification(notificationTitle, notificationOptions);
@@ -1610,7 +1632,7 @@ function sendMessage(token, title, body, icon) {
     notification: {
       title: title,
       body: body,
-      icon: icon || notificationIconUrl
+      icon: normalizeNotificationIconUrl(icon)
     }
   };
 
@@ -1640,6 +1662,7 @@ async function sendMessageToAllDevices(title, body, icon){
   }
 
   const tokens = await getRegisteredDeviceTokens();
+  console.log("등록된 FCM 토큰 수:", tokens.length);
   if (!tokens.length) {
     throw new Error("No registered device tokens");
   }
@@ -1649,7 +1672,7 @@ async function sendMessageToAllDevices(title, body, icon){
     notification: {
       title: title,
       body: body,
-      icon: icon || notificationIconUrl
+      icon: normalizeNotificationIconUrl(icon)
     }
   };
 
@@ -1668,6 +1691,23 @@ async function sendMessageToAllDevices(title, body, icon){
   console.log("Broadcast sent:", data);
   return data;
 }
+window.fcmDebugStatus = async function fcmDebugStatus(){
+  const status = {
+    hasCurrentToken: !!token,
+    currentTokenPreview: token ? token.substring(0, 20) + "..." : "",
+    relayConfigured: !!(getRelayConfig().relayEndpoint && getRelayConfig().relayApiKey),
+    tokenCount: 0,
+    error: ""
+  };
+  try {
+    const list = await getRegisteredDeviceTokens();
+    status.tokenCount = list.length;
+  } catch (error) {
+    status.error = error && error.message ? error.message : String(error);
+  }
+  console.log("FCM DEBUG:", status);
+  return status;
+};
  function reLoad(){
   if(mC){
     location.reload();
@@ -1830,10 +1870,15 @@ async function test(){
     const result = await sendMessageToAllDevices(title, body, notificationIconUrl);
     const successCount = Number(result && result.successCount ? result.successCount : 0);
     const failureCount = Number(result && result.failureCount ? result.failureCount : 0);
-    toastOn("전체 전송 완료: 성공 " + successCount + " / 실패 " + failureCount, 2600);
+    const requested = Number(result && result.requested ? result.requested : (successCount + failureCount));
+    if (requested < 2) {
+      toastOn("대상 토큰이 " + requested + "개입니다. 다른 기기에서 앱 1회 접속/권한허용 필요", 3200);
+    } else {
+      toastOn("전체 전송 완료: 성공 " + successCount + " / 실패 " + failureCount, 2600);
+    }
   } catch (error) {
     console.error("test FCM send error:", error);
-    toastOn("test 메시지 발송 실패");
+    toastOn("test 발송 실패: " + (error && error.message ? error.message : "unknown"), 3200);
   }
 }
 window.test = test;
@@ -1891,6 +1936,109 @@ function closeModal() {
   modalTargetImage = null;
   modal.style.display = "none";
 }
+function attachFcmDebugPanel(){
+  if (document.querySelector("#fcmDebugPanel")) {
+    return;
+  }
+
+  const panel = document.createElement("div");
+  panel.id = "fcmDebugPanel";
+  panel.style.position = "fixed";
+  panel.style.right = "12px";
+  panel.style.bottom = "12px";
+  panel.style.zIndex = "9999";
+  panel.style.display = "grid";
+  panel.style.gap = "6px";
+
+  const openBtn = document.createElement("button");
+  openBtn.type = "button";
+  openBtn.textContent = "FCM상태";
+  openBtn.style.background = "#154077";
+  openBtn.style.color = "#fff";
+  openBtn.style.border = "0";
+  openBtn.style.borderRadius = "10px";
+  openBtn.style.padding = "8px 10px";
+  openBtn.style.fontSize = "12px";
+  openBtn.style.cursor = "pointer";
+
+  const card = document.createElement("div");
+  card.style.display = "none";
+  card.style.width = "min(92vw, 320px)";
+  card.style.maxHeight = "55vh";
+  card.style.overflow = "auto";
+  card.style.background = "#ffffff";
+  card.style.border = "1px solid #d0d7de";
+  card.style.borderRadius = "10px";
+  card.style.boxShadow = "0 8px 24px rgba(0,0,0,0.16)";
+  card.style.padding = "10px";
+
+  const title = document.createElement("div");
+  title.textContent = "FCM Debug";
+  title.style.fontWeight = "700";
+  title.style.marginBottom = "8px";
+
+  const statusPre = document.createElement("pre");
+  statusPre.style.whiteSpace = "pre-wrap";
+  statusPre.style.wordBreak = "break-word";
+  statusPre.style.margin = "0";
+  statusPre.style.fontSize = "12px";
+  statusPre.style.lineHeight = "1.35";
+  statusPre.textContent = "로딩중...";
+
+  const actions = document.createElement("div");
+  actions.style.display = "grid";
+  actions.style.gridTemplateColumns = "1fr 1fr";
+  actions.style.gap = "6px";
+  actions.style.marginTop = "8px";
+
+  const refreshBtn = document.createElement("button");
+  refreshBtn.type = "button";
+  refreshBtn.textContent = "새로고침";
+  refreshBtn.style.padding = "6px";
+  refreshBtn.style.borderRadius = "8px";
+  refreshBtn.style.border = "1px solid #bfc7d1";
+  refreshBtn.style.background = "#f3f6fa";
+  refreshBtn.style.cursor = "pointer";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.textContent = "닫기";
+  closeBtn.style.padding = "6px";
+  closeBtn.style.borderRadius = "8px";
+  closeBtn.style.border = "1px solid #bfc7d1";
+  closeBtn.style.background = "#f3f6fa";
+  closeBtn.style.cursor = "pointer";
+
+  const refreshStatus = async ()=>{
+    statusPre.textContent = "조회중...";
+    try {
+      const status = await window.fcmDebugStatus();
+      statusPre.textContent = JSON.stringify(status, null, 2);
+    } catch (error) {
+      statusPre.textContent = "조회 실패: " + (error && error.message ? error.message : String(error));
+    }
+  };
+
+  openBtn.addEventListener("click", ()=>{
+    card.style.display = card.style.display === "none" ? "block" : "none";
+    if (card.style.display === "block") {
+      refreshStatus();
+    }
+  });
+  refreshBtn.addEventListener("click", refreshStatus);
+  closeBtn.addEventListener("click", ()=>{
+    card.style.display = "none";
+  });
+
+  actions.appendChild(refreshBtn);
+  actions.appendChild(closeBtn);
+  card.appendChild(title);
+  card.appendChild(statusPre);
+  card.appendChild(actions);
+  panel.appendChild(openBtn);
+  panel.appendChild(card);
+  document.body.appendChild(panel);
+}
 document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
   const otherPltBtn = document.querySelector("#otherPlt");
@@ -1917,6 +2065,8 @@ document.addEventListener("DOMContentLoaded", () => {
       window.scrollTo(0, 1);
     }, 250);
   }
+
+  attachFcmDebugPanel();
 });
 function deleteImage() {
   const modalImg = document.getElementById("modalImg");

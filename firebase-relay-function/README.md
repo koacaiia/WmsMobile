@@ -91,3 +91,53 @@ Sample rules file has been added at:
 `../database.rules.sample.json`
 
 You can paste it in Firebase Console > Realtime Database > Rules, or wire it into your Firebase CLI deployment.
+
+## 9) End-to-end checklist (multi-device)
+
+Use this checklist when other devices are not receiving notifications.
+
+1. Deploy latest relay function code:
+
+```bash
+cd firebase-relay-function
+npm install
+firebase deploy --only functions
+```
+
+1. Set relay config in each test browser (once):
+
+```javascript
+localStorage.setItem("fcmRelayEndpoint", "https://asia-southeast1-fine-bondedwarehouse.cloudfunctions.net/sendFcmRelay");
+localStorage.setItem("fcmRelayApiKey", "<YOUR_RELAY_API_KEY>");
+```
+
+1. Apply Realtime Database rules that allow writing/reading:
+
+`DeptName/<deptName>/DeviceTokens/*`
+
+1. Open app on each device and allow notification permission.
+
+1. In each device console, run:
+
+```javascript
+await window.fcmDebugStatus()
+```
+
+Expected:
+
+- `relayConfigured: true`
+- `hasCurrentToken: true`
+- `tokenCount >= number of test devices`
+
+1. On one device, press the test button (`#otherPlt`) to send broadcast.
+
+1. If still failing, inspect these logs:
+
+- Frontend console: `등록된 FCM 토큰 수`, `test 발송 실패: ...`
+- Cloud Function logs for `sendFcmRelay` (success/failure counts)
+
+1. If one specific device never receives:
+
+- Re-open app on that device and re-allow notifications
+- Clear site data/service worker and reload
+- Re-run `await window.fcmDebugStatus()` and verify token registration

@@ -19,6 +19,17 @@ function setCors(req, res) {
   res.set("Access-Control-Allow-Headers", "Content-Type, x-api-key");
 }
 
+function normalizeIconPath(iconValue) {
+  const value = String(iconValue || "").trim();
+  if (!value) {
+    return "/WmsMobile/images/icon.png";
+  }
+  if (value.startsWith("/images/")) {
+    return "/WmsMobile" + value;
+  }
+  return value;
+}
+
 exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res) => {
   setCors(req, res);
 
@@ -65,7 +76,7 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res)
 
     const webpushPayload = {
       notification: {
-        icon: String(notification.icon || "/WmsMobile/images/icon.png")
+        icon: normalizeIconPath(notification.icon)
       }
     };
 
