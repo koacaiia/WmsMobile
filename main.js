@@ -391,6 +391,7 @@ function getData(date){
             if(item["working"]!=""){
                 tr.style="color:red;";}
         }
+          moveRedRowsToBottom(tBodyIn);
         toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
     }).
     catch((e)=>{
@@ -443,6 +444,7 @@ function getData(date){
             if(val[i]["workprocess"]!="미"){
               tr.style="color:red;";}
         }
+        moveRedRowsToBottom(tBodyOut);
     }).catch((e)=>{
       console.log(e);
         // alert(e);
@@ -563,6 +565,32 @@ function removeTableColumn(table, columnIndex){
     if (row.cells && row.cells.length > columnIndex) {
       row.deleteCell(columnIndex);
     }
+  });
+}
+function moveRedRowsToBottom(tBody){
+  if (!tBody) {
+    return;
+  }
+
+  const rows = Array.from(tBody.querySelectorAll("tr"));
+  if (rows.length === 0) {
+    return;
+  }
+
+  const normalRows = [];
+  const redRows = [];
+  rows.forEach((row)=>{
+    const inlineStyle = (row.getAttribute("style") || "").toLowerCase();
+    const isRedRow = row.style.color === "red" || inlineStyle.includes("color:red");
+    if (isRedRow) {
+      redRows.push(row);
+    } else {
+      normalRows.push(row);
+    }
+  });
+
+  normalRows.concat(redRows).forEach((row)=>{
+    tBody.appendChild(row);
   });
 }
 function adjustPopInfoTableLayout(){
