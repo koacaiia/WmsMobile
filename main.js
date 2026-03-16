@@ -681,10 +681,13 @@ function renderMainInSpecSummary(summaryByConsignee){
   const title = isInComplete ? "입고 완료" : "입고";
   const titleOpacity = isInComplete ? 0.32 : 0.72;
   const titleBlur = isInComplete ? 1.9 : 0.6;
+  const isMobileSummary = isMobilePopupContext();
+  const detailFontSize = isMobileSummary ? 42 : 34;
+  const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
   const titleEscaped = escapeSvgText(title);
   const detailEscaped = escapeSvgText(detailLine);
   const detailTextSvg = detailEscaped
-    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='34' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='0.5' filter='url(#d)'>" + detailEscaped + "</text>"
+    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='0.5' filter='url(#d)'>" + detailEscaped + "</text>"
     : "";
 
   const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='0.9'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
