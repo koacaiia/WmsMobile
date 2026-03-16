@@ -688,9 +688,9 @@ function renderMainInSpecSummary(summaryByConsignee){
   const titleEscaped = escapeSvgText(title);
   const consigneeEscaped = escapeSvgText(consigneeLine);
   const totalEscaped = escapeSvgText(totalLine);
-  const mobileTitleGapPercent = ((titleFontSize * 0.3) / 420) * 100;
+  const mobileTitleGapPercent = ((titleFontSize * 0.5) / 420) * 100;
   const consigneeY = isMobileSummary ? (titleY + mobileTitleGapPercent) : 66;
-  const totalY = isMobileSummary ? (consigneeY + 20) : 86;
+  const totalY = isMobileSummary ? (consigneeY + 22) : 86;
   let detailTextSvg = "";
   if (isMobileSummary && consigneeEscaped && totalEscaped) {
     detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
