@@ -590,11 +590,114 @@ const dateSelect = document.querySelector("#dateSelect");
 const tBodyIn=document.querySelector("#tBodyIn");
 const tBodyOut=document.querySelector("#tBodyOut");
 ensureUserNameOnStartup();
+function isRedStyledRow(row){
+  if (!row) {
+    return false;
+  }
+  const inlineStyle = (row.getAttribute("style") || "").toLowerCase();
+  return row.style.color === "red" || inlineStyle.includes("color:red");
+}
+function updateMainInWatermarkStatus(){
+  const mainIn = document.querySelector("#mainIn");
+  if (!mainIn) {
+    return;
+  }
+  const rows = Array.from(document.querySelectorAll("#tBodyIn tr"));
+  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row));
+  mainIn.classList.toggle("in-complete", isComplete);
+}
+function updateMainOutWatermarkStatus(){
+  const mainOut = document.querySelector("#mainOut");
+  if (!mainOut) {
+    return;
+  }
+  const rows = Array.from(document.querySelectorAll("#tBodyOut tr"));
+  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row));
+  mainOut.classList.toggle("out-complete", isComplete);
+}
+function renderMainInSpecSummary(summaryByConsignee){
+  const mainIn = document.querySelector("#mainIn");
+  if (!mainIn) {
+    return;
+  }
+
+  const escapeSvgText = (value)=>String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+
+  const keys = Object.keys(summaryByConsignee || {});
+  const grand = { "40FT": 0, "20FT": 0, "LcL": 0 };
+  const consigneeLines = keys.map((consignee)=>{
+    const info = summaryByConsignee[consignee] || {};
+    const ft40ByConsignee = Number(info["40FT"] || 0);
+    const ft20ByConsignee = Number(info["20FT"] || 0);
+    const lclByConsignee = Number(info["LcL"] || 0);
+
+    grand["40FT"] += ft40ByConsignee;
+    grand["20FT"] += ft20ByConsignee;
+    grand["LcL"] += lclByConsignee;
+
+    const parts = [];
+    if (ft40ByConsignee > 0) {
+      parts.push("40FT:" + ft40ByConsignee);
+    }
+    if (ft20ByConsignee > 0) {
+      parts.push("20FT:" + ft20ByConsignee);
+    }
+    if (lclByConsignee > 0) {
+      parts.push("LCL:" + lclByConsignee);
+    }
+    if (parts.length === 0) {
+      return "";
+    }
+    return consignee + " " + parts.join(" ");
+  }).filter((line)=>line);
+
+  const ft40 = grand["40FT"];
+  const ft20 = grand["20FT"];
+  const lcl = grand["LcL"];
+  const total = ft40 + ft20 + lcl;
+  const totalParts = [];
+  if (ft40 > 0) {
+    totalParts.push("40FT:" + ft40);
+  }
+  if (ft20 > 0) {
+    totalParts.push("20FT:" + ft20);
+  }
+  if (lcl > 0) {
+    totalParts.push("LCL:" + lcl);
+  }
+  if (total > 0) {
+    totalParts.push("합계:" + total);
+  }
+  const totalLine = totalParts.length > 0 ? "총합계 " + totalParts.join(" ") : "";
+  const detailLine = consigneeLines.concat(totalLine ? [totalLine] : []).join(" | ");
+
+  const isInComplete = mainIn.classList.contains("in-complete");
+  const title = isInComplete ? "입고 완료" : "입고";
+  const titleOpacity = isInComplete ? 0.32 : 0.72;
+  const titleBlur = isInComplete ? 1.9 : 0.6;
+  const titleEscaped = escapeSvgText(title);
+  const detailEscaped = escapeSvgText(detailLine);
+  const detailTextSvg = detailEscaped
+    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='34' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='1'>" + detailEscaped + "</text>"
+    : "";
+
+  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
+
+  mainIn.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
+}
 function dateChanged(){
     const d = dateSelect.value;
     titleDate.innerHTML = d;
     tBodyIn.replaceChildren();
     tBodyOut.replaceChildren();
+    updateMainInWatermarkStatus();
+    renderMainInSpecSummary({});
+    updateMainOutWatermarkStatus();
     getData(d);
 }
 dateSelect.value=dateT(new Date());
@@ -626,6 +729,7 @@ function getData(date){
         let ft4=0;
         let ft2=0;
         let lcl=0;
+      const summaryByConsignee = {};
         
         // leaf nodes 추출 함수
         const getLeafNodes = (obj, path = '') => {
@@ -707,6 +811,11 @@ function getData(date){
               continue;
             }
             tBodyIn.appendChild(tr);
+            const consignee = String(item["consignee"] || "미지정").trim() || "미지정";
+            if (!summaryByConsignee[consignee]) {
+              summaryByConsignee[consignee] = { "40FT": 0, "20FT": 0, "LcL": 0 };
+            }
+            summaryByConsignee[consignee][spec] = Number(summaryByConsignee[consignee][spec] || 0) + 1;
             tr.addEventListener("click",(e)=>{
                 const row = e.currentTarget;
                 if (isScheduleMode) {
@@ -727,11 +836,15 @@ function getData(date){
             if(isWorkingDone){
                 tr.style="color:red;";}
         }
-          moveRedRowsToBottom(tBodyIn);
-        toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
+        moveRedRowsToBottom(tBodyIn);
+        updateMainInWatermarkStatus();
+        renderMainInSpecSummary(summaryByConsignee);
+        // toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
     }).
     catch((e)=>{
       console.log(e);
+      updateMainInWatermarkStatus();
+      renderMainInSpecSummary({});
         // alert(e);
     });
 
@@ -790,8 +903,10 @@ function getData(date){
               tr.style="color:red;";}
         }
         moveRedRowsToBottom(tBodyOut);
+        updateMainOutWatermarkStatus();
     }).catch((e)=>{
       console.log(e);
+      updateMainOutWatermarkStatus();
         // alert(e);
     });
     
@@ -925,8 +1040,7 @@ function moveRedRowsToBottom(tBody){
   const normalRows = [];
   const redRows = [];
   rows.forEach((row)=>{
-    const inlineStyle = (row.getAttribute("style") || "").toLowerCase();
-    const isRedRow = row.style.color === "red" || inlineStyle.includes("color:red");
+    const isRedRow = isRedStyledRow(row);
     if (isRedRow) {
       redRows.push(row);
     } else {
