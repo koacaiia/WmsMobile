@@ -681,15 +681,17 @@ function renderMainInSpecSummary(summaryByConsignee){
   const detailOpacity = isInComplete ? 1 : 0.3;
   const detailBlur = isInComplete ? 0 : 0.9;
   const isMobileSummary = isMobilePopupContext();
-  const detailFontSize = isMobileSummary ? 63 : 34;
+  const detailFontSize = isMobileSummary ? 95 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
   const titleEscaped = escapeSvgText(title);
   const consigneeEscaped = escapeSvgText(consigneeLine);
   const totalEscaped = escapeSvgText(totalLine);
+  const consigneeY = isMobileSummary ? 74 : 66;
+  const totalY = isMobileSummary ? 94 : 86;
   let detailTextSvg = "";
   if (consigneeEscaped && totalEscaped) {
-    detailTextSvg = "<text x='50%' y='67%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
-      "<text x='50%' y='79%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + totalEscaped + "</text>";
+    detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
+      "<text x='50%' y='" + totalY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + totalEscaped + "</text>";
   } else if (consigneeEscaped || totalEscaped) {
     const singleLine = consigneeEscaped || totalEscaped;
     detailTextSvg = "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + singleLine + "</text>";
