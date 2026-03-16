@@ -617,7 +617,8 @@ function updateMainOutWatermarkStatus(){
 }
 function renderMainInSpecSummary(summaryByConsignee){
   const mainIn = document.querySelector("#mainIn");
-  if (!mainIn) {
+  const watermarkHost = document.querySelector("#tableIn");
+  if (!mainIn || !watermarkHost) {
     return;
   }
 
@@ -683,12 +684,12 @@ function renderMainInSpecSummary(summaryByConsignee){
   const titleEscaped = escapeSvgText(title);
   const detailEscaped = escapeSvgText(detailLine);
   const detailTextSvg = detailEscaped
-    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='34' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='1'>" + detailEscaped + "</text>"
+    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='34' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='0.5' filter='url(#d)'>" + detailEscaped + "</text>"
     : "";
 
-  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
+  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='0.9'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
 
-  mainIn.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
+  watermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
 }
 function dateChanged(){
     const d = dateSelect.value;
