@@ -681,16 +681,15 @@ function renderMainInSpecSummary(summaryByConsignee){
   const detailOpacity = isInComplete ? 1 : 0.3;
   const detailBlur = isInComplete ? 0 : 0.9;
   const isMobileSummary = window.innerWidth <= 900;
-  const titleY = 46;
+  const titleY = 33;
   const titleFontSize = 195;
   const detailFontSize = isMobileSummary ? 95 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
   const titleEscaped = escapeSvgText(title);
   const consigneeEscaped = escapeSvgText(consigneeLine);
   const totalEscaped = escapeSvgText(totalLine);
-  const mobileTitleGapPercent = ((titleFontSize * 0.5) / 420) * 100;
-  const consigneeY = isMobileSummary ? (titleY + mobileTitleGapPercent) : 66;
-  const totalY = isMobileSummary ? (consigneeY + 22) : 86;
+  const consigneeY = isMobileSummary ? 68 : 66;
+  const totalY = isMobileSummary ? 80 : 86;
   let detailTextSvg = "";
   if (isMobileSummary && consigneeEscaped && totalEscaped) {
     detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
