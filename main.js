@@ -671,26 +671,31 @@ function renderMainInSpecSummary(summaryByConsignee){
   if (lcl > 0) {
     totalParts.push("LCL:" + lcl);
   }
-  if (total > 0) {
-    totalParts.push("합계:" + total);
-  }
   const totalLine = totalParts.length > 0 ? "총합계 " + totalParts.join(" ") : "";
-  const detailLine = consigneeLines.concat(totalLine ? [totalLine] : []).join(" | ");
+  const consigneeLine = consigneeLines.join(" | ");
 
   const isInComplete = mainIn.classList.contains("in-complete");
   const title = isInComplete ? "입고 완료" : "입고";
-  const titleOpacity = isInComplete ? 0.32 : 0.72;
-  const titleBlur = isInComplete ? 1.9 : 0.6;
+  const titleOpacity = isInComplete ? 1 : 0.3;
+  const titleBlur = isInComplete ? 0 : 1.9;
+  const detailOpacity = isInComplete ? 1 : 0.3;
+  const detailBlur = isInComplete ? 0 : 0.9;
   const isMobileSummary = isMobilePopupContext();
-  const detailFontSize = isMobileSummary ? 42 : 34;
+  const detailFontSize = isMobileSummary ? 63 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
   const titleEscaped = escapeSvgText(title);
-  const detailEscaped = escapeSvgText(detailLine);
-  const detailTextSvg = detailEscaped
-    ? "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='0.5' filter='url(#d)'>" + detailEscaped + "</text>"
-    : "";
+  const consigneeEscaped = escapeSvgText(consigneeLine);
+  const totalEscaped = escapeSvgText(totalLine);
+  let detailTextSvg = "";
+  if (consigneeEscaped && totalEscaped) {
+    detailTextSvg = "<text x='50%' y='67%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
+      "<text x='50%' y='79%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + totalEscaped + "</text>";
+  } else if (consigneeEscaped || totalEscaped) {
+    const singleLine = consigneeEscaped || totalEscaped;
+    detailTextSvg = "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + singleLine + "</text>";
+  }
 
-  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='0.9'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
+  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='" + detailBlur + "'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
 
   watermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
 }
