@@ -681,23 +681,26 @@ function renderMainInSpecSummary(summaryByConsignee){
   const detailOpacity = isInComplete ? 1 : 0.3;
   const detailBlur = isInComplete ? 0 : 0.9;
   const isMobileSummary = window.innerWidth <= 900;
+  const titleY = 46;
+  const titleFontSize = 195;
   const detailFontSize = isMobileSummary ? 95 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
   const titleEscaped = escapeSvgText(title);
   const consigneeEscaped = escapeSvgText(consigneeLine);
   const totalEscaped = escapeSvgText(totalLine);
-  const consigneeY = isMobileSummary ? 74 : 66;
-  const totalY = isMobileSummary ? 94 : 86;
+  const mobileTitleGapPercent = ((titleFontSize * 0.3) / 420) * 100;
+  const consigneeY = isMobileSummary ? (titleY + mobileTitleGapPercent) : 66;
+  const totalY = isMobileSummary ? (consigneeY + 20) : 86;
   let detailTextSvg = "";
   if (isMobileSummary && consigneeEscaped && totalEscaped) {
     detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
       "<text x='50%' y='" + totalY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + totalEscaped + "</text>";
   } else if (isMobileSummary && (consigneeEscaped || totalEscaped)) {
     const singleLine = consigneeEscaped || totalEscaped;
-    detailTextSvg = "<text x='50%' y='72%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + singleLine + "</text>";
+    detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + singleLine + "</text>";
   }
 
-  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='" + detailBlur + "'/></filter></defs><text x='50%' y='46%' text-anchor='middle' dominant-baseline='middle' font-size='195' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
+  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='" + detailBlur + "'/></filter></defs><text x='50%' y='" + titleY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + titleFontSize + "' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
 
   watermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
 }
