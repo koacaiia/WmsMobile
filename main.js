@@ -681,7 +681,9 @@ function renderMainInSpecSummary(summaryByConsignee){
   const detailOpacity = isInComplete ? 1 : 0.3;
   const detailBlur = isInComplete ? 0 : 0.9;
   const isMobileSummary = window.innerWidth <= 900;
-  const titleY = 33;
+  const activeWatermarkHost = isMobileSummary ? watermarkHost : mainIn;
+  const inactiveWatermarkHost = isMobileSummary ? mainIn : watermarkHost;
+  const titleY = isMobileSummary ? 33 : 50;
   const titleFontSize = 195;
   const detailFontSize = isMobileSummary ? 95 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
@@ -701,7 +703,8 @@ function renderMainInSpecSummary(summaryByConsignee){
 
   const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 420'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='" + detailBlur + "'/></filter></defs><text x='50%' y='" + titleY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + titleFontSize + "' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
 
-  watermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
+  inactiveWatermarkHost.style.backgroundImage = "none";
+  activeWatermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
 }
 function dateChanged(){
     const d = dateSelect.value;
