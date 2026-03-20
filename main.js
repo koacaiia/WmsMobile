@@ -706,6 +706,100 @@ function renderMainInSpecSummary(summaryByConsignee){
   inactiveWatermarkHost.style.backgroundImage = "none";
   activeWatermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
 }
+
+async function dumpWatermarkDebugInfo(){
+  const mainIn = document.querySelector("#mainIn");
+  const tableIn = document.querySelector("#tableIn");
+  const isMobileSummary = window.innerWidth <= 900;
+  const activeHost = isMobileSummary ? tableIn : mainIn;
+  const inactiveHost = isMobileSummary ? mainIn : tableIn;
+  const title = mainIn && mainIn.classList.contains("in-complete") ? "입고 완료" : "입고";
+
+  const getHostInfo = (host, selector)=>{
+    if (!host) {
+      return { selector, exists: false };
+    }
+    const computed = window.getComputedStyle(host);
+    const inlineBg = host.style.backgroundImage || "";
+    const computedBg = computed.backgroundImage || "";
+    return {
+      selector,
+      exists: true,
+      className: host.className || "",
+      inlineBackgroundImageLength: inlineBg.length,
+      inlineBackgroundImagePrefix: inlineBg.substring(0, 140),
+      computedBackgroundImageLength: computedBg.length,
+      computedBackgroundImagePrefix: computedBg.substring(0, 140),
+      backgroundSize: computed.backgroundSize,
+      backgroundPosition: computed.backgroundPosition,
+      backgroundRepeat: computed.backgroundRepeat
+    };
+  };
+
+  let malgunCheck = null;
+  let segoeCheck = null;
+  if (document.fonts && document.fonts.check) {
+    try {
+      malgunCheck = document.fonts.check("16px 'Malgun Gothic'");
+      segoeCheck = document.fonts.check("16px 'Segoe UI'");
+    } catch (error) {
+      malgunCheck = null;
+      segoeCheck = null;
+    }
+  }
+
+  const snapshot = {
+    timestamp: new Date().toISOString(),
+    href: window.location.href,
+    userAgent: navigator.userAgent,
+    viewport: {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio,
+      isMobileSummary
+    },
+    watermarkLogic: {
+      title,
+      titleFontSize: 195,
+      detailFontSize: isMobileSummary ? 95 : 34,
+      titleY: isMobileSummary ? 33 : 50,
+      activeHostSelector: isMobileSummary ? "#tableIn" : "#mainIn",
+      inactiveHostSelector: isMobileSummary ? "#mainIn" : "#tableIn"
+    },
+    fontAvailability: {
+      malgunGothic: malgunCheck,
+      segoeUi: segoeCheck
+    },
+    hosts: {
+      mainIn: getHostInfo(mainIn, "#mainIn"),
+      tableIn: getHostInfo(tableIn, "#tableIn"),
+      active: getHostInfo(activeHost, isMobileSummary ? "#tableIn" : "#mainIn"),
+      inactive: getHostInfo(inactiveHost, isMobileSummary ? "#mainIn" : "#tableIn")
+    }
+  };
+
+  const jsonText = JSON.stringify(snapshot, null, 2);
+  console.log("[WatermarkDebug]", snapshot);
+
+  let copied = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(jsonText);
+      copied = true;
+    }
+  } catch (error) {
+    copied = false;
+  }
+
+  if (copied) {
+    toastOn("워터마크 디버그 정보가 클립보드에 복사되었습니다.");
+  } else {
+    toastOn("워터마크 디버그 정보를 콘솔에서 확인하세요.");
+  }
+
+  return snapshot;
+}
+window.dumpWatermarkDebugInfo = dumpWatermarkDebugInfo;
 function dateChanged(){
     const d = dateSelect.value;
     titleDate.innerHTML = d;
