@@ -52,7 +52,6 @@ function normalizeNotificationIconUrl(rawIconUrl){
 let ref;
 let refFile;
 let refLegacyFile;
-const APP_VERSION = 3;
 let ioValue;
 let upfileList;
 let token;
@@ -64,6 +63,8 @@ let isScheduleMode = false;
 let isScheduleProcessing = false;
 let messagingSwRegistration = null;
 let messagingSwRegistrationPromise = null;
+let _mainInSummaryCache = {};
+let _mainInSummaryVisible = false;
 const messagingSwVersion = "20260311-1";
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -315,6 +316,43 @@ updateUserRegButtonLabel();
     if (_lpConsumed) { _lpConsumed = false; e.stopImmediatePropagation(); }
   }, true);
   logDataEl.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+})();
+// #mainIn 3초 길게 누르기 → 집계 패널 toggle
+(function(){
+  const mainInEl = document.querySelector("#mainIn");
+  if (!mainInEl) { return; }
+  let _lpTimer = null;
+  let _lpConsumed = false;
+  let _startX = 0;
+  let _startY = 0;
+  function _startLp(e){
+    _lpConsumed = false;
+    _startX = e.clientX;
+    _startY = e.clientY;
+    _lpTimer = setTimeout(function(){
+      _lpTimer = null;
+      _lpConsumed = true;
+      if (_mainInSummaryVisible) {
+        _hideMainInSummaryView();
+      } else {
+        _showMainInSummaryView();
+      }
+    }, 2000);
+  }
+  function _cancelLp(){
+    if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+  }
+  function _onMove(e){
+    if (!_lpTimer) { return; }
+    const dx = e.clientX - _startX;
+    const dy = e.clientY - _startY;
+    if (Math.sqrt(dx * dx + dy * dy) > 10) { _cancelLp(); }
+  }
+  mainInEl.addEventListener("pointerdown", _startLp);
+  mainInEl.addEventListener("pointerup", _cancelLp);
+  mainInEl.addEventListener("pointerleave", _cancelLp);
+  mainInEl.addEventListener("pointermove", _onMove);
+  mainInEl.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
 })();
 function applyMobileTopButtonLabels(){
   const titleBtn = document.querySelector("#titleDate");
@@ -667,96 +705,87 @@ function updateMainOutWatermarkStatus(){
   mainOut.classList.toggle("out-complete", isComplete);
 }
 function renderMainInSpecSummary(summaryByConsignee){
+  // 워터마크 SVG 제거 — 집계 데이터는 #mainIn 길게 누르기로 표시
+  _mainInSummaryCache = summaryByConsignee || {};
   const mainIn = document.querySelector("#mainIn");
-  const watermarkHost = document.querySelector("#tableIn");
-  if (!mainIn || !watermarkHost) {
-    return;
-  }
-
-  const escapeSvgText = (value)=>String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-
+  const tableIn = document.querySelector("#tableIn");
+  if (mainIn) { mainIn.style.backgroundImage = ""; }
+  if (tableIn) { tableIn.style.backgroundImage = ""; }
+  if (_mainInSummaryVisible) { _renderMainInSummaryPanel(); }
+}
+function _buildSummaryContent(summaryByConsignee){
   const keys = Object.keys(summaryByConsignee || {});
   const grand = { "40FT": 0, "20FT": 0, "LcL": 0 };
-  const consigneeLines = keys.map((consignee)=>{
+  const consigneeLines = keys.map(function(consignee){
     const info = summaryByConsignee[consignee] || {};
-    const ft40ByConsignee = Number(info["40FT"] || 0);
-    const ft20ByConsignee = Number(info["20FT"] || 0);
-    const lclByConsignee = Number(info["LcL"] || 0);
-
-    grand["40FT"] += ft40ByConsignee;
-    grand["20FT"] += ft20ByConsignee;
-    grand["LcL"] += lclByConsignee;
-
+    const ft40 = Number(info["40FT"] || 0);
+    const ft20 = Number(info["20FT"] || 0);
+    const lcl = Number(info["LcL"] || 0);
+    grand["40FT"] += ft40;
+    grand["20FT"] += ft20;
+    grand["LcL"] += lcl;
     const parts = [];
-    if (ft40ByConsignee > 0) {
-      parts.push("40FT:" + ft40ByConsignee);
-    }
-    if (ft20ByConsignee > 0) {
-      parts.push("20FT:" + ft20ByConsignee);
-    }
-    if (lclByConsignee > 0) {
-      parts.push("LCL:" + lclByConsignee);
-    }
-    if (parts.length === 0) {
-      return "";
-    }
-    return consignee + " " + parts.join(" ");
-  }).filter((line)=>line);
-
-  const ft40 = grand["40FT"];
-  const ft20 = grand["20FT"];
-  const lcl = grand["LcL"];
-  const total = ft40 + ft20 + lcl;
+    if (ft40 > 0) { parts.push("40FT:" + ft40); }
+    if (ft20 > 0) { parts.push("20FT:" + ft20); }
+    if (lcl > 0) { parts.push("LCL:" + lcl); }
+    if (!parts.length) { return ""; }
+    return consignee + "  " + parts.join("  ");
+  }).filter(function(l){ return l; });
   const totalParts = [];
-  if (ft40 > 0) {
-    totalParts.push("40FT:" + ft40);
+  if (grand["40FT"] > 0) { totalParts.push("40FT:" + grand["40FT"]); }
+  if (grand["20FT"] > 0) { totalParts.push("20FT:" + grand["20FT"]); }
+  if (grand["LcL"] > 0) { totalParts.push("LCL:" + grand["LcL"]); }
+  const totalLine = totalParts.length ? "총합계  " + totalParts.join("  ") : "";
+  return { consigneeLines: consigneeLines, totalLine: totalLine };
+}
+function _renderMainInSummaryPanel(){
+  const mainIn = document.querySelector("#mainIn");
+  if (!mainIn) { return; }
+  let panel = document.querySelector("#mainInSummaryPanel");
+  if (!panel) {
+    panel = document.createElement("div");
+    panel.id = "mainInSummaryPanel";
+    mainIn.appendChild(panel);
   }
-  if (ft20 > 0) {
-    totalParts.push("20FT:" + ft20);
+  const isComplete = mainIn.classList.contains("in-complete");
+  const data = _buildSummaryContent(_mainInSummaryCache);
+  panel.innerHTML = "";
+  const listEl = document.createElement("div");
+  listEl.className = "mainInSummaryList";
+  if (data.consigneeLines.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "mainInSummaryRow";
+    empty.textContent = "(집계 내용 없음)";
+    listEl.appendChild(empty);
+  } else {
+    data.consigneeLines.forEach(function(line){
+      const p = document.createElement("div");
+      p.className = "mainInSummaryRow";
+      p.textContent = line;
+      listEl.appendChild(p);
+    });
   }
-  if (lcl > 0) {
-    totalParts.push("LCL:" + lcl);
+  panel.appendChild(listEl);
+  if (data.totalLine) {
+    const totalEl = document.createElement("div");
+    totalEl.className = "mainInSummaryTotal";
+    totalEl.textContent = data.totalLine;
+    panel.appendChild(totalEl);
   }
-  const totalLine = totalParts.length > 0 ? "총합계 " + totalParts.join(" ") : "";
-  const consigneeLine = consigneeLines.join(" | ");
-
-  const isInComplete = mainIn.classList.contains("in-complete");
-  const title = isInComplete ? "입고 완료" : "입고";
-  const titleOpacity = isInComplete ? 1 : 0.3;
-  const titleBlur = isInComplete ? 0 : 1.9;
-  const detailOpacity = isInComplete ? 1 : 0.3;
-  const detailBlur = isInComplete ? 0 : 0.9;
-  const isMobileSummary = window.innerWidth <= 900 || isSimModeActive();
-  const activeWatermarkHost = isMobileSummary ? watermarkHost : mainIn;
-  const inactiveWatermarkHost = isMobileSummary ? mainIn : watermarkHost;
-  const titleY = isMobileSummary ? 20 : 50;
-  const titleFontSize = 195;
-  const detailFontSize = isMobileSummary ? 95 : 34;
-  const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
-  const titleEscaped = escapeSvgText(title);
-  const consigneeEscaped = escapeSvgText(consigneeLine);
-  const totalEscaped = escapeSvgText(totalLine);
-  const consigneeY = isMobileSummary ? 72 : 66;
-  const totalY = isMobileSummary ? 87 : 86;
-  const svgViewBox = isMobileSummary ? "0 0 1600 900" : "0 0 1600 420";
-  let detailTextSvg = "";
-  if (isMobileSummary && consigneeEscaped && totalEscaped) {
-    detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + consigneeEscaped + "</text>" +
-      "<text x='50%' y='" + totalY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + totalEscaped + "</text>";
-  } else if (isMobileSummary && (consigneeEscaped || totalEscaped)) {
-    const singleLine = consigneeEscaped || totalEscaped;
-    detailTextSvg = "<text x='50%' y='" + consigneeY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + detailFontSize + "'" + detailTextLength + " font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + detailOpacity + "' filter='url(#d)'>" + singleLine + "</text>";
-  }
-
-  const svgMarkup = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='" + svgViewBox + "'><defs><filter id='b'><feGaussianBlur stdDeviation='" + titleBlur + "'/></filter><filter id='d'><feGaussianBlur stdDeviation='" + detailBlur + "'/></filter></defs><text x='50%' y='" + titleY + "%' text-anchor='middle' dominant-baseline='middle' font-size='" + titleFontSize + "' font-family='Malgun Gothic, Segoe UI, sans-serif' font-weight='900' fill='#000000' fill-opacity='" + titleOpacity + "' filter='url(#b)'>" + titleEscaped + "</text>" + detailTextSvg + "</svg>";
-
-  inactiveWatermarkHost.style.backgroundImage = "none";
-  activeWatermarkHost.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svgMarkup) + "\")";
+  panel.classList.add("visible");
+}
+function _showMainInSummaryView(){
+  const tableIn = document.querySelector("#tableIn");
+  if (tableIn) { tableIn.style.display = "none"; }
+  _mainInSummaryVisible = true;
+  _renderMainInSummaryPanel();
+}
+function _hideMainInSummaryView(){
+  const tableIn = document.querySelector("#tableIn");
+  if (tableIn) { tableIn.style.display = ""; }
+  _mainInSummaryVisible = false;
+  const panel = document.querySelector("#mainInSummaryPanel");
+  if (panel) { panel.classList.remove("visible"); }
 }
 
 async function dumpWatermarkDebugInfo(){
@@ -1788,7 +1817,6 @@ if(mC){
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
 }
-setTimeout(function(){ toastOn("현재 Version " + APP_VERSION + " 입니다."); }, 300);
 function toastOn(msg,t){
   if(t == null){
     t=2000;
