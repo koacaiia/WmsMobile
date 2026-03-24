@@ -119,17 +119,7 @@ localStorage.setItem("fcmRelayApiKey", "<YOUR_RELAY_API_KEY>");
 
 1. Open app on each device and allow notification permission.
 
-1. In each device console, run:
-
-```javascript
-await window.fcmDebugStatus()
-```
-
-Expected:
-
-- `relayConfigured: true`
-- `hasCurrentToken: true`
-- `tokenCount >= number of test devices`
+1. In each device browser DevTools, confirm there are no relay auth errors and token registration logs appear.
 
 1. On one device, press the test button (`#otherPlt`) to send broadcast.
 
@@ -142,4 +132,4 @@ Expected:
 
 - Re-open app on that device and re-allow notifications
 - Clear site data/service worker and reload
-- Re-run `await window.fcmDebugStatus()` and verify token registration
+- Re-open DevTools and verify token registration / relay send logs

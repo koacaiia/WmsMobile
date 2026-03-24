@@ -2131,30 +2131,6 @@ async function sendMessageToAllDevices(title, body, icon){
   console.log("Broadcast sent:", data);
   return data;
 }
-window.fcmDebugStatus = async function fcmDebugStatus(){
-  const config = ensureRelayApiKeyConfigured();
-  const tokenForRelay = await getRelayBearerToken();
-  const status = {
-    hasCurrentToken: !!token,
-    currentTokenPreview: token ? token.substring(0, 20) + "..." : "",
-    relayConfigured: !!(config.relayEndpoint && (tokenForRelay || !isPlaceholderRelayApiKey(config.relayApiKey))),
-    relayAuthMode: tokenForRelay ? "bearer" : (!isPlaceholderRelayApiKey(config.relayApiKey) ? "api-key" : "none"),
-    relayCandidates: getRelayEndpointCandidates().length,
-    tokenCount: 0,
-    error: ""
-  };
-  if (!status.relayConfigured) {
-    status.error = "Relay endpoint/apiKey 미설정 (프롬프트에서 API Key 입력 필요)";
-  }
-  try {
-    const list = await getRegisteredDeviceTokens();
-    status.tokenCount = list.length;
-  } catch (error) {
-    status.error = error && error.message ? error.message : String(error);
-  }
-  console.log("FCM DEBUG:", status);
-  return status;
-};
  function reLoad(){
   if(mC){
     location.reload();
@@ -2383,109 +2359,6 @@ function closeModal() {
   modalTargetImage = null;
   modal.style.display = "none";
 }
-function attachFcmDebugPanel(){
-  if (document.querySelector("#fcmDebugPanel")) {
-    return;
-  }
-
-  const panel = document.createElement("div");
-  panel.id = "fcmDebugPanel";
-  panel.style.position = "fixed";
-  panel.style.right = "12px";
-  panel.style.bottom = "12px";
-  panel.style.zIndex = "9999";
-  panel.style.display = "grid";
-  panel.style.gap = "6px";
-
-  const openBtn = document.createElement("button");
-  openBtn.type = "button";
-  openBtn.textContent = "FCM상태";
-  openBtn.style.background = "#154077";
-  openBtn.style.color = "#fff";
-  openBtn.style.border = "0";
-  openBtn.style.borderRadius = "10px";
-  openBtn.style.padding = "8px 10px";
-  openBtn.style.fontSize = "12px";
-  openBtn.style.cursor = "pointer";
-
-  const card = document.createElement("div");
-  card.style.display = "none";
-  card.style.width = "min(92vw, 320px)";
-  card.style.maxHeight = "55vh";
-  card.style.overflow = "auto";
-  card.style.background = "#ffffff";
-  card.style.border = "1px solid #d0d7de";
-  card.style.borderRadius = "10px";
-  card.style.boxShadow = "0 8px 24px rgba(0,0,0,0.16)";
-  card.style.padding = "10px";
-
-  const title = document.createElement("div");
-  title.textContent = "FCM Debug";
-  title.style.fontWeight = "700";
-  title.style.marginBottom = "8px";
-
-  const statusPre = document.createElement("pre");
-  statusPre.style.whiteSpace = "pre-wrap";
-  statusPre.style.wordBreak = "break-word";
-  statusPre.style.margin = "0";
-  statusPre.style.fontSize = "12px";
-  statusPre.style.lineHeight = "1.35";
-  statusPre.textContent = "로딩중...";
-
-  const actions = document.createElement("div");
-  actions.style.display = "grid";
-  actions.style.gridTemplateColumns = "1fr 1fr";
-  actions.style.gap = "6px";
-  actions.style.marginTop = "8px";
-
-  const refreshBtn = document.createElement("button");
-  refreshBtn.type = "button";
-  refreshBtn.textContent = "새로고침";
-  refreshBtn.style.padding = "6px";
-  refreshBtn.style.borderRadius = "8px";
-  refreshBtn.style.border = "1px solid #bfc7d1";
-  refreshBtn.style.background = "#f3f6fa";
-  refreshBtn.style.cursor = "pointer";
-
-  const closeBtn = document.createElement("button");
-  closeBtn.type = "button";
-  closeBtn.textContent = "닫기";
-  closeBtn.style.padding = "6px";
-  closeBtn.style.borderRadius = "8px";
-  closeBtn.style.border = "1px solid #bfc7d1";
-  closeBtn.style.background = "#f3f6fa";
-  closeBtn.style.cursor = "pointer";
-
-  const refreshStatus = async ()=>{
-    statusPre.textContent = "조회중...";
-    try {
-      const status = await window.fcmDebugStatus();
-      statusPre.textContent = JSON.stringify(status, null, 2);
-    } catch (error) {
-      statusPre.textContent = "조회 실패: " + (error && error.message ? error.message : String(error));
-    }
-  };
-
-  openBtn.addEventListener("click", ()=>{
-    card.style.display = card.style.display === "none" ? "block" : "none";
-    if (card.style.display === "block") {
-      refreshStatus();
-    }
-  });
-  refreshBtn.addEventListener("click", refreshStatus);
-  closeBtn.addEventListener("click", ()=>{
-    card.style.display = "none";
-  });
-
-  actions.appendChild(refreshBtn);
-  actions.appendChild(closeBtn);
-  card.appendChild(title);
-  card.appendChild(statusPre);
-  card.appendChild(actions);
-  panel.appendChild(openBtn);
-  panel.appendChild(card);
-  document.body.appendChild(panel);
-}
 document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
   const otherPltBtn = document.querySelector("#otherPlt");
@@ -2513,7 +2386,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 250);
   }
 
-  attachFcmDebugPanel();
 });
 function deleteImage() {
   const modalImg = document.getElementById("modalImg");
