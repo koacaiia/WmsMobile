@@ -21,10 +21,12 @@ else{firebase.app();}
 const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
+const auth_f = firebase.auth();
 const deptName = "WareHouseDept2";
 const notificationIconUrl = new URL("images/icon.png", window.location.href).toString();
 const defaultRelayEndpoint = "https://asia-southeast1-fine-bondedwarehouse.cloudfunctions.net/sendFcmRelay";
-const defaultRelayApiKey = "REPLACE_WITH_RELAY_API_KEY";
+const defaultRelayApiKey = "WMS_RELAY_AUTO_KEY_20260324";
+const relayApiKeyStorageKey = "fcmRelayApiKey";
 function normalizeNotificationIconUrl(rawIconUrl){
   const value = String(rawIconUrl || "").trim();
   if (!value) {
@@ -132,15 +134,65 @@ function getRelayConfig(){
     relayEndpoint = (window.FCM_RELAY_ENDPOINT || "").trim();
   }
   try {
-    relayApiKey = (window.FCM_RELAY_API_KEY || defaultRelayApiKey || "").trim();
+    const windowRelayApiKey = (window.FCM_RELAY_API_KEY || "").trim();
+    const localRelayApiKey = (localStorage.getItem(relayApiKeyStorageKey) || "").trim();
+    relayApiKey = windowRelayApiKey || localRelayApiKey || (defaultRelayApiKey || "").trim();
   } catch (error) {
     console.error("Relay API Key 확인 실패:", error);
     relayApiKey = (window.FCM_RELAY_API_KEY || defaultRelayApiKey || "").trim();
   }
   return { relayEndpoint, relayApiKey };
 }
+function isPlaceholderRelayApiKey(value){
+  const normalized = String(value || "").trim();
+  return !normalized || normalized === "REPLACE_WITH_RELAY_API_KEY";
+}
 function ensureRelayApiKeyConfigured(){
   return getRelayConfig();
+}
+async function getRelayBearerToken(){
+  try {
+    let user = auth_f.currentUser;
+    if (!user) {
+      await auth_f.signInAnonymously();
+      user = auth_f.currentUser;
+    }
+    if (!user) {
+      return "";
+    }
+    return await user.getIdToken();
+  } catch (error) {
+    if (error && error.code === "auth/configuration-not-found") {
+      console.warn("Firebase Anonymous Auth 미활성화 상태입니다. API key fallback을 사용합니다.");
+    }
+    console.error("Relay bearer token 획득 실패:", error);
+    return "";
+  }
+}
+function syncRelayApiKeyToLocalStorage(relayApiKey){
+  if (isPlaceholderRelayApiKey(relayApiKey)) {
+    return;
+  }
+  try {
+    localStorage.setItem(relayApiKeyStorageKey, String(relayApiKey).trim());
+  } catch (error) {
+    console.error("fcmRelayApiKey 저장 실패:", error);
+  }
+}
+async function resolveRelayAuth(){
+  const config = ensureRelayApiKeyConfigured();
+  const relayApiKey = config.relayApiKey;
+  const hasApiKey = !isPlaceholderRelayApiKey(relayApiKey);
+  // If API key is available, skip anonymous auth to avoid unnecessary auth/configuration-not-found noise.
+  const idToken = hasApiKey ? "" : await getRelayBearerToken();
+  syncRelayApiKeyToLocalStorage(relayApiKey);
+
+  return {
+    relayEndpoint: config.relayEndpoint,
+    relayApiKey,
+    idToken,
+    hasApiKey
+  };
 }
 function getRelayEndpointCandidates(){
   const candidates = [];
@@ -167,7 +219,7 @@ function saveWorkingRelayEndpoint(endpoint){
     console.error("fcmRelayEndpoint 저장 실패:", error);
   }
 }
-async function postRelayWithFallback(messagePayload, relayApiKey){
+async function postRelayWithFallback(messagePayload, relayAuth){
   const endpoints = getRelayEndpointCandidates();
   if (!endpoints.length) {
     throw new Error("FCM relay endpoint not configured");
@@ -177,12 +229,18 @@ async function postRelayWithFallback(messagePayload, relayApiKey){
   for (let i = 0; i < endpoints.length; i++) {
     const endpoint = endpoints[i];
     try {
+      const headers = {
+        "Content-Type": "application/json"
+      };
+      if (relayAuth && relayAuth.idToken) {
+        headers.Authorization = "Bearer " + relayAuth.idToken;
+      }
+      if (relayAuth && relayAuth.relayApiKey && !isPlaceholderRelayApiKey(relayAuth.relayApiKey)) {
+        headers["x-api-key"] = relayAuth.relayApiKey;
+      }
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": relayApiKey
-        },
+        headers,
         body: JSON.stringify(messagePayload)
       });
       const data = await response.json().catch(()=>({}));
@@ -1988,18 +2046,19 @@ messaging.onMessage((payload) => {
 
 // Call requestPermission on page load
 
-function sendMessage(token, title, body, icon) {
+async function sendMessage(token, title, body, icon) {
   // Browser -> FCM direct calls are blocked by CORS and exposing serverKey is unsafe.
   // Use a relay endpoint (Cloud Function / backend API) instead.
-  const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
+  const relayAuth = await resolveRelayAuth();
+  const relayEndpoint = relayAuth.relayEndpoint;
 
   if (!relayEndpoint) {
     console.warn("FCM relay endpoint is not configured.");
-    return Promise.reject(new Error("FCM relay endpoint not configured"));
+    throw new Error("FCM relay endpoint not configured");
   }
-  if (!relayApiKey) {
-    console.warn("FCM relay API key is not configured.");
-    return Promise.reject(new Error("FCM relay API key not configured"));
+  if (!relayAuth.idToken && !relayAuth.hasApiKey) {
+    console.warn("Relay auth is not configured (Bearer/API Key).");
+    throw new Error("Relay auth is not configured");
   }
 
   const messagePayload = {
@@ -2011,7 +2070,10 @@ function sendMessage(token, title, body, icon) {
     }
   };
 
-  return postRelayWithFallback(messagePayload, relayApiKey)
+  return postRelayWithFallback(messagePayload, {
+    relayApiKey: relayAuth.hasApiKey ? relayAuth.relayApiKey : "",
+    idToken: relayAuth.idToken
+  })
   .then(data => {
     console.log('Message sent successfully:', data);
   })
@@ -2020,12 +2082,13 @@ function sendMessage(token, title, body, icon) {
   });
 }
 async function sendMessageToAllDevices(title, body, icon){
-  const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
+  const relayAuth = await resolveRelayAuth();
+  const relayEndpoint = relayAuth.relayEndpoint;
   if (!relayEndpoint) {
     throw new Error("FCM relay endpoint not configured");
   }
-  if (!relayApiKey) {
-    throw new Error("FCM relay API key not configured");
+  if (!relayAuth.idToken && !relayAuth.hasApiKey) {
+    throw new Error("Relay auth is not configured");
   }
 
   const tokens = await getRegisteredDeviceTokens();
@@ -2043,16 +2106,21 @@ async function sendMessageToAllDevices(title, body, icon){
     }
   };
 
-  const data = await postRelayWithFallback(messagePayload, relayApiKey);
+  const data = await postRelayWithFallback(messagePayload, {
+    relayApiKey: relayAuth.hasApiKey ? relayAuth.relayApiKey : "",
+    idToken: relayAuth.idToken
+  });
   console.log("Broadcast sent:", data);
   return data;
 }
 window.fcmDebugStatus = async function fcmDebugStatus(){
   const config = ensureRelayApiKeyConfigured();
+  const tokenForRelay = await getRelayBearerToken();
   const status = {
     hasCurrentToken: !!token,
     currentTokenPreview: token ? token.substring(0, 20) + "..." : "",
-    relayConfigured: !!(config.relayEndpoint && config.relayApiKey),
+    relayConfigured: !!(config.relayEndpoint && (tokenForRelay || !isPlaceholderRelayApiKey(config.relayApiKey))),
+    relayAuthMode: tokenForRelay ? "bearer" : (!isPlaceholderRelayApiKey(config.relayApiKey) ? "api-key" : "none"),
     relayCandidates: getRelayEndpointCandidates().length,
     tokenCount: 0,
     error: ""

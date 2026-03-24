@@ -8,6 +8,7 @@ const allowedOrigins = [
   "http://localhost:5501",
   "https://koacaiia.github.io"
 ];
+const fallbackRelayApiKey = "WMS_RELAY_AUTO_KEY_20260324";
 
 function setCors(req, res) {
   const origin = req.headers.origin || "";
@@ -34,7 +35,7 @@ function normalizeIconPath(iconValue) {
   return value;
 }
 
-exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res) => {
+exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" }, async (req, res) => {
   setCors(req, res);
 
   if (req.method === "OPTIONS") {
@@ -47,7 +48,7 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1" }, async (req, res)
     return;
   }
 
-  const relayApiKey = process.env.RELAY_API_KEY || "";
+  const relayApiKey = process.env.RELAY_API_KEY || fallbackRelayApiKey;
   const requestApiKey = String(req.headers["x-api-key"] || "");
   const authorization = String(req.headers.authorization || "");
 
