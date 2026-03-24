@@ -733,7 +733,7 @@ function renderMainInSpecSummary(summaryByConsignee){
   const isMobileSummary = window.innerWidth <= 900 || isSimModeActive();
   const activeWatermarkHost = isMobileSummary ? watermarkHost : mainIn;
   const inactiveWatermarkHost = isMobileSummary ? mainIn : watermarkHost;
-  const titleY = isMobileSummary ? 18 : 50;
+  const titleY = isMobileSummary ? 20 : 50;
   const titleFontSize = 195;
   const detailFontSize = isMobileSummary ? 95 : 34;
   const detailTextLength = isMobileSummary ? " textLength='1280' lengthAdjust='spacingAndGlyphs'" : "";
