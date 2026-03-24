@@ -2031,17 +2031,35 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-messaging.onMessage((payload) => {
+messaging.onMessage(async (payload) => {
   console.log('Message received. ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
+
+  const notificationTitle = payload && payload.notification && payload.notification.title
+    ? payload.notification.title
+    : 'WMS 알림';
+  const notificationBody = payload && payload.notification && payload.notification.body
+    ? payload.notification.body
+    : '메시지 내용';
   const notificationOptions = {
-      body: payload.notification.body,
-      icon: normalizeNotificationIconUrl(payload.notification.icon)
+    body: notificationBody,
+    icon: normalizeNotificationIconUrl(payload && payload.notification ? payload.notification.icon : ''),
+    tag: 'wms-foreground',
+    data: payload && payload.data ? payload.data : {}
   };
-  console.log(notificationTitle,notificationOptions);
-  new Notification(notificationTitle, notificationOptions);
-  alert(payload.notification.body);
+
+  try {
+    const registration = await ensureMessagingServiceWorker();
+    if (registration && typeof registration.showNotification === 'function') {
+      await registration.showNotification(notificationTitle, notificationOptions);
+      return;
+    }
+  } catch (error) {
+    console.error('Foreground notification 표시 실패:', error);
+  }
+
+  if (Notification.permission === 'granted') {
+    new Notification(notificationTitle, notificationOptions);
+  }
 });
 
 // Call requestPermission on page load
