@@ -52,6 +52,7 @@ function normalizeNotificationIconUrl(rawIconUrl){
 let ref;
 let refFile;
 let refLegacyFile;
+const APP_VERSION = 3;
 let ioValue;
 let upfileList;
 let token;
@@ -1782,21 +1783,12 @@ async function upLoad(){
 
 
 if(mC){
-  
-  // document.querySelector("#titleDate").style="display:none";
   // toastOn("모바일 환경에서 접속 됩니다.1");
-  
-  // const osRe = document.querySelector("#osRe");
-  // osRe.classList.add("mobile");
-  // osRe.classList.remove("osInput");
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
-  // td.forEach((e)=>{
-  //   console.log(e);
-  //   e.style.fontSize="small";
-  // });
-  }
+}
+setTimeout(function(){ toastOn("현재 Version " + APP_VERSION + " 입니다."); }, 300);
 function toastOn(msg,t){
   if(t == null){
     t=2000;
