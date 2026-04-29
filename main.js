@@ -376,42 +376,42 @@ updateUserRegButtonLabel();
   logDataEl.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 })();
 // #mainIn 3초 길게 누르기 → 집계 패널 toggle
-(function(){
-  const mainInEl = document.querySelector("#mainIn");
-  if (!mainInEl) { return; }
-  let _lpTimer = null;
-  let _lpConsumed = false;
-  let _startX = 0;
-  let _startY = 0;
-  function _startLp(e){
-    _lpConsumed = false;
-    _startX = e.clientX;
-    _startY = e.clientY;
-    _lpTimer = setTimeout(function(){
-      _lpTimer = null;
-      _lpConsumed = true;
-      if (_mainInSummaryVisible) {
-        _hideMainInSummaryView();
-      } else {
-        _showMainInSummaryView();
-      }
-    }, 2000);
-  }
-  function _cancelLp(){
-    if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
-  }
-  function _onMove(e){
-    if (!_lpTimer) { return; }
-    const dx = e.clientX - _startX;
-    const dy = e.clientY - _startY;
-    if (Math.sqrt(dx * dx + dy * dy) > 10) { _cancelLp(); }
-  }
-  mainInEl.addEventListener("pointerdown", _startLp);
-  mainInEl.addEventListener("pointerup", _cancelLp);
-  mainInEl.addEventListener("pointerleave", _cancelLp);
-  mainInEl.addEventListener("pointermove", _onMove);
-  mainInEl.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
-})();
+// (function(){
+//   const mainInEl = document.querySelector("#mainIn");
+//   if (!mainInEl) { return; }
+//   let _lpTimer = null;
+//   let _lpConsumed = false;
+//   let _startX = 0;
+//   let _startY = 0;
+//   function _startLp(e){
+//     _lpConsumed = false;
+//     _startX = e.clientX;
+//     _startY = e.clientY;
+//     _lpTimer = setTimeout(function(){
+//       _lpTimer = null;
+//       _lpConsumed = true;
+//       if (_mainInSummaryVisible) {
+//         _hideMainInSummaryView();
+//       } else {
+//         _showMainInSummaryView();
+//       }
+//     }, 2000);
+//   }
+//   function _cancelLp(){
+//     if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+//   }
+//   function _onMove(e){
+//     if (!_lpTimer) { return; }
+//     const dx = e.clientX - _startX;
+//     const dy = e.clientY - _startY;
+//     if (Math.sqrt(dx * dx + dy * dy) > 10) { _cancelLp(); }
+//   }
+//   mainInEl.addEventListener("pointerdown", _startLp);
+//   mainInEl.addEventListener("pointerup", _cancelLp);
+//   mainInEl.addEventListener("pointerleave", _cancelLp);
+//   mainInEl.addEventListener("pointermove", _onMove);
+//   mainInEl.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
+// })();
 function applyMobileTopButtonLabels(){
   const titleBtn = document.querySelector("#titleDate");
   const dateNextBtn = document.querySelector("#dateContents");
