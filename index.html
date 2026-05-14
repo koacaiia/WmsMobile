@@ -146,12 +146,13 @@
             <div id="imgTableDiv">
                 <div id="imgTr"></div>
             </div>
-                <div id="popBtn" class="filebox" style="display:grid;grid-template-columns:8fr 2fr;">
+                <div id="popBtn" class="filebox" style="display:grid;grid-template-columns:6fr 2fr 2fr;">
                    
                             <input type="file" id="fileInput" multiple accept="image/*" style="display:none;">
                             <label id="btnUploadAction" onclick="handleUploadAction()">
                                 <span id="btnUploadActionText">사진등록</span>
                             </label>
+                             <button id="workDoneBtn" type="button" onclick="markWorkingDone()">작업완료</button>
                              <button id="regTime" type="button" onclick="closeMainPop()">Registration Time</button>
             </div>
         </div>

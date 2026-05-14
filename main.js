@@ -308,7 +308,6 @@ function userReg(){
     console.log(e);
   }
   updateUserRegButtonLabel();
-  toastOn(nextName ? "사용자명 저장 완료" : "사용자명 초기화 완료");
 }
 function ensureUserNameOnStartup(){
   syncUserNameFromStorage();
@@ -354,10 +353,8 @@ updateUserRegButtonLabel();
         const isSimOn = url.searchParams.get('sim') === '1';
         if (isSimOn) {
           url.searchParams.delete('sim');
-          toastOn('데스크탑 모드로 전환');
         } else {
           url.searchParams.set('sim', '1');
-          toastOn('6.7인치 모바일 모드로 전환');
         }
         setTimeout(function(){ window.location.href = url.toString(); }, 800);
       } catch(e2) { console.error(e2); }
@@ -574,7 +571,6 @@ async function pickTargetDateByModal(){
   }
   const trimmed = (dateInput.value || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || isNaN(new Date(trimmed).getTime())) {
-    toastOn("날짜 형식이 올바르지 않습니다.");
     return null;
   }
   return trimmed;
@@ -631,19 +627,16 @@ async function removeScheduleItem(itemRef){
 }
 async function scheduleChange(){
   if (isScheduleProcessing) {
-    toastOn("일정 변경 작업 진행중입니다.");
     return;
   }
 
   if (!isScheduleMode) {
     setScheduleMode(true);
-    toastOn("선택 모드: 빨간 항목 제외, 다중 선택 가능", 2500);
     return;
   }
 
   const selectedItems = getSelectedScheduleItems();
   if (selectedItems.length === 0) {
-    toastOn("선택된 항목이 없습니다.");
     return;
   }
 
@@ -658,7 +651,6 @@ async function scheduleChange(){
   });
   if (!action || action === "cancel") {
     setScheduleMode(false);
-    toastOn("선택 모드 종료");
     return;
   }
 
@@ -683,7 +675,6 @@ async function scheduleChange(){
       }
 
       await Promise.all(selectedItems.map((item)=>moveScheduleItemToDate(item.ref, nextDate)));
-      toastOn("일정 변경 완료: " + selectedItems.length + "건", 2500);
       setScheduleMode(false);
       return;
     }
@@ -702,13 +693,11 @@ async function scheduleChange(){
         return;
       }
       await Promise.all(selectedItems.map((item)=>removeScheduleItem(item.ref)));
-      toastOn("삭제 완료: " + selectedItems.length + "건", 2500);
       setScheduleMode(false);
       return;
     }
   } catch (error) {
     console.error("scheduleChange error:", error);
-    toastOn("작업 중 오류가 발생했습니다.");
   } finally {
     isScheduleProcessing = false;
   }
@@ -742,7 +731,30 @@ function isRedStyledRow(row){
     return false;
   }
   const inlineStyle = (row.getAttribute("style") || "").toLowerCase();
-  return row.style.color === "red" || inlineStyle.includes("color:red");
+  return row.style.color === "red"
+    || inlineStyle.includes("color:red");
+}
+function isWorkDoneBackgroundRow(row){
+  if (!row) {
+    return false;
+  }
+  if (row.classList.contains("work-done-row")) {
+    return true;
+  }
+  const inlineStyle = (row.getAttribute("style") || "").toLowerCase();
+  const bg = String(row.style.backgroundColor || "").toLowerCase();
+  if (bg === "red" || bg === "rgb(255, 0, 0)") {
+    return true;
+  }
+  if (inlineStyle.includes("background-color:red") || inlineStyle.includes("background-color: red")) {
+    return true;
+  }
+  try {
+    const computedBg = String(window.getComputedStyle(row).backgroundColor || "").toLowerCase();
+    return computedBg === "red" || computedBg === "rgb(255, 0, 0)";
+  } catch (error) {
+    return false;
+  }
 }
 function updateMainInWatermarkStatus(){
   const mainIn = document.querySelector("#mainIn");
@@ -750,7 +762,7 @@ function updateMainInWatermarkStatus(){
     return;
   }
   const rows = Array.from(document.querySelectorAll("#tBodyIn tr"));
-  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row));
+  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row) || isWorkDoneBackgroundRow(row));
   mainIn.classList.toggle("in-complete", isComplete);
 }
 function updateMainOutWatermarkStatus(){
@@ -759,7 +771,7 @@ function updateMainOutWatermarkStatus(){
     return;
   }
   const rows = Array.from(document.querySelectorAll("#tBodyOut tr"));
-  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row));
+  const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row) || isWorkDoneBackgroundRow(row));
   mainOut.classList.toggle("out-complete", isComplete);
 }
 function renderMainInSpecSummary(summaryByConsignee){
@@ -930,12 +942,6 @@ async function dumpWatermarkDebugInfo(){
     copied = false;
   }
 
-  if (copied) {
-    toastOn("워터마크 디버그 정보가 클립보드에 복사되었습니다.");
-  } else {
-    toastOn("워터마크 디버그 정보를 콘솔에서 확인하세요.");
-  }
-
   return snapshot;
 }
 window.dumpWatermarkDebugInfo = dumpWatermarkDebugInfo;
@@ -1083,12 +1089,16 @@ function getData(date){
                 popUp();
             });
             if(isWorkingDone){
-                tr.style="color:red;";}
+              if(item["working"]=="done"){
+                tr.classList.add("work-done-row");
+                tr.style.backgroundColor="red";
+              }
+              else
+                tr.style.color="red";}
         }
         moveRedRowsToBottom(tBodyIn);
         updateMainInWatermarkStatus();
         renderMainInSpecSummary(summaryByConsignee);
-        // toastOn("40FT:"+ft4+"   20FT:"+ft2+"    LCL:"+lcl,4000);
     }).
     catch((e)=>{
       console.log(e);
@@ -1287,17 +1297,21 @@ function moveRedRowsToBottom(tBody){
   }
 
   const normalRows = [];
-  const redRows = [];
+  const textRedRows = [];
+  const doneBackgroundRows = [];
   rows.forEach((row)=>{
-    const isRedRow = isRedStyledRow(row);
-    if (isRedRow) {
-      redRows.push(row);
-    } else {
-      normalRows.push(row);
+    if (isWorkDoneBackgroundRow(row)) {
+      doneBackgroundRows.push(row);
+      return;
     }
+    if (isRedStyledRow(row)) {
+      textRedRows.push(row);
+      return;
+    }
+    normalRows.push(row);
   });
 
-  normalRows.concat(redRows).forEach((row)=>{
+  normalRows.concat(textRedRows, doneBackgroundRows).forEach((row)=>{
     tBody.appendChild(row);
   });
 }
@@ -1394,9 +1408,6 @@ function tryOpenFilePicker(isAutoOpen){
       const mainPop = document.querySelector("#mainPop");
       const isOpen = mainPop && mainPop.style.display !== "none";
       const noSelection = !fileInput.files || fileInput.files.length === 0;
-      if (isOpen && noSelection) {
-        toastOn("자동 파일창이 차단되면 아래 사진등록 버튼을 눌러주세요.", 2500);
-      }
     }, 350);
   }
 }
@@ -1474,6 +1485,10 @@ function popUp(){
     isUploading = false;
     setUploadActionDisabled(false);
     setUploadActionMode("register", "사진등록");
+    const workDoneBtn = document.querySelector("#workDoneBtn");
+    if (workDoneBtn) {
+      workDoneBtn.textContent = "작업완료";
+    }
     resetUploadProgress();
    
     const table= document.querySelector("#popInfoTable");
@@ -1756,7 +1771,6 @@ function loadServerImages(imageRef, fallbackRef){
 }
 function handleUploadAction(){
   if (isUploading) {
-    toastOn("업로드 진행중입니다.");
     return;
   }
   const uploadAction = document.querySelector("#btnUploadAction");
@@ -1769,7 +1783,6 @@ function handleUploadAction(){
       setUploadActionMode("register", "사진추가등록");
     }).catch((error)=>{
       console.error("서버 이미지 로드 오류:", error);
-      toastOn("사진 로드 실패");
     });
     return;
   }
@@ -1793,7 +1806,6 @@ async function upLoad(){
     const stockList ={"client":h3List[0].innerHTML};
     stockList[h3List[1].innerHTML]={"bl":h3List[2].innerHTML};
     if(img.length==0){
-      toastOn("사진 전송 없이 작업 완료 등록만 진행 합니다.");
           }else{
             isUploading = true;
             setUploadActionDisabled(true);
@@ -1844,7 +1856,6 @@ async function upLoad(){
 
               console.log("업로드 완료");
               loadServerImages(refFile, refLegacyFile);
-              toastOn(imgUrls.length+" 파일 업로드 완료");
             }catch(error){
               alert("Error uploading file:", error);
               console.error("Error uploading file:", error);
@@ -1870,33 +1881,17 @@ async function upLoad(){
 
 
 if(mC){
-  // toastOn("모바일 환경에서 접속 됩니다.1");
 }else{
   const btn = document.querySelector("#titleDate");
   btn.innerHTML="일정 업로드 Page Load";
-}
-function toastOn(msg,t){
-  if(t == null){
-    t=2000;
-  }
-  const toastMessage = document.createElement("div");
-  toastMessage.id="tost_message";
-  toastMessage.innerHTML = msg; 
-  toastMessage.classList.add('active');
-  document.body.appendChild(toastMessage);
-  setTimeout(function(){
-      toastMessage.classList.remove('active');
-  },t);
 }
 
 function dateNext(){
   const d = new Date(dateSelect.value);
   if(d.getDay()===5){
     d.setDate(d.getDate()+3);
-    toastOn("다음주 월요일 로 지정 됩니다.")
   }else if(d.getDay()===6){
     d.setDate(d.getDate()+2);
-    toastOn("다음주 월요일 로 지정 됩니다.")
   }else{
     d.setDate(d.getDate()+1);
   }
@@ -1914,14 +1909,12 @@ function osSubmit(){
   const osR = document.querySelector("#osRe").value;
   const osObject={"osM":osM,"osWf":osWf,"osWo":osWo,"osR":osR};
   database_f.ref(refOs).update(osObject).then((e)=>{
-    toastOn(osObject);
   }).catch((e)=>{});
 }
 function staffCheck(){
   const selectedDate = (document.querySelector("#dateSelect").value || dateT(new Date())).trim();
   const dateObj = new Date(selectedDate);
   if (isNaN(dateObj.getTime())) {
-    toastOn("날짜 형식이 올바르지 않습니다.");
     return;
   }
 
@@ -1938,10 +1931,8 @@ function staffCheck(){
   const sC = {"osM":osM, "osWf":osWf, "osWo":osWo, "osR":osR};
 
   database_f.ref(refOs).update(sC).then(()=>{
-    toastOn("인력 정보 등록 완료");
   }).catch((error)=>{
     console.log(error);
-    toastOn("인력 정보 등록 실패");
   });
 }
 window.staffCheck = staffCheck;
@@ -2010,7 +2001,6 @@ if ('serviceWorker' in navigator) {
           token = currentToken;
           registerDeviceToken(currentToken).then((saved)=>{
             if (!saved) {
-              toastOn("토큰 저장 실패: DB rules/네트워크 확인", 2600);
             }
           });
           console.log('FCM Token received:', currentToken);
@@ -2172,16 +2162,13 @@ function bindMobileImageDeleteEvents(imgTag, serverPath){
       if (serverPath) {
         storage_f.ref(serverPath).delete().then(() => {
           removeCard();
-          toastOn("서버 이미지 삭제 완료");
         }).catch((error) => {
           console.error("서버 이미지 삭제 오류:", error);
-          toastOn("서버 이미지 삭제 실패");
         });
         return;
       }
 
       removeCard();
-      toastOn("이미지 삭제 완료");
     }, 800);
   };
 
@@ -2229,7 +2216,6 @@ function downloadImageFromImgTag(imgTag){
     })
     .catch((error)=>{
       console.error("이미지 다운로드 오류:", error);
-      toastOn("이미지 다운로드 실패");
     });
 }
 function closeMainPop(){
@@ -2257,6 +2243,34 @@ function closeMainPop(){
   setUploadActionDisabled(false);
   resetUploadProgress();
 }
+function markWorkingDone(){
+  if (!ref) {
+    console.error("작업 경로(ref)가 없어 working 상태를 업데이트할 수 없습니다.");
+    return;
+  }
+
+  const doneBtn = document.querySelector("#workDoneBtn");
+  const isDoneState = doneBtn && doneBtn.textContent.trim() === "완료됨";
+  let nextWorkingValue = "done";
+  let nextButtonLabel = "완료됨";
+
+  if (isDoneState) {
+    const uploadAction = document.querySelector("#btnUploadAction");
+    const uploadActionText = (uploadAction && uploadAction.textContent ? uploadAction.textContent : "").trim();
+    nextWorkingValue = uploadActionText === "사진등록" ? "" : "컨테이너진입";
+    nextButtonLabel = "작업완료";
+  }
+
+  database_f.ref(ref).update({ working: nextWorkingValue }).then(()=>{
+    if (doneBtn) {
+      doneBtn.textContent = nextButtonLabel;
+    }
+    closeMainPop();
+    dateChanged();
+  }).catch((error)=>{
+    console.error("working 상태 업데이트 실패:", error);
+  });
+}
 function returnTime(){
   const now = new Date();
   const hours = now.getHours().toString().padStart(2, '0');
@@ -2283,25 +2297,20 @@ async function test(){
       if (Notification.permission === "granted") {
         new Notification(title, { body, icon: notificationIconUrl });
       }
-      toastOn("릴레이(endpoint/apiKey) 미설정: 로컬 알림으로 테스트했습니다.", 2500);
       return;
     }
 
     if (!token) {
-      toastOn("현재 기기 토큰이 아직 없어도, 등록된 다른 기기들로 전송 시도합니다.", 2200);
     }
     const result = await sendMessageToAllDevices(title, body, notificationIconUrl);
     const successCount = Number(result && result.successCount ? result.successCount : 0);
     const failureCount = Number(result && result.failureCount ? result.failureCount : 0);
     const requested = Number(result && result.requested ? result.requested : (successCount + failureCount));
     if (requested < 2) {
-      toastOn("대상 토큰이 " + requested + "개입니다. 다른 기기에서 앱 1회 접속/권한허용 필요", 3200);
     } else {
-      toastOn("전체 전송 완료: 성공 " + successCount + " / 실패 " + failureCount, 2600);
     }
   } catch (error) {
     console.error("test FCM send error:", error);
-    toastOn("test 발송 실패: " + (error && error.message ? error.message : "unknown"), 3200);
   }
 }
 window.test = test;
@@ -2341,17 +2350,14 @@ function fileRemove() {
       : firebase.storage().refFromURL(targetImg.src).delete();
     deletePromise.then(() => {
       removeCard();
-      toastOn("이미지 삭제 완료");
       closeModal();
     }).catch((error) => {
       console.error("이미지 삭제 오류:", error);
-      toastOn("이미지 삭제 실패");
     });
     return;
   }
 
   removeCard();
-  toastOn("이미지 삭제 완료");
   closeModal();
 }
 function closeModal() {

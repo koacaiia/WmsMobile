@@ -46,7 +46,6 @@ function loadImage(c){
         fileTr.appendChild(td);
   })
 }).catch((error)=>{
-  toastOn("Last image",error);
 });;
 }
 
@@ -56,7 +55,6 @@ function btn(e){
     if(count>0){
       c=count-1
     }else{
-      toastOn("No more images");
       return;
     }}else if(e.id=="nextImg"){
       c=count+1;
@@ -69,21 +67,9 @@ function btn(e){
     }
   loadImage(c);
 }
-function toastOn(msg){
-  console.log(msg);
-  const toastMessage = document.createElement("div");
-  toastMessage.id="tost_message_img";
-  toastMessage.innerHTML = msg; 
-  toastMessage.classList.add('active');
-  document.body.appendChild(toastMessage);
-  setTimeout(function(){
-      toastMessage.classList.remove('active');
-  },2000);
-}
 function saveImg(){
   storage_f.ref(ref).listAll().then((res)=>{
     if(!res.items || res.items.length===0){
-      toastOn("No images to save");
       return;
     }
 
@@ -120,15 +106,12 @@ function saveImg(){
         saveAs(content, zipName);
       }).catch(err=>{
         console.error('Error generating zip', err);
-        toastOn('Error creating zip');
       });
     }).catch(err=>{
       console.error('Error preparing files', err);
-      toastOn('Error preparing files for download');
     });
 
   }).catch(err=>{
     console.error('Error listing storage ref', err);
-    toastOn('Error listing files1');
   });
 }
