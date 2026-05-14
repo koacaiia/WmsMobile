@@ -1720,12 +1720,6 @@ function popUp(){
     if (isMobilePopupContext()) {
       if (imageCount === 0) {
         setUploadActionMode("register", "사진등록");
-        setTimeout(() => {
-          const mainPop = document.querySelector("#mainPop");
-          if (mainPop && mainPop.style.display !== "none") {
-            tryOpenFilePicker(true);
-          }
-        }, 0);
         return;
       }
       setUploadActionMode("check", imageCount + "개 사진확인");
