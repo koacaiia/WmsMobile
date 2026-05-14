@@ -1091,7 +1091,7 @@ function getData(date){
             if(isWorkingDone){
               if(item["working"]=="done"){
                 tr.classList.add("work-done-row");
-                tr.style.backgroundColor="red";
+                tr.style.backgroundColor="rgba(255, 0, 0, 0.2)";
               }
               else
                 tr.style.color="red";}
