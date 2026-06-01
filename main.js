@@ -98,6 +98,27 @@ function syncUserNameFromStorage(){
 function getDeviceTokenRootRef(){
   return "DeptName/" + deptName + "/DeviceTokens";
 }
+// 테스트 수신 제한 모드:
+// - true: localStorage 사용자명(wmsUserName)이 "Ysk"인 기기만 푸시 수신
+// - false: 모든 사용자 수신
+// 테스트 종료 후 전체 수신으로 복구 방법(둘 중 하나 선택):
+// 1) return true; 를 return false; 로 변경
+// 2) 아래 함수 본문을 주석처리하고 return false;만 남김
+function isYskOnlyReceiveTestMode(){
+  return true;
+}
+function getAllowedReceiveUserName(){
+  return "Ysk";
+}
+function canUserReceiveMessagesByName(name){
+  if (!isYskOnlyReceiveTestMode()) {
+    return true;
+  }
+  return String(name || "").trim() === getAllowedReceiveUserName();
+}
+function canCurrentUserReceiveMessages(){
+  return canUserReceiveMessagesByName(userName);
+}
 function normalizeDeviceTokenKey(value){
   return String(value || "").trim().replace(/[.#$\[\]\/]/g, "_");
 }
@@ -109,6 +130,15 @@ function registerDeviceToken(currentToken){
   const tokenKey = normalizeDeviceTokenKey(safeToken);
   if (!tokenKey) {
     return Promise.resolve(false);
+  }
+
+  if (!canCurrentUserReceiveMessages()) {
+    return database_f.ref(getDeviceTokenRootRef() + "/" + tokenKey).remove()
+      .then(()=>false)
+      .catch((error)=>{
+        console.error("수신 제한 사용자 토큰 제거 실패:", error);
+        return false;
+      });
   }
 
   const payload = {
@@ -274,10 +304,11 @@ async function getRegisteredDeviceTokens(){
   const raw = snapshot.val() || {};
   const values = Object.values(raw);
   const list = values
+    .filter((item)=>canUserReceiveMessagesByName(item && item.userName ? item.userName : ""))
     .map((item)=> item && item.token ? String(item.token).trim() : "")
     .filter((item)=> item.length > 0);
 
-  if (token) {
+  if (token && canCurrentUserReceiveMessages()) {
     list.push(String(token).trim());
   }
   return Array.from(new Set(list));
@@ -306,6 +337,9 @@ function userReg(){
     }
   } catch (e) {
     console.log(e);
+  }
+  if (token) {
+    registerDeviceToken(token);
   }
   updateUserRegButtonLabel();
 }
@@ -1874,7 +1908,7 @@ function osSubmit(){
   database_f.ref(refOs).update(osObject).then((e)=>{
   }).catch((e)=>{});
 }
-function staffCheck(){
+async function staffCheck(){
   const selectedDate = (document.querySelector("#dateSelect").value || dateT(new Date())).trim();
   const dateObj = new Date(selectedDate);
   if (isNaN(dateObj.getTime())) {
@@ -1892,8 +1926,36 @@ function staffCheck(){
 
   const refOs = "/DeptName/" + deptName + "/sC/" + year + "/" + month + "/" + day;
   const sC = {"osM":osM, "osWf":osWf, "osWo":osWo, "osR":osR};
+  const hasMessageValue = (value)=>{
+    const text = String(value == null ? "" : value).trim();
+    if (text === "") {
+      return false;
+    }
+    const numeric = Number(text);
+    if (!Number.isNaN(numeric) && numeric === 0) {
+      return false;
+    }
+    return true;
+  };
+  const messageParts = [];
+  if (hasMessageValue(osM)) {
+    messageParts.push("하역(남): " + String(osM).trim());
+  }
+  if (hasMessageValue(osWf)) {
+    messageParts.push("여(fine): " + String(osWf).trim());
+  }
+  if (hasMessageValue(osWo)) {
+    messageParts.push("여(외부): " + String(osWo).trim());
+  }
+  if (hasMessageValue(osR)) {
+    messageParts.push("비고: " + String(osR).trim());
+  }
+  const message = selectedDate + (messageParts.length ? "\n" + messageParts.join(", ") : "");
 
-  database_f.ref(refOs).update(sC).then(()=>{
+  database_f.ref(refOs).update(sC).then(async ()=>{
+    if (typeof sMs === "function") {
+      await sMs(message);
+    }
   }).catch((error)=>{
     console.log(error);
   });
@@ -1985,6 +2047,10 @@ if ('serviceWorker' in navigator) {
 }
 
 messaging.onMessage(async (payload) => {
+  if (!canCurrentUserReceiveMessages()) {
+    console.log("수신 제한 모드: 현재 사용자는 알림 수신 대상이 아님");
+    return;
+  }
   console.log('Message received. ', payload);
 
   const notificationTitle = payload && payload.notification && payload.notification.title
@@ -2250,10 +2316,10 @@ function otherContents(e){
   }
   
 }
-async function test(){
+async function sMs(m){
   try {
     const title = "WMS Test";
-    const body = "test 메시지 발송";
+    const body = (typeof m === "string" && m.trim()) ? m.trim() : "test 메시지 발송";
     const { relayEndpoint, relayApiKey } = ensureRelayApiKeyConfigured();
     if (!relayEndpoint || !relayApiKey) {
       // Relay 미설정 환경에서는 로컬 알림으로 테스트 가능하게 처리
@@ -2273,10 +2339,261 @@ async function test(){
     } else {
     }
   } catch (error) {
-    console.error("test FCM send error:", error);
+    console.error("sMs FCM send error:", error);
   }
 }
-window.test = test;
+window.sMs = sMs;
+window.sms = sMs;
+async function showDatabaseNodePopup(){
+  syncUserNameFromStorage();
+  if (String(userName || "").trim() !== "Ysk") {
+    alert("권한 없음: Ysk 사용자만 접근할 수 있습니다.");
+    return;
+  }
+
+  const defaultPath = "DeptName/" + deptName;
+  const inputPath = prompt("확인할 database_f 노드 경로를 입력하세요.", defaultPath);
+  if (inputPath === null) {
+    return;
+  }
+
+  const normalizePath = (value)=>String(value || "").trim().replace(/^\/+|\/+$/g, "");
+  const nodePath = normalizePath(inputPath);
+  if (!nodePath) {
+    alert("노드 경로를 입력해야 합니다.");
+    return;
+  }
+
+  const previousOverlay = document.querySelector("#dbTreeOverlay");
+  if (previousOverlay) {
+    previousOverlay.remove();
+  }
+
+  const overlay = document.createElement("div");
+  overlay.id = "dbTreeOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.45)";
+  overlay.style.zIndex = "9999";
+  overlay.style.display = "flex";
+  overlay.style.alignItems = "center";
+  overlay.style.justifyContent = "center";
+
+  const modal = document.createElement("div");
+  modal.style.width = "min(960px, 94vw)";
+  modal.style.maxHeight = "90vh";
+  modal.style.backgroundColor = "#ffffff";
+  modal.style.borderRadius = "10px";
+  modal.style.boxShadow = "0 20px 40px rgba(0, 0, 0, 0.25)";
+  modal.style.display = "grid";
+  modal.style.gridTemplateRows = "auto auto 1fr";
+  modal.style.overflow = "hidden";
+
+  const header = document.createElement("div");
+  header.style.padding = "12px 14px";
+  header.style.backgroundColor = "#154077";
+  header.style.color = "#ffffff";
+  header.style.fontWeight = "700";
+  header.textContent = "Database Node Tree";
+
+  const controls = document.createElement("div");
+  controls.style.display = "grid";
+  controls.style.gridTemplateColumns = "1fr auto auto";
+  controls.style.gap = "8px";
+  controls.style.padding = "10px 12px";
+  controls.style.borderBottom = "1px solid #d9d9d9";
+
+  const pathInput = document.createElement("input");
+  pathInput.type = "text";
+  pathInput.value = nodePath;
+  pathInput.placeholder = "예: DeptName/WareHouseDept2";
+  pathInput.style.padding = "8px 10px";
+
+  const reloadBtn = document.createElement("button");
+  reloadBtn.type = "button";
+  reloadBtn.textContent = "불러오기";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.textContent = "닫기";
+
+  controls.appendChild(pathInput);
+  controls.appendChild(reloadBtn);
+  controls.appendChild(closeBtn);
+
+  const body = document.createElement("div");
+  body.style.padding = "10px 12px 14px";
+  body.style.overflow = "auto";
+
+  const infoLine = document.createElement("div");
+  infoLine.style.marginBottom = "8px";
+  infoLine.style.color = "#444";
+
+  const treeWrap = document.createElement("div");
+  treeWrap.style.fontFamily = "Consolas, 'Courier New', monospace";
+  treeWrap.style.fontSize = "13px";
+  treeWrap.style.lineHeight = "1.5";
+
+  body.appendChild(infoLine);
+  body.appendChild(treeWrap);
+
+  modal.appendChild(header);
+  modal.appendChild(controls);
+  modal.appendChild(body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const joinPath = (basePath, key)=>basePath ? (basePath + "/" + key) : key;
+  const valueSummary = (value)=>{
+    if (value === null) {
+      return "null";
+    }
+    if (Array.isArray(value)) {
+      return "Array(" + value.length + ")";
+    }
+    if (typeof value === "object") {
+      return "Object(" + Object.keys(value).length + ")";
+    }
+    if (typeof value === "string") {
+      return '"' + value + '"';
+    }
+    return String(value);
+  };
+
+  const closeOverlay = ()=>{
+    overlay.remove();
+  };
+
+  const removeNodeWithConfirm = async (path)=>{
+    const ok = confirm("노드를 삭제하시겠습니까?\n" + path);
+    if (!ok) {
+      return false;
+    }
+    try {
+      await database_f.ref(path).remove();
+      infoLine.textContent = "삭제 완료: " + path;
+      return true;
+    } catch (error) {
+      console.error("노드 삭제 실패:", error);
+      alert("노드 삭제 실패: " + (error && error.message ? error.message : "unknown"));
+      return false;
+    }
+  };
+
+  const loadTree = async ()=>{
+    const targetPath = normalizePath(pathInput.value);
+    if (!targetPath) {
+      alert("노드 경로를 입력해야 합니다.");
+      return;
+    }
+    pathInput.value = targetPath;
+    infoLine.textContent = "로딩 중...";
+    treeWrap.replaceChildren();
+
+    try {
+      const snapshot = await database_f.ref(targetPath).get();
+      if (!snapshot.exists()) {
+        infoLine.textContent = "데이터 없음: " + targetPath;
+        return;
+      }
+
+      infoLine.textContent = "경로: " + targetPath + " (1차 노드만 표시)";
+      const rootValue = snapshot.val();
+      const rootCard = document.createElement("div");
+      rootCard.style.display = "flex";
+      rootCard.style.alignItems = "center";
+      rootCard.style.justifyContent = "space-between";
+      rootCard.style.padding = "6px 8px";
+      rootCard.style.background = "#f3f6fb";
+      rootCard.style.border = "1px solid #d8e1ef";
+      rootCard.style.borderRadius = "6px";
+      rootCard.style.marginBottom = "8px";
+
+      const rootLabel = document.createElement("div");
+      rootLabel.textContent = (targetPath.split("/").pop() || targetPath) + "  [" + valueSummary(rootValue) + "]";
+
+      const rootDeleteBtn = document.createElement("button");
+      rootDeleteBtn.type = "button";
+      rootDeleteBtn.textContent = "루트 삭제";
+      rootDeleteBtn.addEventListener("click", async ()=>{
+        const removed = await removeNodeWithConfirm(targetPath);
+        if (removed) {
+          treeWrap.replaceChildren();
+        }
+      });
+
+      rootCard.appendChild(rootLabel);
+      rootCard.appendChild(rootDeleteBtn);
+      treeWrap.appendChild(rootCard);
+
+      if (rootValue === null || typeof rootValue !== "object") {
+        return;
+      }
+
+      const list = document.createElement("ul");
+      list.style.margin = "0";
+      list.style.padding = "0";
+      list.style.listStyle = "none";
+
+      const keys = Object.keys(rootValue).sort();
+      if (!keys.length) {
+        const empty = document.createElement("li");
+        empty.style.color = "#888";
+        empty.textContent = "(1차 하위 노드 없음)";
+        list.appendChild(empty);
+      } else {
+        keys.forEach((key)=>{
+          const childPath = joinPath(targetPath, key);
+          const item = document.createElement("li");
+          item.style.display = "flex";
+          item.style.alignItems = "center";
+          item.style.justifyContent = "space-between";
+          item.style.gap = "10px";
+          item.style.padding = "6px 8px";
+          item.style.borderBottom = "1px solid #eee";
+
+          const text = document.createElement("span");
+          text.textContent = key + "  [" + valueSummary(rootValue[key]) + "]";
+
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.textContent = "삭제";
+          delBtn.addEventListener("click", async ()=>{
+            const removed = await removeNodeWithConfirm(childPath);
+            if (removed) {
+              item.remove();
+            }
+          });
+
+          item.appendChild(text);
+          item.appendChild(delBtn);
+          list.appendChild(item);
+        });
+      }
+
+      treeWrap.appendChild(list);
+    } catch (error) {
+      console.error("DB 노드 조회 실패:", error);
+      infoLine.textContent = "조회 실패: " + (error && error.message ? error.message : "unknown");
+    }
+  };
+
+  reloadBtn.addEventListener("click", loadTree);
+  pathInput.addEventListener("keydown", (event)=>{
+    if (event.key === "Enter") {
+      loadTree();
+    }
+  });
+  closeBtn.addEventListener("click", closeOverlay);
+  overlay.addEventListener("click", (event)=>{
+    if (event.target === overlay) {
+      closeOverlay();
+    }
+  });
+
+  await loadTree();
+}
+window.showDatabaseNodePopup = showDatabaseNodePopup;
 function showModal(imgTag){
     if (!imgTag) {
       return;
@@ -2332,7 +2649,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
   const otherPltBtn = document.querySelector("#otherPlt");
   if (otherPltBtn) {
-    otherPltBtn.addEventListener("click", test);
+    otherPltBtn.addEventListener("click", showDatabaseNodePopup);
   }
   const modal = document.getElementById("imgModal");
   if (!modal) {
