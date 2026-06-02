@@ -293,6 +293,111 @@ async function postRelayWithFallback(messagePayload, relayAuth){
 
   throw lastError || new Error("Relay request failed");
 }
+
+function parseIsoTimeToEpoch(value){
+  const text = String(value || "").trim();
+  if (!text) {
+    return 0;
+  }
+  const epoch = Date.parse(text);
+  return Number.isFinite(epoch) ? epoch : 0;
+}
+
+function buildDeviceIdentity(record){
+  if (!record || typeof record !== "object") {
+    return "";
+  }
+  const name = String(record.userName || "").trim();
+  const agent = String(record.userAgent || "").trim();
+  if (!name || !agent) {
+    return "";
+  }
+  return name + "|" + agent;
+}
+
+function selectNewestTokenPerDevice(rawMap){
+  const map = rawMap && typeof rawMap === "object" ? rawMap : {};
+  const entries = Object.keys(map).map((key)=> {
+    const value = map[key] || {};
+    const currentToken = String(value.token || "").trim();
+    return {
+      key,
+      token: currentToken,
+      userName: String(value.userName || "").trim(),
+      userAgent: String(value.userAgent || "").trim(),
+      updatedAt: String(value.updatedAt || "").trim(),
+      updatedAtEpoch: parseIsoTimeToEpoch(value.updatedAt),
+      identity: buildDeviceIdentity(value)
+    };
+  }).filter((item)=>item.token.length > 0);
+
+  const keepByIdentity = new Map();
+  const keepByToken = new Map();
+  const duplicateKeys = [];
+
+  const shouldReplace = (existing, candidate)=> {
+    if (!existing) {
+      return true;
+    }
+    if (candidate.updatedAtEpoch !== existing.updatedAtEpoch) {
+      return candidate.updatedAtEpoch > existing.updatedAtEpoch;
+    }
+    return candidate.key > existing.key;
+  };
+
+  entries.forEach((entry)=> {
+    if (entry.identity) {
+      const existing = keepByIdentity.get(entry.identity);
+      if (shouldReplace(existing, entry)) {
+        if (existing) {
+          duplicateKeys.push(existing.key);
+        }
+        keepByIdentity.set(entry.identity, entry);
+      } else {
+        duplicateKeys.push(entry.key);
+      }
+      return;
+    }
+
+    // Fallback: records without identity can only be deduped by token.
+    const existingByToken = keepByToken.get(entry.token);
+    if (shouldReplace(existingByToken, entry)) {
+      if (existingByToken) {
+        duplicateKeys.push(existingByToken.key);
+      }
+      keepByToken.set(entry.token, entry);
+    } else {
+      duplicateKeys.push(entry.key);
+    }
+  });
+
+  const keepEntries = [
+    ...Array.from(keepByIdentity.values()),
+    ...Array.from(keepByToken.values())
+  ];
+
+  return {
+    keepEntries,
+    duplicateKeys: Array.from(new Set(duplicateKeys.filter((item)=>!!item)))
+  };
+}
+
+function cleanupDuplicateTokenRecords(duplicateKeys){
+  const list = Array.isArray(duplicateKeys) ? duplicateKeys.filter((item)=>!!item) : [];
+  if (!list.length) {
+    return Promise.resolve(0);
+  }
+  const tasks = list.map((key)=>database_f.ref(getDeviceTokenRootRef() + "/" + key).remove());
+  return Promise.allSettled(tasks).then((results)=> {
+    const successCount = results.filter((item)=>item.status === "fulfilled").length;
+    const failCount = results.length - successCount;
+    if (failCount > 0) {
+      console.warn("중복 토큰 정리 중 일부 삭제 실패:", failCount, "건");
+    }
+    return successCount;
+  });
+}
+
 async function getRegisteredDeviceTokens(){
   const snapshot = await database_f.ref(getDeviceTokenRootRef()).get().catch((error)=>{
     throw new Error("기기 토큰 목록 조회 실패(권한/네트워크 확인): " + (error && error.message ? error.message : "unknown"));
@@ -302,10 +407,19 @@ async function getRegisteredDeviceTokens(){
   }
 
   const raw = snapshot.val() || {};
-  const values = Object.values(raw);
-  const list = values
-    .filter((item)=>canUserReceiveMessagesByName(item && item.userName ? item.userName : ""))
-    .map((item)=> item && item.token ? String(item.token).trim() : "")
+  const { keepEntries, duplicateKeys } = selectNewestTokenPerDevice(raw);
+
+  cleanupDuplicateTokenRecords(duplicateKeys).then((removedCount)=> {
+    if (removedCount > 0) {
+      console.log("중복 기기 토큰 정리 완료:", removedCount, "건 삭제");
+    }
+  }).catch((error)=> {
+    console.error("중복 기기 토큰 정리 실패:", error);
+  });
+
+  const list = keepEntries
+    .filter((item)=>canUserReceiveMessagesByName(item.userName))
+    .map((item)=>item.token)
     .filter((item)=> item.length > 0);
 
   if (token && canCurrentUserReceiveMessages()) {
@@ -2053,15 +2167,24 @@ messaging.onMessage(async (payload) => {
   }
   console.log('Message received. ', payload);
 
-  const notificationTitle = payload && payload.notification && payload.notification.title
+  const notificationTitle = payload && payload.data && payload.data.title
+    ? payload.data.title
+    : payload && payload.notification && payload.notification.title
     ? payload.notification.title
     : 'WMS 알림';
-  const notificationBody = payload && payload.notification && payload.notification.body
+  const notificationBody = payload && payload.data && payload.data.body
+    ? payload.data.body
+    : payload && payload.notification && payload.notification.body
     ? payload.notification.body
     : '메시지 내용';
+  const notificationIcon = payload && payload.data && payload.data.icon
+    ? payload.data.icon
+    : payload && payload.notification
+    ? payload.notification.icon
+    : '';
   const notificationOptions = {
     body: notificationBody,
-    icon: normalizeNotificationIconUrl(payload && payload.notification ? payload.notification.icon : ''),
+    icon: normalizeNotificationIconUrl(notificationIcon),
     tag: 'wms-foreground',
     data: payload && payload.data ? payload.data : {}
   };

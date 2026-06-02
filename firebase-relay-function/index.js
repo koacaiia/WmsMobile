@@ -35,6 +35,13 @@ function normalizeIconPath(iconValue) {
   return value;
 }
 
+function toStringDataValue(value) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+  return String(value);
+}
+
 exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" }, async (req, res) => {
   setCors(req, res);
 
@@ -96,22 +103,17 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" 
       return;
     }
 
-    const notificationPayload = {
-      title: String(notification.title || "WMS"),
-      body: String(notification.body || "")
-    };
-
-    const webpushPayload = {
-      notification: {
-        icon: normalizeIconPath(notification.icon)
-      }
+    const dataPayload = {
+      title: toStringDataValue(notification.title || "WMS"),
+      body: toStringDataValue(notification.body || ""),
+      icon: toStringDataValue(normalizeIconPath(notification.icon)),
+      sentAt: toStringDataValue(Date.now())
     };
 
     if (hasMultiTokens) {
       const multicastMessage = {
         tokens: uniqueTokens,
-        notification: notificationPayload,
-        webpush: webpushPayload
+        data: dataPayload
       };
 
       const result = await admin.messaging().sendEachForMulticast(multicastMessage);
@@ -127,8 +129,7 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" 
 
     const message = {
       token: to,
-      notification: notificationPayload,
-      webpush: webpushPayload
+      data: dataPayload
     };
 
     const messageId = await admin.messaging().send(message);

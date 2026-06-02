@@ -43,13 +43,14 @@ function formatDateTime() {
 // 백그라운드 메시지 처리
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] 백그라운드 메시지 수신:', payload);
+  const data = payload && payload.data ? payload.data : {};
   
-  const notificationTitle = payload.notification?.title || 'WMS 알림';
+  const notificationTitle = data.title || payload.notification?.title || 'WMS 알림';
   const notificationOptions = {
-    body: payload.notification?.body || '메시지 내용',
-    icon: getIconPath(),
+    body: data.body || payload.notification?.body || '메시지 내용',
+    icon: data.icon || getIconPath(),
     tag: 'wms-notification',
-    data: payload.data,
+    data,
     requireInteraction: true,
     actions: [
       {
