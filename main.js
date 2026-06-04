@@ -315,6 +315,12 @@ function buildDeviceIdentity(record){
   return name + "|" + agent;
 }
 
+// 모바일에서 브라우저별 중복 알림을 줄이기 위해 사용자별 최신 1토큰만 유지.
+// 필요 시 false로 바꾸면 기존(기기/브라우저 단위) 동작으로 복귀.
+function isSingleNotificationPerUserMode(){
+  return true;
+}
+
 function selectNewestTokenPerDevice(rawMap){
   const map = rawMap && typeof rawMap === "object" ? rawMap : {};
   const entries = Object.keys(map).map((key)=> {
@@ -333,6 +339,7 @@ function selectNewestTokenPerDevice(rawMap){
 
   const keepByIdentity = new Map();
   const keepByToken = new Map();
+  const keepByUserName = new Map();
   const duplicateKeys = [];
 
   const shouldReplace = (existing, candidate)=> {
@@ -346,6 +353,19 @@ function selectNewestTokenPerDevice(rawMap){
   };
 
   entries.forEach((entry)=> {
+    if (isSingleNotificationPerUserMode() && entry.userName) {
+      const existingByUser = keepByUserName.get(entry.userName);
+      if (shouldReplace(existingByUser, entry)) {
+        if (existingByUser) {
+          duplicateKeys.push(existingByUser.key);
+        }
+        keepByUserName.set(entry.userName, entry);
+      } else {
+        duplicateKeys.push(entry.key);
+      }
+      return;
+    }
+
     if (entry.identity) {
       const existing = keepByIdentity.get(entry.identity);
       if (shouldReplace(existing, entry)) {
@@ -372,6 +392,7 @@ function selectNewestTokenPerDevice(rawMap){
   });
 
   const keepEntries = [
+    ...Array.from(keepByUserName.values()),
     ...Array.from(keepByIdentity.values()),
     ...Array.from(keepByToken.values())
   ];

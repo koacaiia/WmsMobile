@@ -110,9 +110,22 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" 
       sentAt: toStringDataValue(Date.now())
     };
 
+    const notificationPayload = {
+      title: dataPayload.title || "WMS",
+      body: dataPayload.body || ""
+    };
+
+    const webpushPayload = {
+      notification: {
+        icon: dataPayload.icon || normalizeIconPath(notification.icon)
+      }
+    };
+
     if (hasMultiTokens) {
       const multicastMessage = {
         tokens: uniqueTokens,
+        notification: notificationPayload,
+        webpush: webpushPayload,
         data: dataPayload
       };
 
@@ -129,6 +142,8 @@ exports.sendFcmRelay = onRequest({ region: "asia-southeast1", invoker: "public" 
 
     const message = {
       token: to,
+      notification: notificationPayload,
+      webpush: webpushPayload,
       data: dataPayload
     };
 

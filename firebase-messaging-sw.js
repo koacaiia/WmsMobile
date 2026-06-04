@@ -43,6 +43,10 @@ function formatDateTime() {
 // 백그라운드 메시지 처리
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] 백그라운드 메시지 수신:', payload);
+  if (payload && payload.notification) {
+    // notification payload is auto-displayed by the browser; avoid duplicate manual display.
+    return;
+  }
   const data = payload && payload.data ? payload.data : {};
   
   const notificationTitle = data.title || payload.notification?.title || 'WMS 알림';
