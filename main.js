@@ -1634,6 +1634,7 @@ function popUp(){
     thR.style.height="3vh";
     thR.replaceChildren();
     let thList;
+    let layoutSaveHandler = null;
     const tBody = table.querySelectorAll("tbody")[0];
     tBody.replaceChildren();
     const fileTr = document.querySelector("#imgTr");
@@ -1644,7 +1645,29 @@ function popUp(){
       h3List[i].removeAttribute("style");
     }
     if(ioValue=="InCargo"){
-      thList=["품명","PLT","EA","비고",];
+      thList=["품명","PLT","EA","적재방법","비고",];
+      const inCargoParentRef = database_f.ref(ref).parent;
+      layoutSaveHandler = async ()=>{
+        const rows = Array.from(tBody.querySelectorAll("tr[data-layout-key]"));
+        if (!rows.length) {
+          return;
+        }
+        try {
+          const saveTasks = rows.map((row)=>{
+            const layoutKey = row.dataset.layoutKey;
+            if (!layoutKey) {
+              return Promise.resolve();
+            }
+            const layoutInput = row.querySelector("input.layout-input");
+            const nextLayout = layoutInput ? String(layoutInput.value || "").trim() : "";
+            return inCargoParentRef.child(layoutKey).update({ layout: nextLayout });
+          });
+          await Promise.all(saveTasks);
+          popUp();
+        } catch (error) {
+          console.error("적재방법 저장 실패:", error);
+        }
+      };
       database_f.ref(ref).get().then((snapshot)=>{
           const val = snapshot.val();
           const container = val["container"];
@@ -1655,7 +1678,7 @@ function popUp(){
           h3List[0].innerHTML=val["consignee"];
           h3List[1].innerHTML=val["container"];
           h3List[2].innerHTML=val["bl"];
-          database_f.ref(ref).parent.get().then((snapshot)=>{
+            inCargoParentRef.get().then((snapshot)=>{
               const val = snapshot.val();
               for(let i in val){
               const cont = val[i]["container"];
@@ -1672,11 +1695,19 @@ function popUp(){
                   const td4 = document.createElement("td");
                   td4.innerHTML=val[i]["incargo"];
                   const td5 = document.createElement("td");
-                  td5.innerHTML=val[i]["remark"];
+                  const layoutInput = document.createElement("input");
+                  layoutInput.type = "text";
+                  layoutInput.className = "layout-input";
+                  layoutInput.value = val[i]["layout"] || val[i]["loadMethod"] || val[i]["loadingMethod"] || val[i]["stowageMethod"] || "";
+                  td5.appendChild(layoutInput);
+                  const td6 = document.createElement("td");
+                  td6.innerHTML=val[i]["remark"];
+                  tr.dataset.layoutKey = i;
                   tr.appendChild(td2);
                   tr.appendChild(td3);
                   tr.appendChild(td4);
                   tr.appendChild(td5);
+                  tr.appendChild(td6);
                   tBody.appendChild(tr);
               }}
               tBody.querySelectorAll("tr").forEach((tr)=>{
@@ -1740,7 +1771,19 @@ function popUp(){
 //  });
  for(let i=0;i<thList.length;i++){
   const th = document.createElement("th");
-  th.innerHTML=thList[i];
+  if(ioValue=="InCargo" && thList[i]==="적재방법"){
+    const layoutButton = document.createElement("button");
+    layoutButton.type = "button";
+    layoutButton.textContent = "적재방법";
+    layoutButton.addEventListener("click", ()=>{
+      if (typeof layoutSaveHandler === "function") {
+        layoutSaveHandler();
+      }
+    });
+    th.appendChild(layoutButton);
+  } else {
+    th.innerHTML=thList[i];
+  }
   thR.appendChild(th);
  }
 //  for(let i=4;i<thList.length;i++){

@@ -371,12 +371,11 @@ textarea{
     } */
     #popInfoDiv{
         height: 100%;
+        width: 100%;
         overflow-y: auto;
         overflow-x: auto;
     }
-    #popInfoTable{
-        min-width: max-content;
-    }
+    
     #fileInput{
         height:2.5vh;
     }
