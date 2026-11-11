@@ -2921,6 +2921,10 @@ function applyViewVersion(version){
   }
 }
 async function openViewVersionModal(){
+  if (!isMobilePopupContext()) {
+    location.href = "https://koacaiia.github.io/Wms-fine-/";
+    return;
+  }
   const current = document.documentElement.classList.contains("page-view") ? viewVersionPageView : viewVersionDesktop;
   const currentLabel = current === viewVersionPageView ? "pageView 환경" : "데스크탑 환경";
   const picked = await showScheduleModal({
