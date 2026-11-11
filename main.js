@@ -71,12 +71,18 @@ const messagingSwVersion = "20260311-1";
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 // Mobile simulation mode: check URL param ?sim=1 and apply class early
+const viewVersionStorageKey = "wmsViewVersion";
+const viewVersionDesktop = "desktop";
+const viewVersionPageView = "pageView";
 (function(){
   try {
     const _simUrl = new URL(window.location.href);
     if (_simUrl.searchParams.get('sim') === '1') {
       document.documentElement.classList.add('mobile-sim');
       document.body.classList.add('mobile-sim');
+    }
+    if (localStorage.getItem(viewVersionStorageKey) === viewVersionPageView) {
+      document.documentElement.classList.add('page-view');
     }
   } catch(e) {}
 })();
@@ -558,7 +564,7 @@ function applyMobileTopButtonLabels(){
   }
 
   if (isMobilePopupContext()) {
-    titleBtn.textContent = "새로고침";
+    titleBtn.textContent = "버전";
     dateNextBtn.textContent = "+1일";
     otherPltBtn.textContent = "Pallet";
     otherEnFBtn.textContent = "장비";
@@ -2832,8 +2838,135 @@ function closeModal() {
   modalTargetImage = null;
   modal.style.display = "none";
 }
+let shakeSetupDone = false;
+function initShakePageSwitch(){
+  if (shakeSetupDone) {
+    return;
+  }
+  const container = document.querySelector("#mainContent");
+  if (!container || !isMobilePopupContext()) {
+    return;
+  }
+  const SHAKE_THRESHOLD = 15;
+  const SHAKE_COOLDOWN_MS = 1000;
+  let lastAcc = null;
+  let lastShakeAt = 0;
+
+  const goNextPage = () => {
+    const pages = container.querySelectorAll(":scope > .main");
+    if (pages.length < 2 || container.style.display === "none") {
+      return;
+    }
+    const current = Math.round(container.scrollLeft / container.clientWidth);
+    const next = (current + 1) % pages.length;
+    container.scrollTo({ left: next * container.clientWidth, behavior: "smooth" });
+  };
+
+  const onDeviceMotion = (e) => {
+    if (!document.documentElement.classList.contains("page-view")) {
+      return;
+    }
+    const acc = e.accelerationIncludingGravity;
+    if (!acc || acc.x == null) {
+      return;
+    }
+    const cur = { x: acc.x, y: acc.y, z: acc.z };
+    if (!lastAcc) {
+      lastAcc = cur;
+      return;
+    }
+    const delta = Math.abs(cur.x - lastAcc.x) + Math.abs(cur.y - lastAcc.y) + Math.abs(cur.z - lastAcc.z);
+    lastAcc = cur;
+    const now = Date.now();
+    if (delta > SHAKE_THRESHOLD && now - lastShakeAt > SHAKE_COOLDOWN_MS) {
+      lastShakeAt = now;
+      goNextPage();
+    }
+  };
+
+  if (!("DeviceMotionEvent" in window)) {
+    return;
+  }
+  shakeSetupDone = true;
+  if (typeof DeviceMotionEvent.requestPermission === "function") {
+    const requestOnce = () => {
+      document.removeEventListener("touchend", requestOnce);
+      document.removeEventListener("click", requestOnce);
+      DeviceMotionEvent.requestPermission()
+        .then((state) => {
+          if (state === "granted") {
+            window.addEventListener("devicemotion", onDeviceMotion);
+          }
+        })
+        .catch(() => {});
+    };
+    document.addEventListener("touchend", requestOnce);
+    document.addEventListener("click", requestOnce);
+  } else {
+    window.addEventListener("devicemotion", onDeviceMotion);
+  }
+}
+function applyViewVersion(version){
+  const isPageView = version === viewVersionPageView;
+  document.documentElement.classList.toggle("page-view", isPageView);
+  try {
+    localStorage.setItem(viewVersionStorageKey, isPageView ? viewVersionPageView : viewVersionDesktop);
+  } catch (e) {}
+  const mainContent = document.querySelector("#mainContent");
+  if (mainContent) {
+    mainContent.scrollLeft = 0;
+  }
+  if (isPageView) {
+    initShakePageSwitch();
+  }
+}
+async function openViewVersionModal(){
+  const current = document.documentElement.classList.contains("page-view") ? viewVersionPageView : viewVersionDesktop;
+  const currentLabel = current === viewVersionPageView ? "pageView 환경" : "데스크탑 환경";
+  const picked = await showScheduleModal({
+    title: "버전 선택",
+    bodyText: `현재 버전: ${currentLabel}`,
+    buttons: [
+      { label: "데스크탑 환경", value: viewVersionDesktop },
+      { label: "pageView 환경", value: viewVersionPageView },
+      { label: "새로고침", value: "reload" },
+      { label: "취소", value: "cancel" }
+    ]
+  });
+  if (!picked || picked === "cancel") {
+    return;
+  }
+  if (picked === "reload") {
+    reLoad();
+    return;
+  }
+  if (picked !== current) {
+    applyViewVersion(picked);
+  }
+  const pickedLabel = picked === viewVersionPageView ? "pageView 환경" : "데스크탑 환경";
+  showToast(`${pickedLabel}이(가) 선택되었습니다.`, 3000);
+}
+let toastTimer = null;
+function showToast(message, duration = 3000){
+  let toast = document.getElementById("toastMessage");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toastMessage";
+    toast.className = "toastMessage";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, duration);
+}
 document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
+  if (document.documentElement.classList.contains("page-view")) {
+    initShakePageSwitch();
+  }
   const otherPltBtn = document.querySelector("#otherPlt");
   if (otherPltBtn) {
     otherPltBtn.addEventListener("click", showDatabaseNodePopup);
