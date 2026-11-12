@@ -265,8 +265,7 @@ textarea{
             gap: 1%;
             /* border:1px solid black;
             border-radius: 3px; */
-            width:100vw;
-            height:100vh;
+            width:100dvw;
             height:100dvh;
             min-height:100dvh;
             overflow:auto;
