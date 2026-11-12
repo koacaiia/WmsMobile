@@ -549,6 +549,13 @@ textarea{
         text-align: center;
         font-size: clamp(0.75rem, 3.2vw, 1.35rem);
     }
+    #mainIn,
+    #mainOut{
+        overflow-x: auto;
+    }
+    .tableW{
+        min-width: 560px;
+    }
     #imgTableDiv{
         overflow-y: auto;
         overflow-x: hidden;
