@@ -93,6 +93,24 @@ const isMobilePopupContext = ()=>{
   const coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   return mC || navigator.maxTouchPoints > 0 || coarsePointer || window.innerWidth <= 900 || isSimModeActive();
 };
+function shouldUseDesktopLayout(){
+  if (document.documentElement.classList.contains("page-view")) {
+    return false;
+  }
+  let storedVersion = null;
+  try {
+    storedVersion = localStorage.getItem(viewVersionStorageKey);
+  } catch (e) {}
+  if (storedVersion === viewVersionDesktop) {
+    return true;
+  }
+  return !isMobilePopupContext();
+}
+function syncDesktopLayoutClass(){
+  document.documentElement.classList.toggle("desktop-layout", shouldUseDesktopLayout());
+}
+syncDesktopLayoutClass();
+window.addEventListener("resize", syncDesktopLayoutClass);
 function syncUserNameFromStorage(){
   try {
     userName = (localStorage.getItem(userNameStorageKey) || "").trim();
@@ -2454,6 +2472,39 @@ function downloadImageFromImgTag(imgTag){
       console.error("이미지 다운로드 오류:", error);
     });
 }
+function getMainPanels(){
+  return Array.from(document.querySelectorAll("#mainContent > .main"));
+}
+function applyMainPanelDisplay(panel, isActive){
+  if (document.documentElement.classList.contains("desktop-layout")) {
+    panel.style.display = "";
+    return;
+  }
+  panel.style.display = isActive ? "block" : "none";
+}
+function setMainPanelActive(panelId){
+  const panels = getMainPanels();
+  if (!panels.length) {
+    return;
+  }
+  const target = panelId ? document.getElementById(panelId) : panels[0];
+  const activeTarget = target && panels.includes(target) ? target : panels[0];
+  panels.forEach((panel)=>{
+    const isActive = panel === activeTarget;
+    panel.classList.toggle("active", isActive);
+    applyMainPanelDisplay(panel, isActive);
+  });
+}
+function switchMainPanelByDirection(direction){
+  const panels = getMainPanels();
+  if (panels.length < 2 || document.documentElement.classList.contains("page-view")) {
+    return;
+  }
+  const activePanel = panels.find((panel)=>panel.classList.contains("active")) || panels[0];
+  const currentIndex = panels.indexOf(activePanel);
+  const nextIndex = (currentIndex + direction + panels.length) % panels.length;
+  setMainPanelActive(panels[nextIndex].id);
+}
 function closeMainPop(){
   const mainTitle = document.querySelector("#mainTitle");
   const mainContent = document.querySelector("#mainContent");
@@ -2462,8 +2513,9 @@ function closeMainPop(){
   const fileTr = document.querySelector("#imgTr");
 
   mainTitle.style = "display:grid";
-  mainContent.style = "display:grid";
+  mainContent.style = "display:block";
   mainPop.style = "display:none";
+  setMainPanelActive("mainIn");
 
   document.querySelectorAll(".clicked").forEach((row)=>{
     row.classList.remove("clicked");
@@ -2926,6 +2978,7 @@ function applyViewVersion(version){
   try {
     localStorage.setItem(viewVersionStorageKey, isPageView ? viewVersionPageView : viewVersionDesktop);
   } catch (e) {}
+  syncDesktopLayoutClass();
   const mainContent = document.querySelector("#mainContent");
   if (mainContent) {
     mainContent.scrollLeft = 0;
@@ -2984,6 +3037,42 @@ document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
   if (document.documentElement.classList.contains("page-view")) {
     initShakePageSwitch();
+  }
+  const panels = getMainPanels();
+  if (panels.length) {
+    panels.forEach((panel, index) => {
+      panel.classList.toggle("active", index === 0);
+      applyMainPanelDisplay(panel, index === 0);
+    });
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const swipeThreshold = 55;
+    const handleTouchStart = (event) => {
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) {
+        return;
+      }
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    };
+    const handleTouchEnd = (event) => {
+      const touch = event.changedTouches && event.changedTouches[0];
+      if (!touch) {
+        return;
+      }
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY)) {
+        return;
+      }
+      if (deltaX < 0) {
+        switchMainPanelByDirection(1);
+      } else {
+        switchMainPanelByDirection(-1);
+      }
+    };
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
   }
   const otherPltBtn = document.querySelector("#otherPlt");
   if (otherPltBtn) {
