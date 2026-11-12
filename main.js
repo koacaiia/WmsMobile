@@ -512,10 +512,9 @@ window.userName = userName;
 syncUserNameFromStorage();
 window.userName = userName;
 updateUserRegButtonLabel();
-// #logData 3초 길게 누르기 → 집계 패널 toggle
-(function(){
-  const logDataEl = document.querySelector("#logData");
-  if (!logDataEl) { return; }
+// 길게 누르기(3초) 공통 바인딩 — 길게 누른 뒤의 click은 캡처 단계에서 차단
+function bindLongPress(el, onLongPress){
+  const LONG_PRESS_MS = 3000;
   let _lpTimer = null;
   let _lpConsumed = false;
   let _startX = 0;
@@ -527,12 +526,8 @@ updateUserRegButtonLabel();
     _lpTimer = setTimeout(function(){
       _lpTimer = null;
       _lpConsumed = true;
-      if (_mainInSummaryVisible) {
-        _hideMainInSummaryView();
-      } else {
-        _showMainInSummaryView();
-      }
-    }, 3000);
+      onLongPress();
+    }, LONG_PRESS_MS);
   }
   function _cancelLp(){
     if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
@@ -543,15 +538,34 @@ updateUserRegButtonLabel();
     const dy = e.clientY - _startY;
     if (Math.sqrt(dx * dx + dy * dy) > 10) { _cancelLp(); }
   }
-  logDataEl.addEventListener("pointerdown", _startLp);
-  logDataEl.addEventListener("pointerup", _cancelLp);
-  logDataEl.addEventListener("pointerleave", _cancelLp);
-  logDataEl.addEventListener("pointermove", _onMove);
-  // 길게 눌렀을 때 click(userReg) 방지 — 캡처 단계에서 차단
-  logDataEl.addEventListener("click", function(e){
+  el.addEventListener("pointerdown", _startLp);
+  el.addEventListener("pointerup", _cancelLp);
+  el.addEventListener("pointerleave", _cancelLp);
+  el.addEventListener("pointermove", _onMove);
+  el.addEventListener("click", function(e){
     if (_lpConsumed) { _lpConsumed = false; e.stopImmediatePropagation(); }
   }, true);
-  logDataEl.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
+  el.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
+}
+// #logData 3초 길게 누르기 → 집계 패널 toggle
+(function(){
+  const logDataEl = document.querySelector("#logData");
+  if (!logDataEl) { return; }
+  bindLongPress(logDataEl, function(){
+    if (_mainInSummaryVisible) {
+      _hideMainInSummaryView();
+    } else {
+      _showMainInSummaryView();
+    }
+  });
+})();
+// #titleDate 3초 길게 누르기 → WmsIni 페이지 이동
+(function(){
+  const titleDateEl = document.querySelector("#titleDate");
+  if (!titleDateEl) { return; }
+  bindLongPress(titleDateEl, function(){
+    location.href = "https://koacaiia.github.io/WmsIni/";
+  });
 })();
 function applyMobileTopButtonLabels(){
   const titleBtn = document.querySelector("#titleDate");
