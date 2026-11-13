@@ -15,7 +15,8 @@ body{
 }
 body{
     display:grid;
-    grid-template-rows:12fr 86fr;
+    grid-template-columns:minmax(0, 1fr);
+    grid-template-rows:minmax(0, 12fr) minmax(0, 86fr);
     gap:1%;
     /* border:1px solid black;
     border-radius: 3px; */
@@ -24,6 +25,12 @@ body{
     margin:0.5dvh 0.5dvw;
     overflow:auto;
     box-sizing:border-box;
+}
+body > *{
+    box-sizing:border-box;
+    min-width:0;
+    min-height:0;
+    max-width:100%;
 }
 #mainContent{
     display:block;
@@ -56,11 +63,13 @@ body{
     white-space:nowrap;
 }
 #mainTitle{
-    display:grid;grid-template-rows:0.8fr 1.2fr;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px;
+    display:grid;grid-template-rows:minmax(0, 0.8fr) minmax(0, 1.2fr);min-width:0;border-radius: 10px;background-color: rgb(151, 168, 244);padding:5px;grid-gap:2px;
 }
 .tableW{
     table-layout:fixed;
     width:100%;
+    max-width:100%;
+    min-width:0;
     --wm-size: 55% auto;
     background-repeat: no-repeat;
     background-position: center;
@@ -127,8 +136,8 @@ td{
 }
 #mainInSummaryPanel.visible{
     display: grid;
-    grid-template-rows: 7fr 3fr;
-    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 7fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 1fr);
 }
 .mainInSummaryTitle{
     font-size: clamp(2rem, 10vw, 5rem);
@@ -270,7 +279,8 @@ textarea{
         }
         body{
             display:grid;
-            grid-template-rows:2fr 8fr;
+            grid-template-columns:minmax(0, 1fr);
+            grid-template-rows:minmax(0, 2fr) minmax(0, 8fr);
             gap: 1%;
             /* border:1px solid black;
             border-radius: 3px; */
@@ -312,7 +322,8 @@ textarea{
     }
     body.mobile-sim {
         display: grid;
-        grid-template-rows: 2fr 8fr;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 2fr) minmax(0, 8fr);
         gap: 1%;
         width: 393px !important;
         height: 852px !important;
@@ -436,7 +447,7 @@ textarea{
 }
 .filebox div{
     display:grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     
 }
 #popBtn{
@@ -455,6 +466,10 @@ textarea{
 }
 #popBtn #workDoneBtn{
     width: 100%;
+}
+#mainOsTable,
+#popInfoTable{
+    min-width: 0;
 }
 #imgTableDiv{
     /* display: grid;
@@ -537,7 +552,7 @@ textarea{
     gap: 2px;
     height:100%;
     min-height:0;
-    grid-template-rows: 1fr 5fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 5fr);
     border:3px solid black;
     border-radius: 10px;
     box-sizing: border-box;
@@ -559,7 +574,7 @@ textarea{
         overflow-x: auto;
     }
     .tableW{
-        min-width: 560px;
+        min-width: 0;
     }
     #imgTableDiv{
         overflow-y: auto;
@@ -580,8 +595,8 @@ textarea{
 html.desktop-layout:not(.page-view) #mainContent{
     display:grid !important;
     grid-template-rows:minmax(0, 1fr) minmax(0, 1fr);
-    width: 99dvw;
-    grid-template-columns:100%;
+    width: 100%;
+    grid-template-columns:minmax(0, 1fr);
     gap:1%;
 }
 html.desktop-layout:not(.page-view) #mainContent > .main{
