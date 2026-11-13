@@ -71,18 +71,12 @@ const messagingSwVersion = "20260311-1";
 const userNameStorageKey = "wmsUserName";
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 // Mobile simulation mode: check URL param ?sim=1 and apply class early
-const viewVersionStorageKey = "wmsViewVersion";
-const viewVersionDesktop = "desktop";
-const viewVersionPageView = "pageView";
 (function(){
   try {
     const _simUrl = new URL(window.location.href);
     if (_simUrl.searchParams.get('sim') === '1') {
       document.documentElement.classList.add('mobile-sim');
       document.body.classList.add('mobile-sim');
-    }
-    if (localStorage.getItem(viewVersionStorageKey) === viewVersionPageView) {
-      document.documentElement.classList.add('page-view');
     }
   } catch(e) {}
 })();
@@ -93,24 +87,6 @@ const isMobilePopupContext = ()=>{
   const coarsePointer = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   return mC || navigator.maxTouchPoints > 0 || coarsePointer || window.innerWidth <= 900 || isSimModeActive();
 };
-function shouldUseDesktopLayout(){
-  if (document.documentElement.classList.contains("page-view")) {
-    return false;
-  }
-  let storedVersion = null;
-  try {
-    storedVersion = localStorage.getItem(viewVersionStorageKey);
-  } catch (e) {}
-  if (storedVersion === viewVersionDesktop) {
-    return true;
-  }
-  return !isMobilePopupContext();
-}
-function syncDesktopLayoutClass(){
-  document.documentElement.classList.toggle("desktop-layout", shouldUseDesktopLayout());
-}
-syncDesktopLayoutClass();
-window.addEventListener("resize", syncDesktopLayoutClass);
 function syncUserNameFromStorage(){
   try {
     userName = (localStorage.getItem(userNameStorageKey) || "").trim();
@@ -530,9 +506,10 @@ window.userName = userName;
 syncUserNameFromStorage();
 window.userName = userName;
 updateUserRegButtonLabel();
-// 길게 누르기(3초) 공통 바인딩 — 길게 누른 뒤의 click은 캡처 단계에서 차단
-function bindLongPress(el, onLongPress){
-  const LONG_PRESS_MS = 3000;
+// #logData 3초 길게 누르기 → 집계 패널 toggle
+(function(){
+  const logDataEl = document.querySelector("#logData");
+  if (!logDataEl) { return; }
   let _lpTimer = null;
   let _lpConsumed = false;
   let _startX = 0;
@@ -544,8 +521,12 @@ function bindLongPress(el, onLongPress){
     _lpTimer = setTimeout(function(){
       _lpTimer = null;
       _lpConsumed = true;
-      onLongPress();
-    }, LONG_PRESS_MS);
+      if (_mainInSummaryVisible) {
+        _hideMainInSummaryView();
+      } else {
+        _showMainInSummaryView();
+      }
+    }, 3000);
   }
   function _cancelLp(){
     if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
@@ -556,34 +537,15 @@ function bindLongPress(el, onLongPress){
     const dy = e.clientY - _startY;
     if (Math.sqrt(dx * dx + dy * dy) > 10) { _cancelLp(); }
   }
-  el.addEventListener("pointerdown", _startLp);
-  el.addEventListener("pointerup", _cancelLp);
-  el.addEventListener("pointerleave", _cancelLp);
-  el.addEventListener("pointermove", _onMove);
-  el.addEventListener("click", function(e){
+  logDataEl.addEventListener("pointerdown", _startLp);
+  logDataEl.addEventListener("pointerup", _cancelLp);
+  logDataEl.addEventListener("pointerleave", _cancelLp);
+  logDataEl.addEventListener("pointermove", _onMove);
+  // 길게 눌렀을 때 click(userReg) 방지 — 캡처 단계에서 차단
+  logDataEl.addEventListener("click", function(e){
     if (_lpConsumed) { _lpConsumed = false; e.stopImmediatePropagation(); }
   }, true);
-  el.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
-}
-// #logData 3초 길게 누르기 → 집계 패널 toggle
-(function(){
-  const logDataEl = document.querySelector("#logData");
-  if (!logDataEl) { return; }
-  bindLongPress(logDataEl, function(){
-    if (_mainInSummaryVisible) {
-      _hideMainInSummaryView();
-    } else {
-      _showMainInSummaryView();
-    }
-  });
-})();
-// #titleDate 3초 길게 누르기 → WmsIni 페이지 이동
-(function(){
-  const titleDateEl = document.querySelector("#titleDate");
-  if (!titleDateEl) { return; }
-  bindLongPress(titleDateEl, function(){
-    location.href = "https://koacaiia.github.io/WmsIni/";
-  });
+  logDataEl.addEventListener("contextmenu", function(e){ if (_lpConsumed) { e.preventDefault(); } });
 })();
 function applyMobileTopButtonLabels(){
   const titleBtn = document.querySelector("#titleDate");
@@ -596,7 +558,7 @@ function applyMobileTopButtonLabels(){
   }
 
   if (isMobilePopupContext()) {
-    titleBtn.textContent = "버전";
+    titleBtn.textContent = "새로고침";
     dateNextBtn.textContent = "+1일";
     otherPltBtn.textContent = "Pallet";
     otherEnFBtn.textContent = "장비";
@@ -2472,39 +2434,6 @@ function downloadImageFromImgTag(imgTag){
       console.error("이미지 다운로드 오류:", error);
     });
 }
-function getMainPanels(){
-  return Array.from(document.querySelectorAll("#mainContent > .main"));
-}
-function applyMainPanelDisplay(panel, isActive){
-  if (document.documentElement.classList.contains("desktop-layout")) {
-    panel.style.display = "";
-    return;
-  }
-  panel.style.display = isActive ? "block" : "none";
-}
-function setMainPanelActive(panelId){
-  const panels = getMainPanels();
-  if (!panels.length) {
-    return;
-  }
-  const target = panelId ? document.getElementById(panelId) : panels[0];
-  const activeTarget = target && panels.includes(target) ? target : panels[0];
-  panels.forEach((panel)=>{
-    const isActive = panel === activeTarget;
-    panel.classList.toggle("active", isActive);
-    applyMainPanelDisplay(panel, isActive);
-  });
-}
-function switchMainPanelByDirection(direction){
-  const panels = getMainPanels();
-  if (panels.length < 2 || document.documentElement.classList.contains("page-view")) {
-    return;
-  }
-  const activePanel = panels.find((panel)=>panel.classList.contains("active")) || panels[0];
-  const currentIndex = panels.indexOf(activePanel);
-  const nextIndex = (currentIndex + direction + panels.length) % panels.length;
-  setMainPanelActive(panels[nextIndex].id);
-}
 function closeMainPop(){
   const mainTitle = document.querySelector("#mainTitle");
   const mainContent = document.querySelector("#mainContent");
@@ -2513,9 +2442,8 @@ function closeMainPop(){
   const fileTr = document.querySelector("#imgTr");
 
   mainTitle.style = "display:grid";
-  mainContent.style = "display:block";
+  mainContent.style = "display:grid";
   mainPop.style = "display:none";
-  setMainPanelActive("mainIn");
 
   document.querySelectorAll(".clicked").forEach((row)=>{
     row.classList.remove("clicked");
@@ -2904,176 +2832,8 @@ function closeModal() {
   modalTargetImage = null;
   modal.style.display = "none";
 }
-let shakeSetupDone = false;
-function initShakePageSwitch(){
-  if (shakeSetupDone) {
-    return;
-  }
-  const container = document.querySelector("#mainContent");
-  if (!container || !isMobilePopupContext()) {
-    return;
-  }
-  const SHAKE_THRESHOLD = 15;
-  const SHAKE_COOLDOWN_MS = 1000;
-  let lastAcc = null;
-  let lastShakeAt = 0;
-
-  const goNextPage = () => {
-    const pages = container.querySelectorAll(":scope > .main");
-    if (pages.length < 2 || container.style.display === "none") {
-      return;
-    }
-    const current = Math.round(container.scrollLeft / container.clientWidth);
-    const next = (current + 1) % pages.length;
-    container.scrollTo({ left: next * container.clientWidth, behavior: "smooth" });
-  };
-
-  const onDeviceMotion = (e) => {
-    if (!document.documentElement.classList.contains("page-view")) {
-      return;
-    }
-    const acc = e.accelerationIncludingGravity;
-    if (!acc || acc.x == null) {
-      return;
-    }
-    const cur = { x: acc.x, y: acc.y, z: acc.z };
-    if (!lastAcc) {
-      lastAcc = cur;
-      return;
-    }
-    const delta = Math.abs(cur.x - lastAcc.x) + Math.abs(cur.y - lastAcc.y) + Math.abs(cur.z - lastAcc.z);
-    lastAcc = cur;
-    const now = Date.now();
-    if (delta > SHAKE_THRESHOLD && now - lastShakeAt > SHAKE_COOLDOWN_MS) {
-      lastShakeAt = now;
-      goNextPage();
-    }
-  };
-
-  if (!("DeviceMotionEvent" in window)) {
-    return;
-  }
-  shakeSetupDone = true;
-  if (typeof DeviceMotionEvent.requestPermission === "function") {
-    const requestOnce = () => {
-      document.removeEventListener("touchend", requestOnce);
-      document.removeEventListener("click", requestOnce);
-      DeviceMotionEvent.requestPermission()
-        .then((state) => {
-          if (state === "granted") {
-            window.addEventListener("devicemotion", onDeviceMotion);
-          }
-        })
-        .catch(() => {});
-    };
-    document.addEventListener("touchend", requestOnce);
-    document.addEventListener("click", requestOnce);
-  } else {
-    window.addEventListener("devicemotion", onDeviceMotion);
-  }
-}
-function applyViewVersion(version){
-  const isPageView = version === viewVersionPageView;
-  document.documentElement.classList.toggle("page-view", isPageView);
-  try {
-    localStorage.setItem(viewVersionStorageKey, isPageView ? viewVersionPageView : viewVersionDesktop);
-  } catch (e) {}
-  syncDesktopLayoutClass();
-  const mainContent = document.querySelector("#mainContent");
-  if (mainContent) {
-    mainContent.scrollLeft = 0;
-  }
-  if (isPageView) {
-    initShakePageSwitch();
-  }
-}
-async function openViewVersionModal(){
-  if (!isMobilePopupContext()) {
-    location.href = "https://koacaiia.github.io/Wms-fine-/";
-    return;
-  }
-  const current = document.documentElement.classList.contains("page-view") ? viewVersionPageView : viewVersionDesktop;
-  const currentLabel = current === viewVersionPageView ? "pageView 환경" : "데스크탑 환경";
-  const picked = await showScheduleModal({
-    title: "버전 선택",
-    bodyText: `현재 버전: ${currentLabel}`,
-    buttons: [
-      { label: "데스크탑 환경", value: viewVersionDesktop },
-      { label: "pageView 환경", value: viewVersionPageView },
-      { label: "새로고침", value: "reload" },
-      { label: "취소", value: "cancel" }
-    ]
-  });
-  if (!picked || picked === "cancel") {
-    return;
-  }
-  if (picked === "reload") {
-    reLoad();
-    return;
-  }
-  if (picked !== current) {
-    applyViewVersion(picked);
-  }
-  const pickedLabel = picked === viewVersionPageView ? "pageView 환경" : "데스크탑 환경";
-  showToast(`${pickedLabel}이(가) 선택되었습니다.`, 3000);
-}
-let toastTimer = null;
-function showToast(message, duration = 3000){
-  let toast = document.getElementById("toastMessage");
-  if (!toast) {
-    toast = document.createElement("div");
-    toast.id = "toastMessage";
-    toast.className = "toastMessage";
-    document.body.appendChild(toast);
-  }
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toast.classList.remove("show");
-  }, duration);
-}
 document.addEventListener("DOMContentLoaded", () => {
   applyMobileTopButtonLabels();
-  if (document.documentElement.classList.contains("page-view")) {
-    initShakePageSwitch();
-  }
-  const panels = getMainPanels();
-  if (panels.length) {
-    panels.forEach((panel, index) => {
-      panel.classList.toggle("active", index === 0);
-      applyMainPanelDisplay(panel, index === 0);
-    });
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const swipeThreshold = 55;
-    const handleTouchStart = (event) => {
-      const touch = event.changedTouches && event.changedTouches[0];
-      if (!touch) {
-        return;
-      }
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-    };
-    const handleTouchEnd = (event) => {
-      const touch = event.changedTouches && event.changedTouches[0];
-      if (!touch) {
-        return;
-      }
-      const deltaX = touch.clientX - touchStartX;
-      const deltaY = touch.clientY - touchStartY;
-      if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) < Math.abs(deltaY)) {
-        return;
-      }
-      if (deltaX < 0) {
-        switchMainPanelByDirection(1);
-      } else {
-        switchMainPanelByDirection(-1);
-      }
-    };
-    document.addEventListener("touchstart", handleTouchStart, { passive: true });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
-  }
   const otherPltBtn = document.querySelector("#otherPlt");
   if (otherPltBtn) {
     otherPltBtn.addEventListener("click", showDatabaseNodePopup);
