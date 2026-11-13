@@ -68,7 +68,9 @@ let messagingSwRegistrationPromise = null;
 let _mainInSummaryCache = {};
 let _mainInSummaryVisible = false;
 const messagingSwVersion = "20260311-1";
+const appVersion = "20260512-1";
 const userNameStorageKey = "wmsUserName";
+window.APP_VERSION = appVersion;
 const mC = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 // Mobile simulation mode: check URL param ?sim=1 and apply class early
 (function(){
@@ -617,6 +619,11 @@ function getTomorrowDateText(){
   baseDate.setDate(baseDate.getDate() + 1);
   return dateT(baseDate);
 }
+function openWmsFineLink(){
+  const targetUrl = "https://koacaiia.github.io/Wms-fine-/";
+  window.open(targetUrl, "_blank", "noopener,noreferrer");
+}
+window.openWmsFineLink = openWmsFineLink;
 function showScheduleModal(config){
   const modal = document.querySelector("#scheduleModal");
   const title = document.querySelector("#scheduleModalTitle");
