@@ -621,7 +621,7 @@ function getTomorrowDateText(){
 }
 function openWmsFineLink(){
   const targetUrl = "https://koacaiia.github.io/Wms-fine-/";
-  window.open(targetUrl, "_blank", "noopener,noreferrer");
+  window.location.href = targetUrl;
 }
 window.openWmsFineLink = openWmsFineLink;
 function showScheduleModal(config){
