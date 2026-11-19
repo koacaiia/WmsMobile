@@ -919,6 +919,13 @@ function updateMainOutWatermarkStatus(){
   const isComplete = rows.length > 0 && rows.every((row)=>isRedStyledRow(row) || isWorkDoneBackgroundRow(row));
   mainOut.classList.toggle("out-complete", isComplete);
 }
+function getSpecFromValue(value){
+  const v = String(value ?? "").trim().toUpperCase().replace(/\s+/g, "");
+  if(v === "40FT" || v === "40"){ return "40FT"; }
+  if(v === "20FT" || v === "20"){ return "20FT"; }
+  if(v === "LCL"){ return "LcL"; }
+  return "";
+}
 function renderMainInSpecSummary(summaryByConsignee){
   // 워터마크 SVG 제거 — 집계 데이터는 #mainIn 길게 누르기로 표시
   _mainInSummaryCache = summaryByConsignee || {};
@@ -1176,19 +1183,23 @@ function getData(date){
         
         for(let i in leafData){
             const item = leafData[i];
-            let spec="";
-            if(item["container40"]==="1"){
-                spec="40FT";
-              ft4+=1;}
-            else if(item["container20"]==="1"){
-                spec="20FT";
-              ft2+=1;}
-            else if(item["lclcargo"]!="0"){
-                spec="LcL";
-                lcl+=1;
-            }else{
-             continue
+            if(!("working" in item)){
+              item["working"]="";
             }
+            let spec=getSpecFromValue(item["spec"]);
+            if(!spec){
+              if(item["container40"]==="1"){
+                  spec="40FT";}
+              else if(item["container20"]==="1"){
+                  spec="20FT";}
+              else if(item["lclcargo"]!=null && item["lclcargo"]!="0"){
+                  spec="LcL";
+              }
+            }
+            const specText = spec || String(item["spec"] ?? "").trim();
+            if(spec==="40FT"){ft4+=1;}
+            else if(spec==="20FT"){ft2+=1;}
+            else if(spec==="LcL"){lcl+=1;}
             const tr = document.createElement("tr");
             tr.id=item["refValue"] || refI + "/" + i;
             const td1 = document.createElement("td");
@@ -1198,7 +1209,7 @@ function getData(date){
             const td3 = document.createElement("td");
             td3.innerHTML=item["Pqty"]||item["qtyPlt"];
             const td4 = document.createElement("td");
-            td4.innerHTML=spec;
+            td4.innerHTML=specText;
             const td5 = document.createElement("td");
             td5.innerHTML=item["description"];
             tr.appendChild(td1);
@@ -1211,11 +1222,13 @@ function getData(date){
               continue;
             }
             tBodyIn.appendChild(tr);
-            const consignee = String(item["consignee"] || "미지정").trim() || "미지정";
-            if (!summaryByConsignee[consignee]) {
-              summaryByConsignee[consignee] = { "40FT": 0, "20FT": 0, "LcL": 0 };
+            if (spec) {
+              const consignee = String(item["consignee"] || "미지정").trim() || "미지정";
+              if (!summaryByConsignee[consignee]) {
+                summaryByConsignee[consignee] = { "40FT": 0, "20FT": 0, "LcL": 0 };
+              }
+              summaryByConsignee[consignee][spec] = Number(summaryByConsignee[consignee][spec] || 0) + 1;
             }
-            summaryByConsignee[consignee][spec] = Number(summaryByConsignee[consignee][spec] || 0) + 1;
             tr.addEventListener("click",(e)=>{
                 const row = e.currentTarget;
                 if (isScheduleMode) {
