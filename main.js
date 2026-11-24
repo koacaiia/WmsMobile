@@ -1181,11 +1181,7 @@ function getData(date){
         
         const leafData = extractLeafParents(val) || {};
         
-        for(let i in leafData){
-            const item = leafData[i];
-            if(!("working" in item)){
-              item["working"]="";
-            }
+        const getRowSpec = (item)=>{
             let spec=getSpecFromValue(item["spec"]);
             if(!spec){
               if(item["container40"]==="1"){
@@ -1197,6 +1193,40 @@ function getData(date){
               }
             }
             const specText = spec || String(item["spec"] ?? "").trim();
+            return { spec, specText };
+        };
+
+        // 같은 Con't No는 한 행만 표시 (유형이 0이 아닌 행을 우선 대표로 선택)
+        const representativeByContainer = new Map();
+        for(let i in leafData){
+            const item = leafData[i];
+            const working = ("working" in item) ? item["working"] : "";
+            if (isScheduleMode && working!="") {
+              continue;
+            }
+            const containerKey = String(item["container"] ?? "").trim();
+            if(!containerKey){
+              continue;
+            }
+            const { specText } = getRowSpec(item);
+            const hasType = specText !== "" && specText !== "0";
+            const current = representativeByContainer.get(containerKey);
+            if(!current || (!current.hasType && hasType)){
+              representativeByContainer.set(containerKey, { key: i, hasType });
+            }
+        }
+
+        for(let i in leafData){
+            const item = leafData[i];
+            if(!("working" in item)){
+              item["working"]="";
+            }
+            const containerKey = String(item["container"] ?? "").trim();
+            const representative = containerKey ? representativeByContainer.get(containerKey) : null;
+            if(representative && representative.key !== i){
+              continue;
+            }
+            const { spec, specText } = getRowSpec(item);
             if(spec==="40FT"){ft4+=1;}
             else if(spec==="20FT"){ft2+=1;}
             else if(spec==="LcL"){lcl+=1;}
