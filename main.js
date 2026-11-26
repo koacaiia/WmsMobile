@@ -22,6 +22,7 @@ const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const auth_f = firebase.auth();
+firebase.appCheck().activate("6LeewTIuAAAAAJ5mLaHGzGicmQ1hJSYppoKbjsyL", true);
 const authReady = new Promise((resolve, reject)=>{
   const unsubscribe = auth_f.onAuthStateChanged((user)=>{
     if (user) {
