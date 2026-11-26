@@ -22,6 +22,19 @@ const database_f = firebase.database();
 const messaging = firebase.messaging();
 const storage_f = firebase.storage();
 const auth_f = firebase.auth();
+const authReady = new Promise((resolve, reject)=>{
+  const unsubscribe = auth_f.onAuthStateChanged((user)=>{
+    if (user) {
+      unsubscribe();
+      resolve(user);
+      return;
+    }
+    auth_f.signInAnonymously().catch((error)=>{
+      unsubscribe();
+      reject(error);
+    });
+  });
+});
 const deptName = "WareHouseDept2";
 const notificationIconUrl = new URL("images/icon.png", window.location.href).toString();
 const defaultRelayEndpoint = "https://asia-southeast1-fine-bondedwarehouse.cloudfunctions.net/sendFcmRelay";
@@ -1328,7 +1341,11 @@ function getData(date){
     });
     
 }
-getData(titleDate.innerHTML);
+authReady
+  .then(() => getData(dateSelect.value))
+  .catch((error) => {
+    console.error("익명 인증 실패로 데이터 로드를 건너뜁니다:", error);
+  });
 async function compressImageBlobToMaxBytes(blob, maxBytes){
   try{
     if (!blob || blob.size <= maxBytes) {
@@ -2240,7 +2257,11 @@ if ('serviceWorker' in navigator) {
   }
   
   document.addEventListener('DOMContentLoaded', () => {
-    requestPermission();
+    authReady
+      .then(() => requestPermission())
+      .catch((error) => {
+        console.error("익명 인증 실패로 알림 권한/토큰 저장을 건너뜁니다:", error);
+      });
   });
 }
 
